@@ -31,6 +31,14 @@
   estimates from noisy hedges are biased UP, and pair viability must be judged
   net of it.
 
+- **L-009 (platform quirk, must-respect):** In QC, MYM minute data exists only
+  under `Market.CBOT` (`Market.CME` serves nothing), is complete from the
+  2019-05-06 launch, **but a continuous-contract subscription starting before
+  the launch date never initializes (zero bars for the whole run)** — the
+  other micros tolerate pre-launch starts. All QC runs touching MYM must start
+  2019-05-06 or later; the research window (2019-06-01) satisfies this.
+  Evidence: validation report 00-QC §Findings-6 + qc_data_inventory.json
+  diagnostics.
 - **L-008:** yfinance preview series contain at least one suspected provider
   artifact: ZB 2015-03-23 daily log-return +0.099 (~10% one-day move in the
   30-year future that did not occur — bad print or roll splice). Flagged by the

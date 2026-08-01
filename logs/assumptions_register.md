@@ -5,8 +5,8 @@ FALSIFIED (must not be relied upon).
 
 | ID | Assumption | Category | Status | Evidence / verification path | Risk if wrong |
 |----|-----------|----------|--------|------------------------------|---------------|
-| A-001 | Micro index futures (MES/MNQ/M2K/MYM) have usable minute-level history from ~2019-06 in QuantConnect | data | UNVERIFIED | Notebook 00 in QC Research | Research window shrinks; parent-proxy protocol needed |
-| A-002 | Treasury futures (ZT/ZF/ZN/ZB) have long minute-level history in QuantConnect | data | UNVERIFIED | Notebook 00 in QC Research | Same as A-001 |
+| A-001 | Micro index futures (MES/MNQ/M2K/MYM) have usable minute-level history from ~2019-06 in QuantConnect | data | VERIFIED | QC inventory audit 2026-08-01 (validation report 00-QC): 2.28-2.43M minute bars each over research window; MES/MNQ/M2K from launch 2019-05-05 evening; MYM complete but requires Market.CBOT + subscription start >= 2019-05-06 (L-009) | Research window shrinks; parent-proxy protocol needed |
+| A-002 | Treasury futures (ZT/ZF/ZN/ZB) have long minute-level history in QuantConnect | data | VERIFIED (window) | Same audit: 1.92-2.28M minute bars each across research window; pre-2019 depth unprobed (not needed for V1) | Same as A-001 |
 | A-003 | Contract specs in config/instruments.yaml are correct | specs | VERIFIED | PRIMARY SOURCE 2026-08-01: all 8 instruments checked live on cmegroup.com contractSpecs pages (browser session, local machine). Multipliers, face values, tick sizes/values, settlement types, expiry cycles, termination rules all matched; calendar-spread ticks and listing counts added to config | Wrong tick values corrupt every cost and PnL number |
 | A-004 | Continuous (OpenInterest-mapped, ratio-adjusted) series are artifact-free enough for indicator estimation | methodology | UNVERIFIED | Notebook 01 roll audit | Roll gaps create fake mean-reversion signals |
 | A-005 | Mapped raw contract prices are executable at bar close +/- slippage model | execution | UNVERIFIED | Notebook 07; ultimately quote data | Overstated fill quality → fake edge |

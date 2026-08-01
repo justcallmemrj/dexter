@@ -5,11 +5,19 @@ prohibited until `PROCEED TO LEAN BUILD`). It places no orders, holds no
 positions, and only counts bars: per-symbol minute-bar coverage, first/last
 bar timestamps, per-year bar counts, and continuous-mapping roll counts for
 the locked 8-instrument universe. Output = one compact JSON log line per
-symbol at end of algorithm, consumed by reports/machine_readable/.
+symbol at end of algorithm (marker DEXTER_ROW2), ingested by
+scripts/ingest_qc_inventory.py.
 
-Mapping/normalization mirror config/research_config.yaml
-(OpenInterest / BackwardsRatio) so the audited series is the same series the
-research will use. Runs in QC cloud as project `dexter-rv-research`.
+This file mirrors the code of the CANONICAL run ("inventory-audit-2", QC
+project dexter-rv-research 34720894, 2026-08-01; results in
+reports/validation/00_qc_data_inventory.md).
+
+Platform facts this code encodes (L-009):
+- MYM data lives under Market.CBOT (Market.CME serves nothing);
+- a continuous subscription starting before the 2019-05-06 micro launch never
+  initializes for MYM (zero bars) -> start at the research window (2019-06-01).
+Mapping/normalization mirror config/research_config.yaml (OpenInterest /
+BackwardsRatio) so the audited series is the same series the research uses.
 """
 
 from AlgorithmImports import *
@@ -22,7 +30,7 @@ class DexterDataInventoryAudit(QCAlgorithm):
         ("MES", Market.CME),
         ("MNQ", Market.CME),
         ("M2K", Market.CME),
-        ("MYM", Market.CBOT),  # Micro E-mini Dow clears CBOT (CME spec page verified)
+        ("MYM", Market.CBOT),  # data-bearing market per diagnostic (L-009)
         ("ZT", Market.CBOT),
         ("ZF", Market.CBOT),
         ("ZN", Market.CBOT),
@@ -30,8 +38,9 @@ class DexterDataInventoryAudit(QCAlgorithm):
     ]
 
     def initialize(self):
-        # Micros launched 2019-05-06; start a touch earlier to observe the edge.
-        self.set_start_date(2019, 4, 1)
+        # Research window start (config research_start). Do NOT start before
+        # 2019-05-06 while MYM is subscribed (L-009).
+        self.set_start_date(2019, 6, 1)
         self.set_end_date(2026, 7, 31)   # free tier clips ~3mo before today — the
         self.set_cash(100_000)           # audit reports the ACTUAL last bar seen.
         self.set_benchmark(lambda dt: 0)  # no benchmark data subscription
@@ -81,9 +90,9 @@ class DexterDataInventoryAudit(QCAlgorithm):
                 st["mapped_last"] = mapped
 
     def on_end_of_algorithm(self):
-        self.log("DEXTER_INVENTORY_BEGIN")
+        self.log("DEXTER_INVENTORY2_BEGIN")
         for ticker, _ in self.UNIVERSE:
             st = dict(self.stats[ticker])
             st.pop("last_mapped", None)
-            self.log("DEXTER_ROW " + json.dumps(st, separators=(",", ":")))
-        self.log("DEXTER_INVENTORY_END")
+            self.log("DEXTER_ROW2 " + json.dumps(st, separators=(",", ":")))
+        self.log("DEXTER_INVENTORY2_END")

@@ -18,10 +18,11 @@ import pandas as pd
 def parse_log(text: str) -> list[dict]:
     rows = []
     for line in text.splitlines():
-        marker = "DEXTER_ROW "
-        if marker in line:
-            payload = line.split(marker, 1)[1].strip()
-            rows.append(json.loads(payload))
+        for marker in ("DEXTER_ROW2 ", "DEXTER_ROW "):
+            if marker in line:
+                payload = line.split(marker, 1)[1].strip()
+                rows.append(json.loads(payload))
+                break
     return rows
 
 
