@@ -1,0 +1,12 @@
+{
+ "meta": {
+  "run": "own-splice acceptance ZN 'Fat Sky Blue Badger' (QC project 34720894, 2026-08-01)",
+  "module": "roll_adjustment.py (shipped code, uploaded as project file)",
+  "schedule": "treasury_roll_schedule(splice_time=10:30 ET) - month-end prior to delivery",
+  "totals": "rolls=27 | flags=1 | bars=782850 | 2019-05-28 08:31 -> 2026-04-27 16:00",
+  "verdict": "PASS: 27/27 splices market-sized; the single flag (ZNM21 2021-05-31, -8.3bp vs factor gap -69bp) is NOT gap-shaped - the roll landed on Memorial Day (holiday-blind calendar), boundary spans the holiday and trips the 5bp floor. Fixed going forward: holidays parameter added to both schedule generators (test covers this exact case).",
+  "flagged": {
+   "ZNM21_20210531": "1|-0.0833|0.993059|median_ratio|390"
+  }
+ }
+}

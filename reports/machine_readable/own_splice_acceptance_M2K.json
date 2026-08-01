@@ -1,0 +1,264 @@
+{
+ "meta": {
+  "run": "own-splice acceptance M2K 'Hipster Sky Blue Wolf' (QC project 34720894, 2026-08-01)",
+  "module": "roll_adjustment.py (shipped code, uploaded as project file)",
+  "schedule": "index_roll_schedule(days_before=8, splice_time=10:30 ET)",
+  "totals": "rolls=28 | flags=1 | bars=790200 | 2019-05-27 09:31 -> 2026-04-27 17:00",
+  "verdict": "PASS: 28/28 splices market-sized (max |ret| 0.23% in the 2022 high-vol regime, median ~0.04%); the single flag (M2KM19 2019-06-13, -0.06% vs factor gap +0.26%) is NOT gap-shaped - quiet-launch-period 5bp floor catch, not an artifact. Compare QC's own M2K series: 19/28 splices carrying 13-108bp gaps.",
+  "note": "first segment retains a ~5-day fetch buffer before the intended 2019-06-01 window start (harmless; slice at use time)"
+ },
+ "splices": [
+  {
+   "from_contract": "M2KM19",
+   "roll_date": "2019-06-13",
+   "artifact_flag": 1,
+   "splice_ret_pct": -0.06,
+   "factor": 1.002563,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KU19",
+   "roll_date": "2019-09-12",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0121,
+   "factor": 1.001083,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KZ19",
+   "roll_date": "2019-12-12",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0763,
+   "factor": 1.001472,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KH20",
+   "roll_date": "2020-03-12",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.1716,
+   "factor": 0.996548,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KM20",
+   "roll_date": "2020-06-11",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.1713,
+   "factor": 0.997865,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KU20",
+   "roll_date": "2020-09-10",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.047,
+   "factor": 0.997663,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KZ20",
+   "roll_date": "2020-12-10",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0048,
+   "factor": 0.998958,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KH21",
+   "roll_date": "2021-03-11",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.013,
+   "factor": 0.99875,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KM21",
+   "roll_date": "2021-06-10",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0182,
+   "factor": 0.998673,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KU21",
+   "roll_date": "2021-09-09",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0605,
+   "factor": 0.997911,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KZ21",
+   "roll_date": "2021-12-09",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.05,
+   "factor": 0.999119,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KH22",
+   "roll_date": "2022-03-10",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.2274,
+   "factor": 0.998465,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KM22",
+   "roll_date": "2022-06-09",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0532,
+   "factor": 1.000159,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KU22",
+   "roll_date": "2022-09-08",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0361,
+   "factor": 1.003533,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KZ22",
+   "roll_date": "2022-12-08",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0713,
+   "factor": 1.007857,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KH23",
+   "roll_date": "2023-03-09",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0106,
+   "factor": 1.009303,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KM23",
+   "roll_date": "2023-06-08",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0317,
+   "factor": 1.009655,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KU23",
+   "roll_date": "2023-09-07",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0029,
+   "factor": 1.010185,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KZ23",
+   "roll_date": "2023-12-07",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.064,
+   "factor": 1.010567,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KH24",
+   "roll_date": "2024-03-07",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0002,
+   "factor": 1.011544,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KM24",
+   "roll_date": "2024-06-13",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0418,
+   "factor": 1.011215,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KU24",
+   "roll_date": "2024-09-12",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0405,
+   "factor": 1.009648,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KZ24",
+   "roll_date": "2024-12-12",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0724,
+   "factor": 1.010927,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KH25",
+   "roll_date": "2025-03-13",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0059,
+   "factor": 1.008199,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KM25",
+   "roll_date": "2025-06-12",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0283,
+   "factor": 1.008077,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KU25",
+   "roll_date": "2025-09-11",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.0228,
+   "factor": 1.007421,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KZ25",
+   "roll_date": "2025-12-11",
+   "artifact_flag": 0,
+   "splice_ret_pct": 0.0119,
+   "factor": 1.007871,
+   "method": "median_ratio",
+   "n_overlap": 390
+  },
+  {
+   "from_contract": "M2KH26",
+   "roll_date": "2026-03-12",
+   "artifact_flag": 0,
+   "splice_ret_pct": -0.1414,
+   "factor": 1.006555,
+   "method": "median_ratio",
+   "n_overlap": 390
+  }
+ ]
+}

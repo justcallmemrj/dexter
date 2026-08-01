@@ -115,3 +115,37 @@ Original stub requirements not yet executed (deferred, tracked): z-score
 behavior across rolls and adopted exclusion/warm-up windows — these are only
 meaningful on the OWN-SPLICE constructed series (D-009) and move to the
 notebook-02 preflight.
+
+## 6. D-009 acceptance — own-splice constructor VALIDATED on real data
+
+**Date:** 2026-08-01 (same session). The shipped module
+(`src/spread_research/roll_adjustment.py`) was uploaded as a QC project file
+and run in-cloud against real per-contract minute closes over the full
+research window — runs "Hipster Sky Blue Wolf" (M2K) and "Fat Sky Blue
+Badger" (ZN). Machine-readable: `own_splice_acceptance_M2K.json` / `_ZN.json`.
+
+| Case | Rolls | Bars built | Factor quality | Audit flags |
+|---|---|---|---|---|
+| **M2K** (worst QC symbol: 19/28 bad factors) | 28 | 790,200 | 28/28 median_ratio, full 390-bar overlap | **1** — M2KM19 2019-06-13, −6 bp vs +26 bp factor gap: NOT gap-shaped; quiet launch-period 5 bp floor catch |
+| **ZN** (treasury schedule path) | 27 | 782,850 | 27/27 median_ratio, full 390-bar overlap | **1** — ZNM21 2021-05-31: roll landed on Memorial Day (holiday-blind calendar), −8.3 bp boundary vs −69 bp factor gap: NOT gap-shaped |
+
+Verdict — **PASS**:
+
+- Every splice return is market-sized (M2K max 0.23% inside the 2022
+  high-vol regime with the threshold adapting correctly; medians ~4 bp).
+  Nothing gap-shaped anywhere — against QC's own M2K series carrying 13–108
+  bp gaps at 19 of the same 28 rolls.
+- Measured factors reproduce the carry-regime flip (≈0.997–1.001 through
+  2021 → 1.007–1.012 from 2023) — consistent with the audit's raw-gap series.
+- Both flags are conservative-floor catches with clear causes, not
+  artifacts. The Memorial-Day case produced a fix: both schedule generators
+  now accept a `holidays` set (unit-tested on this exact date); notebook-02
+  data loading should pass the CME holiday list.
+- Minor driver note: the first segment retains its ~5-day fetch buffer
+  before 2019-06-01 (harmless; slice at use).
+
+**A-004 status upgrade:** FALSIFIED for QC-provided series (unchanged) —
+but the D-009 replacement path is now VERIFIED end-to-end: unit tests
+(known-answer, return-preservation to 1e-12, planted-bad-factor negative
+control) + this real-data acceptance. Notebook 02 may proceed on
+constructed series.

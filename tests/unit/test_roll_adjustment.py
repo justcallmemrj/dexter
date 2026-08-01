@@ -74,6 +74,23 @@ def test_treasury_roll_schedule_month_end_prior_to_delivery():
     assert sched2["timestamp"].iloc[0].date() == date(2026, 2, 27)
 
 
+def test_holiday_aware_schedules_step_off_memorial_day():
+    """Real case from the ZN acceptance run: last business day of May 2021 is
+    2021-05-31 = Memorial Day; the holiday-blind schedule spliced on a market
+    holiday (flagged at the audit floor). With the holiday supplied, the roll
+    lands on the prior trading day."""
+    memorial_day = date(2021, 5, 31)
+    blind = treasury_roll_schedule(["ZNM21", "ZNU21"])
+    assert blind["timestamp"].iloc[0].date() == memorial_day
+    aware = treasury_roll_schedule(["ZNM21", "ZNU21"],
+                                   holidays={memorial_day})
+    assert aware["timestamp"].iloc[0].date() == date(2021, 5, 28)  # Friday
+    # index generator honors holidays the same way
+    idx_aware = index_roll_schedule(["MESM21", "MESU21"], days_before=8,
+                                    holidays={date(2021, 6, 10)})
+    assert idx_aware["timestamp"].iloc[0].date() == date(2021, 6, 9)
+
+
 # ---------------------------------------------------------------------------
 # Splice factors
 # ---------------------------------------------------------------------------

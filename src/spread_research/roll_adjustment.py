@@ -67,29 +67,35 @@ def index_expiry(code: str) -> date:
     return third_friday(year, month)
 
 
-def prior_business_day(d: date) -> date:
-    """Step back to Mon-Fri (weekend only; exchange holidays are handled by
-    the factor window using actually-available bars, not the calendar)."""
-    while d.weekday() >= 5:
+def prior_business_day(d: date, holidays: frozenset[date] | set[date] = frozenset()) -> date:
+    """Step back to a Mon-Fri that is not in 'holidays'. Without a holiday
+    list, exchange holidays are still survivable — the factor window uses
+    actually-available bars — but a splice ON a holiday spans a longer quiet
+    boundary and can trip the conservative audit floor (observed: ZNM21 roll
+    scheduled 2021-05-31 Memorial Day, -8bp boundary return flagged at the
+    5bp floor). Pass CME holidays to keep splices on trading days."""
+    while d.weekday() >= 5 or d in holidays:
         d -= timedelta(days=1)
     return d
 
 
-def last_business_day_of_month(year: int, month: int) -> date:
+def last_business_day_of_month(year: int, month: int,
+                               holidays: frozenset[date] | set[date] = frozenset()) -> date:
     nxt = date(year + (month == 12), (month % 12) + 1, 1)
-    return prior_business_day(nxt - timedelta(days=1))
+    return prior_business_day(nxt - timedelta(days=1), holidays)
 
 
 def index_roll_schedule(codes: list[str], *, days_before: int = 8,
                         splice_time: time = time(14, 30),
-                        tz: str = "UTC") -> pd.DataFrame:
+                        tz: str = "UTC",
+                        holidays: frozenset[date] | set[date] = frozenset()) -> pd.DataFrame:
     """OUR index roll calendar: roll 'days_before' calendar days before each
     contract's 3rd-Friday expiry (weekend-snapped back), at 'splice_time'.
     'codes' = consecutive quarterly contracts, e.g. ['MESH24','MESM24',...]."""
     ordered = sorted(codes, key=index_expiry)
     rows = []
     for old, new in zip(ordered[:-1], ordered[1:]):
-        roll_d = prior_business_day(index_expiry(old) - timedelta(days=days_before))
+        roll_d = prior_business_day(index_expiry(old) - timedelta(days=days_before), holidays)
         rows.append({
             "timestamp": pd.Timestamp(datetime.combine(roll_d, splice_time), tz=tz),
             "from_contract": old, "to_contract": new,
@@ -98,7 +104,8 @@ def index_roll_schedule(codes: list[str], *, days_before: int = 8,
 
 
 def treasury_roll_schedule(codes: list[str], *, splice_time: time = time(14, 30),
-                           tz: str = "UTC") -> pd.DataFrame:
+                           tz: str = "UTC",
+                           holidays: frozenset[date] | set[date] = frozenset()) -> pd.DataFrame:
     """OUR treasury roll calendar: roll on the last business day of the month
     BEFORE the delivery month (precedes first-notice; liquidity migrates in
     that window per validation report 01 §2)."""
@@ -111,7 +118,7 @@ def treasury_roll_schedule(codes: list[str], *, splice_time: time = time(14, 30)
     for old, new in zip(ordered[:-1], ordered[1:]):
         y, m = delivery(old)
         prev_y, prev_m = (y - 1, 12) if m == 1 else (y, m - 1)
-        roll_d = last_business_day_of_month(prev_y, prev_m)
+        roll_d = last_business_day_of_month(prev_y, prev_m, holidays)
         rows.append({
             "timestamp": pd.Timestamp(datetime.combine(roll_d, splice_time), tz=tz),
             "from_contract": old, "to_contract": new,
