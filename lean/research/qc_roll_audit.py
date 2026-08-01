@@ -72,6 +72,19 @@ class DexterRollAudit(QCAlgorithm):
             self.futs[fut.symbol] = fut
             self.on_returns[ticker] = []
 
+    def _last_close_and_vol(self, s):
+        """Per-contract raw History (single-symbol call; .loc[Symbol] slicing on
+        multi-symbol frames raises InvalidIndexError in QC pandas)."""
+        try:
+            hh = self.history(s, timedelta(days=3), Resolution.MINUTE)
+            if hh is None or hh.empty or "close" not in hh.columns:
+                return None, None
+            close = float(hh["close"].iloc[-1])
+            vol = float(hh["volume"].sum()) if "volume" in hh.columns else None
+            return close, vol
+        except Exception:
+            return None, None
+
     def on_data(self, slice: Slice):
         for sym, fut in self.futs.items():
             ticker = sym.id.symbol
@@ -84,25 +97,14 @@ class DexterRollAudit(QCAlgorithm):
                     row["dte"] = (prev_m.id.date - self.time).days
                 except Exception:
                     row["dte"] = None
-                try:
-                    h = self.history([prev_m, mapped], timedelta(days=3),
-                                     Resolution.MINUTE)
-                    if not h.empty and "close" in h.columns:
-                        for s_, key in ((prev_m, "po"), (mapped, "pn")):
-                            try:
-                                row[key] = round(
-                                    float(h.loc[s_]["close"].iloc[-1]), 6)
-                            except Exception:
-                                row[key] = None
-                        try:
-                            vo = float(h.loc[prev_m]["volume"].sum())
-                            vn = float(h.loc[mapped]["volume"].sum())
-                            row["vs"] = (round(vn / (vo + vn), 3)
-                                         if (vo + vn) > 0 else None)
-                        except Exception:
-                            row["vs"] = None
-                except Exception as e:
-                    row["err"] = str(e)[:40]
+                po, vo = self._last_close_and_vol(prev_m)
+                pn, vn = self._last_close_and_vol(mapped)
+                if po is not None:
+                    row["po"] = round(po, 6)
+                if pn is not None:
+                    row["pn"] = round(pn, 6)
+                if vo is not None and vn is not None and (vo + vn) > 0:
+                    row["vs"] = round(vn / (vo + vn), 3)
                 if row.get("po") is not None and row.get("pn") is not None:
                     row["gap"] = round(row["pn"] - row["po"], 6)
                     row["gp"] = round(
