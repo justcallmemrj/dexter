@@ -39,6 +39,17 @@
   2019-05-06 or later; the research window (2019-06-01) satisfies this.
   Evidence: validation report 00-QC §Findings-6 + qc_data_inventory.json
   diagnostics.
+- **L-010 (data defect, mitigated by D-009):** QC continuous-futures adjusted
+  series contain BAD ADJUSTMENT FACTORS at 40 of 220 rolls in the research
+  window (M2K 19, MYM 14, MNQ 4, MES 3; treasuries clean) — the refetched
+  (QuantBook/notebook) series jump by the full calendar gap (0.13-1.08%) at
+  those splices. Additionally 24 splices leak in the STREAMED backtest feed
+  only, and streamed/refetched paths disagree in both directions — any future
+  streaming/live use requires its own splice audit. Dated list:
+  reports/machine_readable/qc_roll_audit.csv (final == data_side_leak).
+  Evidence: validation report 01. Free-tier operational caps discovered en
+  route: logs 10KB/backtest AND 10KB/day; custom chart series unreliable
+  above ~10/run (summary statistics reliable).
 - **L-008:** yfinance preview series contain at least one suspected provider
   artifact: ZB 2015-03-23 daily log-return +0.099 (~10% one-day move in the
   30-year future that did not occur — bad print or roll splice). Flagged by the

@@ -88,6 +88,31 @@ Expected effect | Review required?
 - **Review:** Yes — screening conclusions must be re-checked against QC
   continuous series (A-015 verification) once minute data is available.
 
+## D-009 — 2026-08-01 — Own-splice continuous construction replaces QC-provided adjusted series
+
+- **Decision:** Indicator series for notebooks 02+ are constructed by US from
+  QC per-contract raw minute bars, spliced with measured pn/po factors at OUR
+  calendar roll dates (index ~8 days pre-expiry; treasuries month-end prior
+  to delivery month), via src/spread_research/roll_adjustment.py. QC-provided
+  continuous adjusted series are NOT used across roll boundaries for M2K/MYM
+  (A-004 FALSIFIED); for MES/MNQ/treasuries they may serve only as stopgap
+  with the 40 bad splice dates excluded. Constructor must pass unit tests +
+  a splice-return re-audit before notebook 02 relies on it.
+- **Alternatives:** Trust QC continuous series (rejected — validation report
+  01: 40 data-side gap leaks up to 1.08%, concentrated in M2K/MYM); exclude
+  roll windows only (rejected as primary — hedges/z-scores would still span
+  contaminated history; kept as stopgap); switch normalization mode
+  (BackwardsPanamaCanal — moot: the defect is in factor data, not the mode;
+  ratio-vs-subtraction choice for OUR splicing resolved analytically in
+  favor of ratio for returns-based indicators).
+- **Evidence:** reports/validation/01_data_and_roll_validation.md; 220-splice
+  streamed audit + 220-splice History-refetch sweep; figures
+  rollaudit_refetch_verdict.png (40 points on the ar=gap diagonal).
+- **Expected effect:** Trustworthy indicator series; roll timing aligned with
+  executable liquidity; notebook 02 preflight gains a splice re-audit step.
+- **Review:** Yes — after the constructor passes its splice re-audit; and
+  L-010 re-audit required before any future streaming/live use.
+
 ## D-008 — 2026-08-01 — Screening outcome: minute-program priority order + treasury adaptive-hedge mandate
 
 - **Decision:** Based on the daily preview screen (EXP-003/EXP-004,
