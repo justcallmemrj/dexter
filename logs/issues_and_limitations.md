@@ -10,8 +10,6 @@
   unavailable locally. **Remaining resolution path:** run notebooks inside
   QuantConnect Research (browser-driven workflow available on this machine), or a
   licensed data drop into `data/raw/`.
-- **L-002:** Contract specifications verified only against secondary sources
-  (assumption A-003). Re-verify on CME before execution use.
 - **L-003:** Commission and spread assumptions are placeholders (A-007, A-008).
 - **L-004:** Minute-bar execution simulation cannot model queue position, intrabar
   adverse selection, or partial fills. Mitigated (not solved) by the 'stressed'
@@ -42,4 +40,10 @@
 
 ## Closed
 
-(none yet)
+- **L-002 (closed 2026-08-01):** Contract specifications were verified only
+  against secondary sources. Resolved: all 8 instruments primary-source
+  verified live on cmegroup.com (browser session; A-003 → VERIFIED). New
+  details captured in config: calendar-spread ticks, listing counts (MYM 4
+  quarters vs 5 for other micros; treasuries 3), exact termination times
+  (index micros 9:30 a.m. ET 3rd Friday; ZT/ZF 12:01 p.m. CT last business
+  day; ZN/ZB 12:01 p.m. CT 7 business days prior to last business day).

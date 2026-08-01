@@ -1,10 +1,11 @@
 # Instrument universe and verified contract specifications.
 #
-# VERIFICATION STATUS: specs cross-checked 2026-08-01 against multiple public
-# secondary sources via web search (CME Group pages returned HTTP 403 to this
-# research container, so direct primary-source verification is still OUTSTANDING —
-# see logs/assumptions_register.md A-003). Re-verify against
-# https://www.cmegroup.com/.../contractSpecs.html before any execution use.
+# VERIFICATION STATUS: PRIMARY-SOURCE VERIFIED 2026-08-01 against live
+# cmegroup.com contractSpecs pages for all 8 instruments (browser session from
+# the local machine; scripted fetches are bot-blocked). Every multiplier /
+# face value / tick size / tick value / settlement type / expiry cycle below
+# matched CME exactly; termination rules recorded from CME verbatim.
+# A-003 = VERIFIED (was PARTIAL via secondary sources).
 #
 # tick_value = tick_size (in index points / price points) x multiplier.
 # Treasury prices are quoted per $100 face; point_value = face_value / 100.
@@ -17,8 +18,10 @@ equity_index_futures:
     multiplier: 5.0            # $5 x S&P 500 index
     tick_size: 0.25            # index points
     tick_value: 1.25           # USD
-    expiry_months: [H, M, U, Z]   # Mar, Jun, Sep, Dec quarterly
+    expiry_months: [H, M, U, Z]   # Mar, Jun, Sep, Dec quarterly; 5 listed (CME)
     settlement: cash
+    termination: "9:30 a.m. ET, 3rd Friday of contract month (CME verified)"
+    calendar_spread_tick: 0.05    # = $0.25 (CME verified)
     session: nearly-24x5, daily halt 16:00-17:00 CT
     parent_proxy: ES           # E-mini S&P 500 ($50 multiplier) — proxy history only
     micro_launch: 2019-05-06
@@ -29,8 +32,10 @@ equity_index_futures:
     multiplier: 2.0
     tick_size: 0.25
     tick_value: 0.50
-    expiry_months: [H, M, U, Z]
+    expiry_months: [H, M, U, Z]   # 5 listed (CME)
     settlement: cash
+    termination: "9:30 a.m. ET, 3rd Friday of contract month (CME verified)"
+    calendar_spread_tick: 0.05    # = $0.10 (CME verified)
     session: nearly-24x5, daily halt 16:00-17:00 CT
     parent_proxy: NQ
     micro_launch: 2019-05-06
@@ -41,8 +46,10 @@ equity_index_futures:
     multiplier: 5.0
     tick_size: 0.10
     tick_value: 0.50
-    expiry_months: [H, M, U, Z]
+    expiry_months: [H, M, U, Z]   # 5 listed (CME)
     settlement: cash
+    termination: "9:30 a.m. ET, 3rd Friday of contract month (CME verified)"
+    calendar_spread_tick: 0.05    # = $0.25 (CME verified)
     session: nearly-24x5, daily halt 16:00-17:00 CT
     parent_proxy: RTY
     micro_launch: 2019-05-06
@@ -53,8 +60,10 @@ equity_index_futures:
     multiplier: 0.50
     tick_size: 1.0
     tick_value: 0.50
-    expiry_months: [H, M, U, Z]
+    expiry_months: [H, M, U, Z]   # 4 listed (CME � one fewer than other micros)
     settlement: cash
+    termination: "9:30 a.m. ET, 3rd Friday of contract month (CME verified)"
+    calendar_spread_tick: 1.0     # = $0.50, same as outright (CME verified)
     session: nearly-24x5, daily halt 16:00-17:00 CT
     parent_proxy: YM
     micro_launch: 2019-05-06
@@ -71,7 +80,8 @@ treasury_futures:
     expiry_months: [H, M, U, Z]
     settlement: physical_delivery
     delivery_note: basket of eligible 2Y notes; CTD switching affects behavior
-    last_trading: last business day of contract month (verify)
+    last_trading: "12:01 p.m. CT, last business day of contract month (CME verified)"
+    listed_quarters: 3
   ZF:
     name: 5-Year US Treasury Note
     exchange: CBOT
@@ -83,7 +93,9 @@ treasury_futures:
     expiry_months: [H, M, U, Z]
     settlement: physical_delivery
     delivery_note: eligible 4y2m-5y3m remaining maturity
-    last_trading: last business day of contract month (verify)
+    last_trading: "12:01 p.m. CT, last business day of contract month (CME verified)"
+    calendar_spread_tick_points: 0.00390625   # = $3.90625 (CME verified)
+    listed_quarters: 3
   ZN:
     name: 10-Year US Treasury Note
     exchange: CBOT
@@ -95,7 +107,9 @@ treasury_futures:
     expiry_months: [H, M, U, Z]
     settlement: physical_delivery
     delivery_note: eligible ~6.5y-10y remaining maturity; CTD duration can jump
-    last_trading: 7th business day preceding last business day of month (verify)
+    last_trading: "12:01 p.m. CT, 7 business days prior to last business day of contract month (CME verified)"
+    calendar_spread_tick_points: 0.0078125    # = $7.8125 (CME verified)
+    listed_quarters: 3
   ZB:
     name: 30-Year US Treasury Bond
     exchange: CBOT
@@ -107,7 +121,9 @@ treasury_futures:
     expiry_months: [H, M, U, Z]
     settlement: physical_delivery
     delivery_note: eligible 15y-25y remaining maturity ("classic" bond)
-    last_trading: 7th business day preceding last business day of month (verify)
+    last_trading: "12:01 p.m. CT, 7 business days prior to last business day of contract month (CME verified)"
+    calendar_spread_tick_points: 0.0078125    # = $7.8125 (CME verified)
+    listed_quarters: 3
 
 # Deferred until independently validated (liquidity, hedge behavior, incremental value):
 deferred:
