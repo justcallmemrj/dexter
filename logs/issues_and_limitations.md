@@ -57,6 +57,22 @@
   `reports/preview/daily_pair_screen.md` §2. Reinforces A-015: preview tier is
   screening-only and its data is never execution-grade.
 
+- **L-011:** A fitted hedge ratio must be paired with its regression
+  INTERCEPT. Computing `log(P_a) - beta_t * log(P_b)` with a rolling OLS beta
+  but no intercept scales every beta wobble by the log price LEVEL — MYM near
+  38,000 has log(x) ~ 10.5, so a beta moving 0.001 between refits injects
+  ~10 bps of residual movement, larger than the intraday effect under study.
+  Caught on synthetic data during the notebook-02 dry run, where the
+  no-intercept spec produced -1,689 bps "reversion" that vanished (to +1.7 bps,
+  matching the estimation-free spec) once the intercept was restored. Fix:
+  `pair_minute_report.rolling_ols_residual` measures the deviation from the
+  full trailing fitted line; a regression test asserts the no-intercept form
+  stays >20x noisier. `pair_builder.build_residual` keeps the no-intercept form
+  ON PURPOSE — it is correct for hedge ratios that are NOT fitted (notional,
+  DV01). **Notebook 04 must route every FITTED beta through the
+  intercept-aware path**, or its half-life and residual comparisons will be
+  measuring hedge noise (this is L-007 with a concrete mechanism).
+
 ## Closed
 
 - **L-002 (closed 2026-08-01):** Contract specifications were verified only

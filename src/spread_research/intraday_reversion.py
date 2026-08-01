@@ -145,7 +145,10 @@ def subsample_within_session(x: pd.Series, step: int) -> pd.Series:
 # ---------------------------------------------------------------------------
 
 
-def _vr_session_sums(x: pd.Series, q: int) -> pd.DataFrame:
+_VR_COLS = ("s1", "ss1", "n1", "sq", "ssq", "nq")
+
+
+def _vr_session_sums(x: pd.Series, q: int) -> np.ndarray:
     """Per-session sums for a NON-OVERLAPPING variance-ratio estimator.
 
     Non-overlapping blocks are used instead of Lo-MacKinlay overlapping blocks
@@ -154,6 +157,10 @@ def _vr_session_sums(x: pd.Series, q: int) -> pd.DataFrame:
     rounding error), and because non-overlapping blocks keep the session
     bootstrap below exactly independent. With ~1,700 sessions the efficiency
     loss is affordable; correctness is not.
+
+    Returns an (n_sessions, 6) float array of the sufficient statistics named
+    by `_VR_COLS`. Sufficient statistics rather than raw returns is what makes
+    the session bootstrap cheap enough to run inside the QC sandbox.
     """
     vals = x.values.astype(float)
     sess = session_ids(x.index)
@@ -167,23 +174,23 @@ def _vr_session_sums(x: pd.Series, q: int) -> pd.DataFrame:
         if nblk < 1:
             continue
         rq = r1[:nblk * q].reshape(nblk, q).sum(axis=1)
-        rows.append((sess[lo], r1.sum(), (r1 ** 2).sum(), len(r1),
-                     rq.sum(), (rq ** 2).sum(), nblk))
-    return pd.DataFrame(rows, columns=["session", "s1", "ss1", "n1",
-                                       "sq", "ssq", "nq"])
+        rows.append((r1.sum(), (r1 ** 2).sum(), float(len(r1)),
+                     rq.sum(), (rq ** 2).sum(), float(nblk)))
+    return np.array(rows, dtype=float).reshape(-1, len(_VR_COLS))
 
 
-def _vr_from_sums(sums: pd.DataFrame, q: int) -> float:
-    n1, nq = sums["n1"].sum(), sums["nq"].sum()
-    if n1 < 2 or nq < 2:
-        return float("nan")
-    mu = sums["s1"].sum() / n1
-    var1 = (sums["ss1"].sum() - 2 * mu * sums["s1"].sum() + n1 * mu ** 2) / (n1 - 1)
-    muq = q * mu
-    varq = (sums["ssq"].sum() - 2 * muq * sums["sq"].sum() + nq * muq ** 2) / (nq - 1)
-    if var1 <= 0:
-        return float("nan")
-    return float(varq / (q * var1))
+def _vr_from_sums(tot: np.ndarray, q: int) -> np.ndarray:
+    """Vectorized over any leading axes: `tot[..., :]` holds the column sums in
+    `_VR_COLS` order, so one call evaluates the point estimate or a whole stack
+    of bootstrap replicates."""
+    s1, ss1, n1, sq, ssq, nq = (tot[..., i] for i in range(len(_VR_COLS)))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        mu = s1 / n1
+        var1 = (ss1 - 2 * mu * s1 + n1 * mu ** 2) / (n1 - 1)
+        muq = q * mu
+        varq = (ssq - 2 * muq * sq + nq * muq ** 2) / (nq - 1)
+        vr = varq / (q * var1)
+    return np.where((n1 > 1) & (nq > 1) & (var1 > 0), vr, np.nan)
 
 
 def variance_ratio(x: pd.Series, q: int, *, n_boot: int = 1000,
@@ -201,26 +208,27 @@ def variance_ratio(x: pd.Series, q: int, *, n_boot: int = 1000,
     """
     if q < 2:
         raise ValueError(f"q must be >= 2, got {q}")
-    sums = _vr_session_sums(x, q)
-    point = _vr_from_sums(sums, q)
-    out = {"q": q, "vr": point, "n_sessions": int(len(sums)),
-           "n_returns": int(sums["n1"].sum()) if len(sums) else 0,
-           "n_blocks": int(sums["nq"].sum()) if len(sums) else 0,
+    arr = _vr_session_sums(x, q)
+    n_sess = len(arr)
+    point = float(_vr_from_sums(arr.sum(axis=0), q)) if n_sess else np.nan
+    out = {"q": q, "vr": point, "n_sessions": int(n_sess),
+           "n_returns": int(arr[:, 2].sum()) if n_sess else 0,
+           "n_blocks": int(arr[:, 5].sum()) if n_sess else 0,
            "ci_lo": np.nan, "ci_hi": np.nan, "p_lt_1": np.nan}
-    if len(sums) < 10 or point != point:
+    if n_sess < 10 or point != point:
         return out
     rng = np.random.default_rng(seed)
-    arr = sums[["s1", "ss1", "n1", "sq", "ssq", "nq"]].values
-    idx = rng.integers(0, len(arr), size=(n_boot, len(arr)))
     reps = np.empty(n_boot)
-    for b in range(n_boot):
-        reps[b] = _vr_from_sums(
-            pd.DataFrame(arr[idx[b]], columns=["s1", "ss1", "n1",
-                                               "sq", "ssq", "nq"]), q)
+    chunk = max(1, min(n_boot, 2_000_000 // max(n_sess, 1)))   # bound peak RAM
+    for lo in range(0, n_boot, chunk):
+        hi = min(lo + chunk, n_boot)
+        idx = rng.integers(0, n_sess, size=(hi - lo, n_sess))
+        reps[lo:hi] = _vr_from_sums(arr[idx].sum(axis=1), q)
     reps = reps[np.isfinite(reps)]
     if len(reps) < n_boot // 2:
         return out
-    out["ci_lo"], out["ci_hi"] = np.percentile(reps, [2.5, 97.5])
+    out["ci_lo"], out["ci_hi"] = (float(v) for v in
+                                  np.percentile(reps, [2.5, 97.5]))
     out["p_lt_1"] = float((reps >= 1.0).mean())
     return out
 
@@ -341,6 +349,32 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
                      "t_clustered": float(t) if t == t else np.nan,
                      "hit_rate": float((pnl > 0).mean()), "n_dropped": n_drop})
     return pd.DataFrame(rows)
+
+
+def event_clock_profile(z: pd.Series, entry_z: float,
+                        bucket_minutes: int = 30) -> pd.DataFrame:
+    """Where in the session |z| crossings happen.
+
+    The z-score lookback (390 bars = one RTH day, per config) reaches back
+    across the overnight break, so the first bars of a session are scored
+    against yesterday's mean. If an overnight repricing dominates, crossings
+    pile up right after the open and the "intraday reversion" being measured is
+    really an open-gap effect. This profile is what makes that visible instead
+    of invisible.
+    """
+    zz = z.dropna()
+    az = zz.abs()
+    cross = np.concatenate([[False], (az.values[1:] >= entry_z)
+                            & (az.values[:-1] < entry_z)])
+    idx = zz.index[cross]
+    if len(idx) == 0:
+        return pd.DataFrame(columns=["minutes_from_open", "n_events", "share"])
+    mins = ((idx.hour * 60 + idx.minute) - (RTH_OPEN.hour * 60 + RTH_OPEN.minute))
+    b = (np.asarray(mins) // bucket_minutes) * bucket_minutes
+    counts = pd.Series(b).value_counts().sort_index()
+    return pd.DataFrame({"minutes_from_open": counts.index.astype(int),
+                         "n_events": counts.values,
+                         "share": counts.values / counts.values.sum()})
 
 
 # ---------------------------------------------------------------------------

@@ -3,9 +3,10 @@
 The point of these tests is that the tools must be able to return NO. Each
 statistic is exercised against a process whose answer is known analytically:
 a within-session random walk (VR == 1, no reversion), a planted AR(1) (known
-half-life, VR falling in q), and a random walk contaminated by bid-ask bounce
-(VR below 1 but RISING in q — the false positive this battery must not
-mistake for an edge).
+half-life, VR falling like 1/q), and a random walk contaminated by bid-ask
+bounce (VR well below 1 but flattening onto a floor by q ~ 30, and washing out
+when the base sampling is coarsened) — the false positive this battery must
+not mistake for an edge.
 """
 
 from datetime import time
@@ -15,7 +16,8 @@ import pandas as pd
 import pytest
 
 from spread_research.intraday_reversion import (
-    conditional_reversion, half_life_within_session, held_position_roll_shock,
+    conditional_reversion, event_clock_profile, half_life_within_session,
+    held_position_roll_shock,
     roll_window_diagnostics, rth_frame, session_ids, subsample_within_session,
     variance_ratio, variance_ratio_curve, within_session_returns,
 )
@@ -281,3 +283,29 @@ def test_held_position_roll_shock_known_answer():
     got = held_position_roll_shock(1.0050, 1.0000, beta=1.0)
     assert got == pytest.approx(np.log(1.005) * 1e4, rel=1e-9)
     assert held_position_roll_shock(1.01, 1.01, beta=1.0) == pytest.approx(0.0)
+
+
+def test_event_clock_profile_finds_a_planted_open_pile_up():
+    """If crossings cluster right after the open, the profile must say so —
+    that pattern would mean an overnight-gap effect, not intraday reversion."""
+    x = random_walk(n_sessions=80)
+    z = rolling_zscore(x, 60).fillna(0.0)
+    z.iloc[:] = 0.0
+    for s in range(80):                       # one crossing per session, at +5m
+        z.iloc[s * BARS + 5] = 3.0
+    prof = event_clock_profile(z, entry_z=2.0)
+    assert prof["n_events"].sum() == 80
+    assert prof.loc[prof["minutes_from_open"] == 0, "share"].iloc[0] == 1.0
+
+
+def test_event_clock_profile_empty_when_nothing_crosses():
+    x = random_walk(n_sessions=5)
+    assert event_clock_profile(rolling_zscore(x, 60) * 0.0, entry_z=2.0).empty
+
+
+def test_vr_bootstrap_is_seed_deterministic_and_chunk_invariant():
+    x = ar1_level(0.99, n_sessions=60)
+    a = variance_ratio(x, q=15, n_boot=300, seed=7)
+    b = variance_ratio(x, q=15, n_boot=300, seed=7)
+    assert a == b
+    assert a["ci_lo"] < a["vr"] < a["ci_hi"]
