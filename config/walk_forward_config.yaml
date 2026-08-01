@@ -1,0 +1,16 @@
+# Walk-forward validation design (notebook 09).
+
+walk_forward:
+  scheme: anchored_and_rolling      # run both; report both
+  train_window_months: 12
+  test_window_months: 3
+  step_months: 3
+  embargo_days: 5                   # purge gap between train and test
+  min_trades_per_test_window: 10    # below this, window flagged low-power
+  reoptimized_params: [zscore_lookback_bars, entry_z, exit_z]
+  frozen_params: [stop_z, max_holding_bars, hedge.lookback_bars]
+  acceptance:
+    # Acceptance is about consistency, not peak performance:
+    min_fraction_profitable_windows: 0.55
+    max_single_window_pnl_share: 0.40   # no single window may carry the result
+    require_positive_after_stressed_costs: true

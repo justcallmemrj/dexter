@@ -1,0 +1,62 @@
+# Research pair universe for Version 1.
+# economic_rationale is the hypothesis under test, not an established fact.
+# All hedge_method values are candidates; selection happens in notebook 04 and is
+# logged in logs/research_decisions.md.
+
+index_pairs:
+  MES_MNQ:
+    long_ref: MES
+    short_ref: MNQ
+    economic_rationale: >
+      [PLAUSIBLE] Broad large-cap vs tech/growth-heavy large-cap. Heavy index
+      membership overlap creates strong co-movement; short-horizon divergences
+      driven by flow imbalances may partially revert intraday.
+    candidate_hedge_methods: [notional, ols, robust, ewls, dollar_vol, kalman]
+  MES_M2K:
+    long_ref: MES
+    short_ref: M2K
+    economic_rationale: >
+      [PLAUSIBLE] Large-cap vs small-cap. Weaker membership overlap than MES-MNQ;
+      size-factor regime shifts are a known structural-break risk.
+    candidate_hedge_methods: [notional, ols, robust, ewls, dollar_vol, kalman]
+  MES_MYM:
+    long_ref: MES
+    short_ref: MYM
+    economic_rationale: >
+      [PLAUSIBLE] Cap-weighted vs price-weighted large-cap with large overlap.
+      Divergences reflect weighting-scheme and single-name idiosyncrasies.
+    candidate_hedge_methods: [notional, ols, robust, ewls, dollar_vol, kalman]
+
+treasury_pairs:
+  ZT_ZF:
+    long_ref: ZT
+    short_ref: ZF
+    curve_segment: 2s5s
+    economic_rationale: >
+      [PLAUSIBLE] Adjacent curve points; co-move under parallel shifts, diverge on
+      slope repricing. Mean reversion of the hedged residual at intraday horizon
+      is the hypothesis under test.
+    candidate_hedge_methods: [one_to_one_baseline, dollar_vol, ols, robust, kalman, dv01]
+  ZF_ZN:
+    long_ref: ZF
+    short_ref: ZN
+    curve_segment: 5s10s
+    economic_rationale: >
+      [PLAUSIBLE] Belly of the curve; historically the most liquid RV segment.
+    candidate_hedge_methods: [one_to_one_baseline, dollar_vol, ols, robust, kalman, dv01]
+  ZT_ZN:
+    long_ref: ZT
+    short_ref: ZN
+    curve_segment: 2s10s
+    economic_rationale: >
+      [PLAUSIBLE] Classic slope trade; wider maturity gap means larger structural
+      (policy-regime) component — higher structural-break risk than adjacent pairs.
+    candidate_hedge_methods: [one_to_one_baseline, dollar_vol, ols, robust, kalman, dv01]
+  ZN_ZB:
+    long_ref: ZN
+    short_ref: ZB
+    curve_segment: 10s30s
+    economic_rationale: >
+      [PLAUSIBLE] Long-end slope; term-premium and convexity-flow driven. ZB CTD
+      duration jumps are a documented modeling hazard.
+    candidate_hedge_methods: [one_to_one_baseline, dollar_vol, ols, robust, kalman, dv01]

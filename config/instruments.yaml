@@ -1,0 +1,124 @@
+# Instrument universe and verified contract specifications.
+#
+# VERIFICATION STATUS: specs cross-checked 2026-08-01 against multiple public
+# secondary sources via web search (CME Group pages returned HTTP 403 to this
+# research container, so direct primary-source verification is still OUTSTANDING —
+# see logs/assumptions_register.md A-003). Re-verify against
+# https://www.cmegroup.com/.../contractSpecs.html before any execution use.
+#
+# tick_value = tick_size (in index points / price points) x multiplier.
+# Treasury prices are quoted per $100 face; point_value = face_value / 100.
+
+equity_index_futures:
+  MES:
+    name: Micro E-mini S&P 500
+    exchange: CME
+    quote_ccy: USD
+    multiplier: 5.0            # $5 x S&P 500 index
+    tick_size: 0.25            # index points
+    tick_value: 1.25           # USD
+    expiry_months: [H, M, U, Z]   # Mar, Jun, Sep, Dec quarterly
+    settlement: cash
+    session: nearly-24x5, daily halt 16:00-17:00 CT
+    parent_proxy: ES           # E-mini S&P 500 ($50 multiplier) — proxy history only
+    micro_launch: 2019-05-06
+  MNQ:
+    name: Micro E-mini Nasdaq-100
+    exchange: CME
+    quote_ccy: USD
+    multiplier: 2.0
+    tick_size: 0.25
+    tick_value: 0.50
+    expiry_months: [H, M, U, Z]
+    settlement: cash
+    session: nearly-24x5, daily halt 16:00-17:00 CT
+    parent_proxy: NQ
+    micro_launch: 2019-05-06
+  M2K:
+    name: Micro E-mini Russell 2000
+    exchange: CME
+    quote_ccy: USD
+    multiplier: 5.0
+    tick_size: 0.10
+    tick_value: 0.50
+    expiry_months: [H, M, U, Z]
+    settlement: cash
+    session: nearly-24x5, daily halt 16:00-17:00 CT
+    parent_proxy: RTY
+    micro_launch: 2019-05-06
+  MYM:
+    name: Micro E-mini Dow
+    exchange: CBOT
+    quote_ccy: USD
+    multiplier: 0.50
+    tick_size: 1.0
+    tick_value: 0.50
+    expiry_months: [H, M, U, Z]
+    settlement: cash
+    session: nearly-24x5, daily halt 16:00-17:00 CT
+    parent_proxy: YM
+    micro_launch: 2019-05-06
+
+treasury_futures:
+  ZT:
+    name: 2-Year US Treasury Note
+    exchange: CBOT
+    quote_ccy: USD
+    face_value: 200000
+    point_value: 2000.0        # per full point (prices quoted per $100 face)
+    tick_size_points: 0.00390625   # 1/8 of 1/32
+    tick_value: 7.8125
+    expiry_months: [H, M, U, Z]
+    settlement: physical_delivery
+    delivery_note: basket of eligible 2Y notes; CTD switching affects behavior
+    last_trading: last business day of contract month (verify)
+  ZF:
+    name: 5-Year US Treasury Note
+    exchange: CBOT
+    quote_ccy: USD
+    face_value: 100000
+    point_value: 1000.0
+    tick_size_points: 0.0078125    # 1/4 of 1/32
+    tick_value: 7.8125
+    expiry_months: [H, M, U, Z]
+    settlement: physical_delivery
+    delivery_note: eligible 4y2m-5y3m remaining maturity
+    last_trading: last business day of contract month (verify)
+  ZN:
+    name: 10-Year US Treasury Note
+    exchange: CBOT
+    quote_ccy: USD
+    face_value: 100000
+    point_value: 1000.0
+    tick_size_points: 0.015625     # 1/2 of 1/32
+    tick_value: 15.625
+    expiry_months: [H, M, U, Z]
+    settlement: physical_delivery
+    delivery_note: eligible ~6.5y-10y remaining maturity; CTD duration can jump
+    last_trading: 7th business day preceding last business day of month (verify)
+  ZB:
+    name: 30-Year US Treasury Bond
+    exchange: CBOT
+    quote_ccy: USD
+    face_value: 100000
+    point_value: 1000.0
+    tick_size_points: 0.03125      # 1/32
+    tick_value: 31.25
+    expiry_months: [H, M, U, Z]
+    settlement: physical_delivery
+    delivery_note: eligible 15y-25y remaining maturity ("classic" bond)
+    last_trading: 7th business day preceding last business day of month (verify)
+
+# Deferred until independently validated (liquidity, hedge behavior, incremental value):
+deferred:
+  UB:
+    name: Ultra US Treasury Bond
+    status: excluded_from_v1
+
+# Explicitly excluded from Version 1:
+excluded:
+  - {pair: [ES, MES], reason: economically-equivalent big/micro, speed-dependent}
+  - {pair: [NQ, MNQ], reason: economically-equivalent big/micro, speed-dependent}
+  - {pair: [RTY, M2K], reason: economically-equivalent big/micro, speed-dependent}
+  - {pair: [YM, MYM], reason: economically-equivalent big/micro, speed-dependent}
+  - {class: cross_asset_index_vs_treasury, reason: correlation-regime model out of V1 scope}

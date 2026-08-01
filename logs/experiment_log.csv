@@ -1,0 +1,2 @@
+experiment_id,timestamp_utc,git_commit,config_hash,data_period,pairs,model_type,parameters,cost_scenario,result_summary,notes,status
+EXP-000,2026-08-01T00:00:00Z,,,n/a,n/a,framework-setup,n/a,n/a,"Framework scaffolded; no market experiments run — data access blocked in this environment","See reports/00_repository_audit.md",accepted

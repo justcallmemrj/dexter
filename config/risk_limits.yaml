@@ -1,0 +1,31 @@
+# Research-phase risk limits (used by the backtester; also the draft for any
+# future LEAN implementation). Conservative by construction.
+
+account:
+  reference_equity_usd: 100000    # research reference only, not a real account
+
+per_trade:
+  max_risk_pct_equity: 0.25       # % of equity at stop distance, per spread trade
+  max_gross_notional_pct: 40      # both legs combined, per trade
+  max_contracts_per_leg: 10
+
+portfolio:
+  max_concurrent_spreads: 3
+  max_gross_notional_pct: 120
+  max_net_direction_notional_pct: 10   # residual directional exposure cap
+  max_margin_utilization_pct: 35
+  correlated_cluster_limit: 2          # max concurrent trades sharing a leg symbol
+
+drawdown:
+  daily_loss_stop_pct: 1.0             # halt new entries for the day
+  trailing_drawdown_stop_pct: 6.0      # halt strategy, require human review
+  consecutive_loss_review: 8           # trades; triggers research review, not resize-up
+
+event_handling:
+  no_new_entries_minutes_before_close: 30
+  flat_before_roll: true               # candidate rule; test in notebook 01
+  scheduled_event_blackout:            # candidate; test value in notebook 11
+    fomc_minutes_before: 30
+    fomc_minutes_after: 30
+    cpi_nfp_minutes_before: 15
+    cpi_nfp_minutes_after: 15

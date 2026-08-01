@@ -1,0 +1,46 @@
+# Transaction-cost and execution assumptions. Deliberately conservative.
+# Commission figures are placeholders pending broker confirmation — flagged in
+# logs/assumptions_register.md (A-007). All costs are PER SIDE, PER CONTRACT, USD.
+
+commissions:
+  # all-in (broker + exchange + NFA), retail-tier placeholders:
+  MES: 0.62
+  MNQ: 0.62
+  M2K: 0.62
+  MYM: 0.62
+  ZT: 0.85
+  ZF: 0.85
+  ZN: 0.85
+  ZB: 0.85
+
+spread_assumptions_ticks:
+  # typical top-of-book spread in ticks during liquid RTH; verify empirically
+  # from quote data before trusting (notebook 07).
+  MES: 1
+  MNQ: 1
+  M2K: 1
+  MYM: 1
+  ZT: 1
+  ZF: 1
+  ZN: 1
+  ZB: 1
+
+slippage_scenarios_ticks_per_leg:
+  optimistic: 0      # fill at touch — reporting-only, never for acceptance
+  base: 1
+  stressed: 2
+  severe: 3
+
+execution_risk:
+  legging_delay_bars: [0, 1, 2]   # simulate second leg filling N bars late
+  partial_fill_model: none_v1     # V1 assumes all-or-none at bar price + slippage
+  note: >
+    Minute-bar simulation cannot see queue position or intrabar adverse selection.
+    Acceptance criteria therefore require the edge to survive the 'stressed'
+    scenario, not merely 'base'.
+
+acceptance_rule:
+  # A pair/parameter combination is only research-viable if expected net edge per
+  # round-trip remains positive under: base commissions + full spread paid on both
+  # legs + 'stressed' slippage.
+  required_scenario: stressed

@@ -1,0 +1,55 @@
+# Master research configuration. Every value here is an ASSUMPTION subject to
+# revision by evidence; changes must be logged in logs/research_decisions.md.
+
+meta:
+  project: dexter-spread-research
+  version: 0.1.0
+  random_seed: 20260801        # single global seed; record per-experiment overrides
+
+data:
+  primary_resolution: minute
+  later_resolutions: [second, tick]     # evaluation only, after minute-level results
+  research_start: 2019-06-01            # micros launched 2019-05-06; warmup margin
+  research_end: null                    # null = latest available
+  # Continuous-vs-mapped working hypothesis (test in notebook 01 before finalizing):
+  continuous_for_indicators:
+    mapping_mode: OpenInterest
+    normalization_mode: BackwardsRatio  # candidate; compare vs BackwardsPanamaCanal
+  mapped_raw_for_execution: true
+  session_filter:
+    # Initial research restricted to US regular trading hours; overnight studied
+    # separately in intraday-seasonality sections.
+    rth_start_ct: "08:30"
+    rth_end_ct: "15:00"
+  roll_exclusion_days: 2        # candidate: no new entries within N days of roll
+  post_roll_warmup_bars: 390    # candidate: 1 RTH day of minute bars after mapping change
+
+signals:
+  zscore_lookback_bars: 390             # candidate: ~1 RTH day of minute bars
+  zscore_lookback_grid: [120, 240, 390, 780, 1950]
+  entry_z: 2.0
+  entry_z_grid: [1.5, 2.0, 2.5, 3.0]
+  exit_z: 0.5
+  exit_z_grid: [0.0, 0.25, 0.5, 1.0]
+  stop_z: 4.0                           # structural-failure guard
+  max_holding_bars: 780                 # candidate: 2 RTH days
+  min_half_life_bars: 15                # reject pairs reverting faster than executable
+  max_half_life_bars: 1170              # reject pairs slower than ~3 RTH days
+
+hedge:
+  default_method: null                  # selected by notebook 04, not preset
+  lookback_bars: 1950                   # candidate: ~1 RTH week
+  lookback_grid: [780, 1950, 3900]
+  refit_frequency_bars: 390
+  kalman:
+    delta: 1.0e-5
+    initial_state_var: 1.0
+
+validation:
+  in_sample_fraction: 0.6
+  min_oos_years: 1.5
+  embargo_bars: 390                     # gap between IS and OOS to limit leakage
+  significance_level: 0.05
+  multiple_testing_note: >
+    7 pairs x parameter grids => report effective number of trials with every
+    result; single-pair significance at 0.05 is NOT acceptance evidence.
