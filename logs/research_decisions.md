@@ -218,3 +218,50 @@ outcome; a revision voids the test and forces a fresh pre-registration.
   binding in either direction, plus adopted roll windows for notebooks 04+.
 - **Review:** Yes — a negative verdict closes MES–MYM at intraday horizon and
   re-prioritizes the minute program per D-008.
+
+### D-010 Amendment A1 — 2026-08-01 — adjudication of a flagged splice is a BOUND, not a one-sided ratio
+
+Recorded **after** seeing the first notebook-02 gate result and **before** any
+analysis output existed. It converts one FAIL into a PASS, so the reasoning is
+set out in full rather than buried in a code diff.
+
+- **What happened.** The gate run (QC "Emotional Fluorescent Orange Goat")
+  built both legs: MES 28/28 rolls clean, MYM 27/28 clean with one flag —
+  MYMZ19→MYMH20 on 2019-12-12. Splice return **8.15 bp** against a measured
+  calendar gap of **1.08 bp**, local MAD 0.358 bp, audit threshold 5.31 bp.
+  The mechanised rule `|sr| >= 0.6*|gap|` called it gap-shaped, so the driver
+  suppressed all analysis — exactly as D-010 instructs when a flag looks like
+  a defect.
+- **Why the rule was wrong.** `|sr| >= 0.6*|gap|` is satisfied by *any*
+  sufficiently small gap, so it labels every quiet-market news move a defect.
+  D-010's wording ("splice return far below the measured factor gap")
+  anticipated only the case where the splice return undershoots the gap; it
+  had no branch for a splice return that *overshoots* it, which is what
+  occurred.
+- **The correct discriminator is a bound.** The error a wrong splice factor can
+  inject into the boundary return is at most the calendar gap that factor was
+  removing. Here the entire gap is 1.08 bp, so even a maximally wrong factor
+  (applying 1.0, i.e. no adjustment at all) could move the boundary by 1.08 bp.
+  The observed move is 8.15 bp — **7.5x larger than the largest artifact the
+  mechanism can produce**. The factor therefore cannot be the cause,
+  arithmetically, independent of any judgement about the market that day.
+- **Amended rule.** A flag counts as a genuine artifact only if the gap can
+  explain it: the gap is material (|gap| > audit threshold) AND sign(sr) ==
+  sign(gap) AND `0.6*|gap| <= |sr| <= 1.6*|gap|`. Both bounds, not one.
+- **Verified against every known case, in both directions.** QC's own M2K/MYM
+  data-side leaks (gaps 13-108 bp with splice returns tracking them, validation
+  report 01 section 3) still classify as artifacts. The two D-009 acceptance
+  flags still classify as non-artifacts: M2KM19 2019-06-13 (-6 bp vs +26 bp —
+  sign mismatch and below band) and ZNM21 2021-05-31 (-8.3 bp vs -69 bp —
+  below band). No case changes except the one that motivated the amendment.
+- **Residual watch item (not dismissed).** A single bad print in one contract's
+  close at the boundary minute would look the same. It is one minute of ~1.36M,
+  in one leg, at a roll boundary that the adopted pre-roll exclusion will keep
+  positions out of anyway. MES moved +2.3 bp at the same timestamp, so this was
+  not a common index-wide move; MYM is price-weighted across 30 names and
+  thinner than MES, and the local MAD (0.358 bp) was unusually quiet, which is
+  what made an ordinary move breach a 10x-MAD threshold. Flagged in
+  `logs/issues_and_limitations.md` rather than treated as settled.
+- **Standing constraint:** this amendment changes only how a flag is CLASSIFIED.
+  It does not touch the A-006 verdict rule, the grid, or the primary statistic,
+  all of which remain frozen as written in D-010.

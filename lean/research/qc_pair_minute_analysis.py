@@ -49,10 +49,26 @@ WINDOW_START = datetime(2019, 6, 1)              # micros launched 2019-05-06
 WINDOW_END = datetime(2026, 4, 27)               # inside the free-tier clip
 GATE_WINDOW_BARS = 390
 
-# A flagged splice is tolerable only if it is NOT gap-shaped: the boundary
-# return must be far smaller than the calendar gap the factor removed. Same
-# adjudication rule the D-009 acceptance run used (validation report 01 section 6).
-GAPSHAPED_FRACTION = 0.6
+# Adjudication of a flagged splice (D-010 + amendment A1).
+#
+# A splice-audit flag only says "this boundary return is large relative to the
+# local MAD". That has two possible causes: a bad splice factor, or a genuine
+# market move at that minute. The discriminator is a BOUND: the error a wrong
+# factor can inject is at most the calendar gap that factor was removing. So a
+# flag is a real artifact only if the gap can actually explain it —
+#
+#   * the gap must itself be material (bigger than the audit threshold; a gap
+#     buried in the local noise cannot produce a flag), AND
+#   * the splice return must have the same sign as the gap, AND
+#   * its magnitude must sit inside a band around the gap: too small and the
+#     factor clearly worked, too large and the gap is arithmetically incapable
+#     of being the cause.
+#
+# The original one-sided rule (|sr| >= 0.6*|gap|) was satisfied by ANY small
+# gap and mislabelled a quiet-market news move as a defect — see amendment A1
+# in logs/research_decisions.md.
+GAPSHAPED_LO = 0.6
+GAPSHAPED_HI = 1.6
 
 
 class PairMinuteAnalysis(QCAlgorithm):
@@ -153,13 +169,23 @@ class PairMinuteAnalysis(QCAlgorithm):
 
         gapshaped = []
         for _, r in flagged.iterrows():
-            sr, gp = abs(float(r["splice_ret_pct"])), abs(float(r["factor_gap_pct"]))
-            bad = gp > 0 and sr >= GAPSHAPED_FRACTION * gp
+            sr_s, gp_s = float(r["splice_ret_pct"]), float(r["factor_gap_pct"])
+            sr, gp = abs(sr_s), abs(gp_s)
+            thr = float(r["threshold"]) * 100.0
+            material = gp > thr
+            same_sign = (sr_s * gp_s) > 0
+            in_band = GAPSHAPED_LO * gp <= sr <= GAPSHAPED_HI * gp
+            bad = bool(material and same_sign and in_band)
             gapshaped.append(bad)
+            why = ("gap_explains_it" if bad else
+                   "gap_immaterial" if not material else
+                   "sign_mismatch" if not same_sign else
+                   "sr_below_gap" if sr < GAPSHAPED_LO * gp else "sr_exceeds_gap")
             self.results["S_FLAG_" + leg + pd.Timestamp(
                 r["timestamp"]).strftime("%y%m%d")] = (
-                f"sr={fmt(sr)}|gap={fmt(gp)}|thr={fmt(r['threshold'] * 100)}|"
-                f"mad={fmt(r['local_mad'] * 100, 5)}|gapshaped={int(bad)}")
+                f"sr={fmt(sr_s)}|gap={fmt(gp_s)}|thr={fmt(thr)}|"
+                f"mad={fmt(r['local_mad'] * 100, 5)}|ratio={fmt(sr / gp if gp else float('nan'), 2)}|"
+                f"gapshaped={int(bad)}|why={why}")
         return not any(gapshaped)
 
     def _resolve(self, canonical, code):
