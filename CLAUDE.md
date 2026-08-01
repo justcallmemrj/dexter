@@ -47,7 +47,14 @@ never be described as such.
 
 ## Environment notes
 
-- This container has no QuantConnect data and no LEAN CLI credentials; the network
-  policy blocks market-data downloads (see `reports/00_repository_audit.md`).
-  Empirical notebooks are therefore structured-but-blocked until run inside
-  QuantConnect Research (or LEAN CLI with data) — do not fake their results.
+- Current environment (since 2026-08-01): the user's local Windows machine at
+  `C:\Users\Mrder\dexter` (Python 3.14.5 in `.venv`; run tools via
+  `.venv/Scripts/python.exe`). See report 00 Addendum A. The original ephemeral
+  container (no data at all) is history.
+- Data reality here: yfinance gives DAILY data (screening only — assumption
+  A-015) and ~1 trailing week of minute bars. The project's primary
+  minute-resolution history still requires QuantConnect Research (browser
+  workflow) or a licensed data drop. Do not fake empirical results that need
+  data this environment does not have.
+- CME contract-spec pages block scripted fetches (HTTP 403) but open in a real
+  browser — primary-source verification of A-003 goes through the browser.

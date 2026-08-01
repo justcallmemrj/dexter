@@ -117,3 +117,48 @@ session and is covered by the test suite (`pytest tests/`).
 5. Only after notebooks 08–13 and the validation reports: issue the formal
    go / revise / no-go recommendation. **The LEAN algorithm remains prohibited
    until the user writes `PROCEED TO LEAN BUILD`.**
+
+---
+
+## Addendum A — Environment migration to local machine (2026-08-01)
+
+The repository was cloned to the user's local Windows machine
+(`C:\Users\Mrder\dexter`) and the research continues there. Everything above
+this addendum describes the original ephemeral container and is retained as
+the historical record.
+
+### A.1 Local environment
+
+| Item | Finding |
+|---|---|
+| OS | Windows 11 Pro (10.0.26200) |
+| Python | 3.14.5 (`.venv` in repo root) |
+| Test suite | **38/38 passed** on first run after editable install (`pip install -e .`) |
+| LEAN CLI | Not installed (free-tier org has no CLI token — known from prior QC work) |
+| QuantConnect account | Available via browser session (proven API-over-UI workflow from prior projects) |
+
+Package deltas vs. the container (tests green under both): numpy 2.5.1
+(was 2.4.6), scipy 1.18.0 (was 1.17.1), matplotlib 3.11.1, pandas 3.0.5,
+statsmodels 0.14.6, scikit-learn 1.9.0, pytest 9.1.1, yfinance 1.5.2 (all same).
+
+### A.2 Network / data probes re-run locally (all performed live 2026-08-01)
+
+| Probe | Result | Consequence |
+|---|---|---|
+| yfinance daily (`ES=F`, `ZN=F`, `MES=F`) | ✅ OK — current through 2026-07-31 | **Daily-resolution relationship screening is unblocked** |
+| yfinance 1-minute (`ES=F`, 5d) | ✅ OK — 6,481 rows | Minute data exists but only for the trailing ~week (Yahoo API limit) — sanity checks only, not research history |
+| `cmegroup.com` spec pages (scripted fetch) | ❌ HTTP 403 (bot protection) | Primary-source spec verification must go through a real browser session (available locally) |
+| `quantconnect.com` docs | ✅ HTTP 200 | Continuous-futures mapping docs now directly readable |
+
+### A.3 Revised data-availability conclusion
+
+**L-001 is downgraded from total blocker to partial blocker.**
+
+- Unblocked now (local): coarse **daily-resolution** pair-relationship
+  screening via yfinance front-month series — preview/triage evidence only,
+  never execution-grade (roll methodology of Yahoo's `=F` series is
+  undocumented; see A-015 in the assumptions register).
+- Still blocked: **minute-resolution** research history — the primary
+  resolution of this project. Resolution paths unchanged: QuantConnect
+  Research (browser-driven; proven workflow exists from prior projects on
+  this machine) or a licensed data drop into `data/raw/`.

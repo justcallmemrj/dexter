@@ -67,6 +67,27 @@ Expected effect | Review required?
 - **Expected effect:** Some genuinely marginal edges will be rejected — accepted cost.
 - **Review:** Revisit only if quote-level data later shows tighter realized costs.
 
+## D-007 — 2026-08-01 — Environment migrated local; daily yfinance screening tier added
+
+- **Decision:** Continue the research on the user's local Windows machine
+  (report 00 Addendum A). Add a clearly-labeled **daily-resolution screening
+  tier** using yfinance front-month series (assumption A-015) to triage the 7
+  pairs BEFORE the minute-resolution program runs in QC Research. Screening
+  outputs are preview evidence only and can never validate a pair — only
+  deprioritize or flag one.
+- **Alternatives:** Wait for QC Research access for all empirical work (slower,
+  wastes an available data tier); treat yfinance daily as research-grade
+  (rejected — undocumented roll methodology, not executable prices).
+- **Evidence:** Local probes 2026-08-01: yfinance daily OK for ES=F/ZN=F/MES=F;
+  38/38 tests pass locally.
+- **Reason:** Cheap, honest triage that concentrates expensive minute-level
+  effort on pairs whose daily-resolution relationship structure is not already
+  disqualifying.
+- **Expected effect:** Pair prioritization with explicit caveats; possible early
+  flags (e.g. structurally broken relationships).
+- **Review:** Yes — screening conclusions must be re-checked against QC
+  continuous series (A-015 verification) once minute data is available.
+
 ## D-006 — 2026-08-01 — Empirical notebooks structured but blocked on data
 
 - **Decision:** Notebooks 02–13 are created with full methodology and module wiring,

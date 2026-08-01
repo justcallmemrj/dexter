@@ -2,12 +2,14 @@
 
 ## Open
 
-- **L-001 (blocker):** No futures market data reachable from this research container.
-  QuantConnect data requires QC Research / LEAN CLI + subscription; the container's
-  network policy returns 403 for market-data hosts (Yahoo Finance) and for
-  cmegroup.com / quantconnect.com docs. All empirical notebooks (02–13) are
-  structured but unexecuted. **Resolution path:** run notebooks inside QuantConnect
-  Research, or configure LEAN CLI with data locally.
+- **L-001 (partial blocker — downgraded 2026-08-01):** Originally: no futures market
+  data reachable from the research container at any resolution. After migration to
+  the local Windows machine (report 00, Addendum A): yfinance daily data for all
+  probed instruments works, so **daily-resolution screening is unblocked**;
+  minute-resolution research history (the project's primary resolution) remains
+  unavailable locally. **Remaining resolution path:** run notebooks inside
+  QuantConnect Research (browser-driven workflow available on this machine), or a
+  licensed data drop into `data/raw/`.
 - **L-002:** Contract specifications verified only against secondary sources
   (assumption A-003). Re-verify on CME before execution use.
 - **L-003:** Commission and spread assumptions are placeholders (A-007, A-008).
