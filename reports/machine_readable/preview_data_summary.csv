@@ -1,0 +1,13 @@
+symbol,ticker,role,rows,start,end,nan_volume,zero_volume,weekend_holiday_gaps,gaps_gt_4d,other_issues,file
+MES,MES=F,micro,1824,2019-05-03,2026-07-31,0,6,395,0,0,data\processed\MES_daily.csv
+MNQ,MNQ=F,micro,1824,2019-05-03,2026-07-31,0,6,395,0,0,data\processed\MNQ_daily.csv
+M2K,M2K=F,micro,1824,2019-05-03,2026-07-31,0,6,395,0,0,data\processed\M2K_daily.csv
+MYM,MYM=F,micro,1824,2019-05-03,2026-07-31,0,6,395,0,1,data\processed\MYM_daily.csv
+ZT,ZT=F,treasury,4170,2010-01-04,2026-07-31,0,28,902,1,2,data\processed\ZT_daily.csv
+ZF,ZF=F,treasury,4170,2010-01-04,2026-07-31,0,20,902,1,0,data\processed\ZF_daily.csv
+ZN,ZN=F,treasury,4168,2010-01-04,2026-07-31,0,8,904,1,0,data\processed\ZN_daily.csv
+ZB,ZB=F,treasury,4168,2010-01-04,2026-07-31,0,9,904,1,1,data\processed\ZB_daily.csv
+ES,ES=F,parent_proxy,4170,2010-01-04,2026-07-31,0,9,902,1,2,data\processed\ES_daily.csv
+NQ,NQ=F,parent_proxy,4170,2010-01-04,2026-07-31,0,10,902,1,0,data\processed\NQ_daily.csv
+RTY,RTY=F,parent_proxy,2281,2017-07-10,2026-07-31,0,9,495,0,0,data\processed\RTY_daily.csv
+YM,YM=F,parent_proxy,4170,2010-01-04,2026-07-31,0,7,902,1,3,data\processed\YM_daily.csv

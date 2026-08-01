@@ -88,6 +88,30 @@ Expected effect | Review required?
 - **Review:** Yes — screening conclusions must be re-checked against QC
   continuous series (A-015 verification) once minute data is available.
 
+## D-008 — 2026-08-01 — Screening outcome: minute-program priority order + treasury adaptive-hedge mandate
+
+- **Decision:** Based on the daily preview screen (EXP-003/EXP-004,
+  `reports/preview/daily_pair_screen.md`): (1) minute-resolution program runs
+  for ALL 7 pairs (screen cannot test the intraday hypothesis) in priority
+  order MES_MYM → MES_MNQ → treasuries → MES_M2K; (2) for Treasury pairs,
+  long-lookback static hedges are demoted from candidate to control in
+  notebook 04 (hedge ratios shown regime-driven: ZT_ZN rolling beta 0.0→0.4
+  across 2010-26, recent-vs-full shifts +70-111%); (3) short z-lookback /
+  short-hold design is hardened by evidence (all pairs except MES_MYM lack any
+  long-run daily anchor 2019-26).
+- **Alternatives:** Drop non-cointegrating pairs now (rejected — daily
+  non-cointegration does not falsify intraday reversion); keep static treasury
+  hedges as candidates (rejected — regime evidence).
+- **Evidence:** EXP-003/EXP-004; figures preview_MES_MYM_residual.png,
+  preview_MES_MNQ_residual.png, preview_ZT_ZN_rolling_beta.png; L-007
+  empirically confirmed on real daily data (rolling-hedge half-life inflation
+  1-2 orders of magnitude).
+- **Reason:** Concentrate expensive minute-level effort; encode design
+  constraints the daily evidence already settles.
+- **Expected effect:** Faster path through notebooks 02-05; fewer wasted grids.
+- **Review:** Yes — priority order may change once minute-level co-movement and
+  microstructure (spreads, depth) are measured in notebooks 02/03/07.
+
 ## D-006 — 2026-08-01 — Empirical notebooks structured but blocked on data
 
 - **Decision:** Notebooks 02–13 are created with full methodology and module wiring,

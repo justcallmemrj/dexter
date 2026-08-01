@@ -33,6 +33,13 @@
   estimates from noisy hedges are biased UP, and pair viability must be judged
   net of it.
 
+- **L-008:** yfinance preview series contain at least one suspected provider
+  artifact: ZB 2015-03-23 daily log-return +0.099 (~10% one-day move in the
+  30-year future that did not occur — bad print or roll splice). Flagged by the
+  validation battery, retained-never-filled, documented in
+  `reports/preview/daily_pair_screen.md` §2. Reinforces A-015: preview tier is
+  screening-only and its data is never execution-grade.
+
 ## Closed
 
 (none yet)
