@@ -22,7 +22,7 @@ class DexterDataInventoryAudit(QCAlgorithm):
         ("MES", Market.CME),
         ("MNQ", Market.CME),
         ("M2K", Market.CME),
-        ("MYM", Market.CME),
+        ("MYM", Market.CBOT),  # Micro E-mini Dow clears CBOT (CME spec page verified)
         ("ZT", Market.CBOT),
         ("ZF", Market.CBOT),
         ("ZN", Market.CBOT),
