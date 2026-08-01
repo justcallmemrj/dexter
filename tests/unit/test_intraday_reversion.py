@@ -309,3 +309,79 @@ def test_vr_bootstrap_is_seed_deterministic_and_chunk_invariant():
     b = variance_ratio(x, q=15, n_boot=300, seed=7)
     assert a == b
     assert a["ci_lo"] < a["vr"] < a["ci_hi"]
+
+
+# --- position P&L vs residual differencing (amendment A2) ------------------
+
+
+def _two_legs(n_sessions=200, seed=11):
+    """Leg A = common walk; leg B = same walk minus a stationary wedge, so the
+    beta=1 log spread mean-reverts and the legs themselves do not."""
+    rng = np.random.default_rng(seed)
+    idx = minute_index(n_sessions)
+    n = len(idx)
+    common = np.cumsum(rng.normal(0, 1e-4, n))
+    w = np.empty(n); w[0] = 0.0
+    e = rng.normal(0, 1e-4, n)
+    for i in range(1, n):
+        w[i] = 0.99 * w[i - 1] + e[i]
+    return (pd.Series(common, index=idx), pd.Series(common - w, index=idx))
+
+
+def test_pnl_and_residual_agree_when_beta_is_constant():
+    la, lb = _two_legs()
+    res = la - lb
+    z = rolling_zscore(res, 60)
+    plain = conditional_reversion(res, z, entry_z=2.0, horizons=(30,))
+    viapnl = conditional_reversion(res, z, entry_z=2.0, horizons=(30,),
+                                   legs=(la, lb), beta=1.0)
+    assert viapnl["mean_bps"].iloc[0] == pytest.approx(plain["mean_bps"].iloc[0])
+    assert viapnl["n_events"].iloc[0] == plain["n_events"].iloc[0]
+
+
+def test_moving_reference_point_is_not_counted_as_reversion():
+    """The defect amendment A2 fixes. Build a residual as 'price minus its own
+    trailing mean' on legs whose spread is a RANDOM WALK. Differencing that
+    residual shows strong fake reversion, because the trailing mean slides
+    toward the price. Pricing the actual position must not."""
+    rng = np.random.default_rng(5)
+    idx = minute_index(300)
+    n = len(idx)
+    la = pd.Series(np.cumsum(rng.normal(0, 1e-4, n)), index=idx)
+    lb = pd.Series(np.cumsum(rng.normal(0, 1e-4, n)), index=idx)  # independent
+    spread = la - lb
+    res = (spread - spread.rolling(120).mean().shift(1)).dropna()
+    z = rolling_zscore(res, 60)
+
+    fake = conditional_reversion(res, z, entry_z=2.0, horizons=(120,))
+    real = conditional_reversion(res, z, entry_z=2.0, horizons=(120,),
+                                 legs=(la, lb), beta=1.0)
+    # Same events, same data; only the outcome definition differs.
+    assert fake["t_clustered"].iloc[0] > 10         # the artifact
+    assert fake["mean_bps"].iloc[0] > 4             # ~5 bps of pure fiction
+    assert abs(real["t_clustered"].iloc[0]) < 3     # the truth: nothing there
+
+
+def test_session_mean_is_reported_alongside_pooled_mean():
+    la, lb = _two_legs()
+    res = la - lb
+    out = conditional_reversion(res, rolling_zscore(res, 60), entry_z=2.0,
+                                horizons=(30,), legs=(la, lb), beta=1.0)
+    assert "mean_session_bps" in out.columns
+    assert np.isfinite(out["mean_session_bps"].iloc[0])
+
+
+def test_beta_is_frozen_at_entry_not_applied_from_the_exit_bar():
+    """A time-varying beta must be read at the SIGNAL bar. If a later beta
+    leaked in, changing beta only after the entry would move the result."""
+    la, lb = _two_legs()
+    res = la - lb
+    z = rolling_zscore(res, 60)
+    b1 = pd.Series(1.0, index=la.index)
+    b2 = b1.copy()
+    b2.iloc[len(b2) // 2:] = 5.0
+    a = conditional_reversion(res, z, entry_z=2.0, horizons=(30,),
+                              legs=(la, lb), beta=b1)
+    b = conditional_reversion(res, z, entry_z=2.0, horizons=(30,),
+                              legs=(la, lb), beta=b2)
+    assert a["mean_bps"].iloc[0] != pytest.approx(b["mean_bps"].iloc[0])

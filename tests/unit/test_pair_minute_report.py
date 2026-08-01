@@ -90,7 +90,8 @@ def test_conditional_rows_carry_every_horizon():
     row = _report(True)["S_CR_S1_20"]
     horizons = [int(cell.split(":")[0]) for cell in row.split("|")]
     assert horizons == [5, 30]
-    assert all(len(cell.split(":")) == 5 for cell in row.split("|"))
+    # layout: horizon:mean_bps:mean_session_bps:t_clustered:hit_rate:n_events
+    assert all(len(cell.split(":")) == 6 for cell in row.split("|"))
 
 
 def test_fmt_preserves_nan_instead_of_inventing_a_number():
@@ -109,7 +110,7 @@ def test_independent_walks_produce_no_reversion_signal():
     conditional statistic should be insignificant and VR should sit near 1."""
     out = _report(False)
     cells = [c.split(":") for c in out["S_CR_S1_20"].split("|")]
-    tstats = [abs(float(c[2])) for c in cells if c[2] != "nan"]
+    tstats = [abs(float(c[3])) for c in cells if c[3] != "nan"]
     assert tstats and max(tstats) < 3.0, out["S_CR_S1_20"]
 
     vr = {int(c.split(":")[0]): float(c.split(":")[1])
@@ -122,9 +123,10 @@ def test_reverting_pair_is_detected_with_the_expected_signs():
     for spec in ("S1", "S2", "S3"):
         cells = [c.split(":") for c in out[f"S_CR_{spec}_20"].split("|")]
         assert all(float(c[1]) > 0 for c in cells), spec   # fade pays, in bps
+        assert all(float(c[2]) > 0 for c in cells), spec   # session-mean agrees
         # Reversion should build with horizon toward the planted half-life,
         # so the long horizon carries the evidence, not the 5-bar one.
-        assert float(cells[-1][2]) > 4.0, (spec, cells)
+        assert float(cells[-1][3]) > 4.0, (spec, cells)
         assert float(cells[-1][1]) > float(cells[0][1]), (spec, cells)
 
     vr = {int(c.split(":")[0]): float(c.split(":")[1])

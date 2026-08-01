@@ -8,7 +8,9 @@ CSVs plus a JSON copy under reports/machine_readable/.
     python scripts/ingest_qc_pair_minute.py --input raw.json --run "<run name>"
 
 Key layouts (mirrors src/spread_research/pair_minute_report.py):
-  S_CR_<spec>_<entryz>   horizon:mean_bps:t_clustered:hit_rate:n_events | ...
+  S_CR_<spec>_<entryz>   horizon:mean_bps:mean_session_bps:t_clustered:
+                         hit_rate:n_events | ...   (mean_session_bps is the
+                         quantity t_clustered refers to; see amendment A2)
   S_VR_<tag>_s<step>     q:vr:ci_lo:ci_hi:p_lt_1 | ...
   S_RL<LEG><nn>          yymmdd,splice_ret_pct,factor_gap_pct,flag | ...
   S_PF_<bucket>          n=..|sd=..|mz=..|p99=..|tail=..
@@ -58,11 +60,12 @@ def parse(stats: dict) -> dict[str, pd.DataFrame]:
         entry_z = float(ez[0] + "." + ez[1:]) if len(ez) > 1 else float(ez)
         for cell in str(val).split("|"):
             p = cell.split(":")
-            if len(p) != 5:
+            if len(p) != 6:
                 continue
             rows.append({"spec": spec, "entry_z": entry_z, "horizon_bars": int(p[0]),
-                         "mean_bps": _num(p[1]), "t_clustered": _num(p[2]),
-                         "hit_rate": _num(p[3]), "n_events": _num(p[4])})
+                         "mean_bps": _num(p[1]), "mean_session_bps": _num(p[2]),
+                         "t_clustered": _num(p[3]), "hit_rate": _num(p[4]),
+                         "n_events": _num(p[5])})
     if rows:
         frames["conditional_reversion"] = pd.DataFrame(rows).sort_values(
             ["spec", "entry_z", "horizon_bars"]).reset_index(drop=True)

@@ -21,8 +21,18 @@ data:
     # separately in intraday-seasonality sections.
     rth_start_ct: "08:30"
     rth_end_ct: "15:00"
-  roll_exclusion_days: 2        # candidate: no new entries within N days of roll
-  post_roll_warmup_bars: 390    # candidate: 1 RTH day of minute bars after mapping change
+  # ADOPTED by validation report 02 (was: candidates anchored to QC's
+  # OpenInterest flip, which report 01 showed is the wrong event — it happens
+  # at expiry-day open, ~8 days AFTER our splice). Both are now counted in RTH
+  # bars from the D-009 splice timestamp (index: expiry-8d @ 10:30 ET).
+  roll_exclusion_bars: 780      # ADOPTED: 2 RTH days before the splice. Binding
+                                # constraint is max_holding_bars (780), not the
+                                # measured dispersion: a held position absorbs a
+                                # median 11.8 bps level shift at every roll.
+  post_roll_warmup_bars: 780    # ADOPTED: raised from 390. Residual dispersion
+                                # is still 1.74x baseline through the 2nd
+                                # post-roll day; 780 also guarantees the 390-bar
+                                # z-score window holds no pre-splice bars.
 
 signals:
   zscore_lookback_bars: 390             # candidate: ~1 RTH day of minute bars

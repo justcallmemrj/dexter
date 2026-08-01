@@ -73,6 +73,27 @@
   intercept-aware path**, or its half-life and residual comparisons will be
   measuring hedge noise (this is L-007 with a concrete mechanism).
 
+- **L-012:** MYM 2019-12-12 (MYMZ19->MYMH20 splice) shows an 8.15 bp boundary
+  return against a 1.08 bp calendar gap and an unusually quiet 0.358 bp local
+  MAD. Adjudicated NOT a splice artifact by a bound — a wrong factor can inject
+  at most the gap, and the move is 7.5x larger (D-010 amendment A1). But a
+  single bad print in one contract's close at the boundary minute would look
+  identical, and this was not independently confirmed against a second data
+  source. MES moved only +2.3 bp at the same timestamp, so it was not an
+  index-wide move. One minute of ~1.36M, at a roll boundary the adopted
+  exclusion window keeps positions out of; revisit if a second symbol shows the
+  same signature at the same timestamp.
+- **L-013:** Under the current config (`zscore_lookback_bars: 390`, one RTH day)
+  the z-score window reaches back across the overnight break, so the first bars
+  of a session are scored against the previous session's mean. Consequence
+  measured in validation report 02 §6.4: **24.3% of |z| >= 2 crossings occur in
+  the first 30 minutes and ~37% in the first hour**, decaying to ~3% per 30-min
+  bucket by the afternoon. A large minority of "intraday dislocations" under
+  this configuration are overnight repricings. Notebook 06 must either
+  session-anchor the z-score (reset at the open), add a warm-up after the open,
+  or explicitly test the open-gap subset as its own hypothesis. Does not affect
+  the report-02 verdict, which is negative with or without those events.
+
 ## Closed
 
 - **L-002 (closed 2026-08-01):** Contract specifications were verified only

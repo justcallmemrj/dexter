@@ -265,3 +265,86 @@ set out in full rather than buried in a code diff.
 - **Standing constraint:** this amendment changes only how a flag is CLASSIFIED.
   It does not touch the A-006 verdict rule, the grid, or the primary statistic,
   all of which remain frozen as written in D-010.
+
+### D-010 Amendment A2 — 2026-08-01 — the primary statistic measures POSITION P&L, not residual change
+
+Recorded after the first full analysis run (QC "Geeky Brown Flamingo") and
+before any verdict was written. It corrects HOW the pre-registered statistic is
+computed; the statistic, the grid and the verdict rule are unchanged.
+
+- **Defect 1 — a moving reference point was being counted as reversion.**
+  D-010 defined the outcome as `-sign(z)*(residual_{t+1+k} - residual_{t+1})`.
+  For S1 (beta = 1) and S3 (constant beta) the residual is a tradable spread,
+  so that difference IS the position's P&L. For **S2 it is not**: the trailing
+  OLS residual contains its own trailing mean, so differencing it mixes the
+  price coming back with the REFERENCE WINDOW SLIDING toward the price. Only
+  the first is tradable. A control on two INDEPENDENT random walks (no
+  relationship whatsoever) makes the size of the error plain: differencing a
+  trailing-mean residual reports +5.4 bps at t = 20.3, while pricing the actual
+  position on the same events reports +0.8 bps at t = 1.9. The entire effect
+  was the window moving.
+- **Amended measurement.** The outcome is now the position's P&L with the hedge
+  ratio FROZEN AT THE SIGNAL BAR:
+  `-sign(z_t) * [ (a_{t+1+k} - a_{t+1}) - beta_t * (b_{t+1+k} - b_{t+1}) ]`.
+  This is identical to the old form when beta is constant, so S1 and S3 are
+  expected to reproduce their previous numbers — that equality is the
+  self-check that the change is a correction and not a new model.
+- **Defect 2 — effect size and t-statistic were weighted differently.**
+  `mean_bps` pooled every event equally while `t_clustered` came from
+  per-session means. The two can disagree in sign when heavily-populated
+  sessions behave unlike the typical one, and the first run produced exactly
+  that (S1, entry 1.5, h=5: pooled +0.066 bps against t = -4.86). Both are now
+  reported, with `mean_session_bps` — the quantity the t-statistic actually
+  refers to — printed alongside the pooled mean. No verdict may quote a pooled
+  mean next to a clustered t as if they described the same average.
+- **Why this is a correction and not goalpost-moving.** It was derived from a
+  synthetic control with a known answer of "nothing", not from the MES-MYM
+  numbers; it makes the S2 specification harder to pass, not easier; and it
+  leaves the frozen verdict rule, entry grid, horizon grid and specifications
+  exactly as pre-registered. Regression tests
+  (`test_moving_reference_point_is_not_counted_as_reversion`,
+  `test_pnl_and_residual_agree_when_beta_is_constant`) pin both properties.
+- **Consequence for reading run 1.** The S2 column of "Geeky Brown Flamingo"
+  (positive, t up to 10.6) is measurement artifact and is superseded; it is
+  retained in the record only as the evidence that motivated this amendment.
+
+## D-011 — 2026-08-01 — A-006 FALSIFIED for MES–MYM at intraday horizon; roll windows adopted
+
+- **Decision:** Close MES–MYM as an intraday reversion candidate. The
+  pre-registered D-010 verdict rule returns **NO REVERSION**: zero cells of the
+  60-cell grid are positive with session-clustered |t| >= 3 in either
+  look-ahead-safe specification, so criterion (a) fails outright. Of the 26
+  cells that do reach |t| >= 3, **24 are negative** — fading a 1.5-2.0 sigma
+  dislocation lost money at every horizon from 5 to 120 minutes over 2019-2026.
+  Adopt the roll windows in §6.3 of validation report 02.
+- **Alternatives:** (i) read the sub-unit variance ratio (residual VR ~ 0.75,
+  bootstrap p < 0.001) as reversion — rejected, both pre-registered guards
+  identify it as microstructure: the curve stops declining after q = 30
+  (VR(120)/VR(30) = 0.991) and it walks back to ~0.99 at 5-minute base
+  sampling; (ii) read S2's pre-amendment result (+2.14 bps, t = +8.91) as an
+  edge — rejected, that was the sliding-reference-window artifact fixed in
+  amendment A2, and the corrected number is -0.32 bps at t = -0.67; (iii) read
+  S3's two positive significant cells as evidence — rejected, S3 is the
+  full-sample static-beta spec, look-ahead contaminated and pre-declared a
+  diagnostic upper bound; (iv) extend the holding period to reach the daily
+  structure — rejected here, a 40-day half-life is ~15,600 RTH bars, two orders
+  of magnitude past the design's 780-bar maximum hold, and D-008 already ruled
+  out long holds on regime-break grounds.
+- **Evidence:** validation report 02; runs "Emotional Fluorescent Orange Goat",
+  "Geeky Brown Flamingo", "Alert Magenta Rabbit" (QC 34720894); EXP-008;
+  `reports/machine_readable/nb02_*.csv`. Gate passed first: MES 28/28 rolls
+  clean, MYM 27/28 with one flag adjudicated non-artifact by the A1 bound.
+- **Reason:** The hypothesis was tested as written and the answer is no. It is
+  additionally immaterial: the largest session-mean in either honest spec is
+  +1.41 bps against a ~2-3 bps round-trip cost, so the sign is not even the
+  binding objection.
+- **Expected effect:** Notebook 02 continues to MES–MNQ (next in the D-008
+  priority order), then MES–M2K; notebook 03 runs the Treasury pairs against
+  A-009 with the same battery and the same pre-registered rule. Notebooks 04/05
+  inherit the adopted roll windows and must route every FITTED beta through the
+  intercept-aware residual (L-011). If MES–MNQ and MES–M2K also come back
+  negative, the index book as an intraday reversion strategy is closed and the
+  program's remaining hypothesis is the Treasury curve.
+- **Review:** No re-test of MES–MYM at intraday horizon without a NEW
+  mechanism, pre-registered afresh. Re-running the same grid on the same window
+  after seeing this result would be a multiple-testing violation.

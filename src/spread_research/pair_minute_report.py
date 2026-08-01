@@ -103,7 +103,15 @@ def residual_specs(log_a: pd.Series, log_b: pd.Series, *,
         "S2": rolling_ols_residual(log_a, log_b, beta_lookback).rename("S2"),
         "S3": (log_a - alpha_static - beta_static * log_b).rename("S3"),
     }
-    info = {"beta_static": beta_static, "beta_roll": beta_roll}
+    # The hedge ratio each spec would actually trade, known at the signal bar.
+    # conditional_reversion needs this to price a POSITION rather than to
+    # difference a residual whose reference point moves (see its docstring).
+    betas = {
+        "S1": pd.Series(1.0, index=log_a.index),
+        "S2": beta_roll,
+        "S3": pd.Series(beta_static, index=log_a.index),
+    }
+    info = {"beta_static": beta_static, "beta_roll": beta_roll, "betas": betas}
     return specs, info
 
 
@@ -143,7 +151,8 @@ def pair_minute_report(close_a: pd.Series, close_b: pd.Series, *,
 
     out.update(_preflight(specs["S1"], df.index, roll_timestamps,
                           factors_a, factors_b))
-    out.update(_conditional_block(specs, entry_grid, horizons))
+    out.update(_conditional_block(specs, info["betas"], (log_a, log_b),
+                                  entry_grid, horizons))
     out.update(_vr_blocks(specs, log_a, log_b, q_grid, n_boot, seed))
     return out
 
@@ -187,18 +196,29 @@ def _preflight(res1: pd.Series, index, roll_timestamps,
     return out
 
 
-def _conditional_block(specs, entry_grid, horizons) -> dict[str, str]:
-    """D-010 primary statistic. Layout per key:
-    horizon:mean_bps:t_clustered:hit_rate:n_events, pipe-separated."""
+def _conditional_block(specs, betas, legs, entry_grid, horizons) -> dict[str, str]:
+    """D-010 primary statistic, measured as POSITION P&L (amendment A2).
+
+    Layout per key, pipe-separated:
+    horizon:mean_bps:mean_session_bps:t_clustered:hit_rate:n_events
+
+    `mean_session_bps` is the mean of per-session means — the quantity the
+    session-clustered t-statistic actually refers to. It is reported next to
+    the event-pooled mean because the two weight differently and can even
+    disagree in sign when high-event-count sessions behave unlike the typical
+    session; quoting the pooled mean beside a clustered t would be a mismatch.
+    """
     out: dict[str, str] = {}
     for name, res in specs.items():
         z = rolling_zscore(res, ZS_LOOKBACK)
         for ez in entry_grid:
-            cr = conditional_reversion(res, z, entry_z=ez, horizons=horizons)
+            cr = conditional_reversion(res, z, entry_z=ez, horizons=horizons,
+                                       legs=legs, beta=betas[name])
             out[f"S_CR_{name}_{str(ez).replace('.', '')}"] = "|".join(
                 f"{int(r['horizon_bars'])}:{fmt(r['mean_bps'], 3)}:"
-                f"{fmt(r['t_clustered'], 2)}:{fmt(r['hit_rate'], 3)}:"
-                f"{int(r['n_events'])}" for _, r in cr.iterrows())
+                f"{fmt(r['mean_session_bps'], 3)}:{fmt(r['t_clustered'], 2)}:"
+                f"{fmt(r['hit_rate'], 3)}:{int(r['n_events'])}"
+                for _, r in cr.iterrows())
         if name == "S1":
             prof = event_clock_profile(z, 2.0)
             out["S_CLOCK"] = "|".join(

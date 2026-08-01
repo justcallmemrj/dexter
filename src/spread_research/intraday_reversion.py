@@ -283,7 +283,9 @@ def half_life_within_session(x: pd.Series) -> dict:
 def conditional_reversion(residual: pd.Series, z: pd.Series, *,
                           entry_z: float, horizons=(5, 15, 30, 60, 120),
                           require_full_horizon: bool = True,
-                          min_events: int = 20) -> pd.DataFrame:
+                          min_events: int = 20,
+                          legs: tuple[pd.Series, pd.Series] | None = None,
+                          beta: pd.Series | float | None = None) -> pd.DataFrame:
     """Event study: when |z| first crosses `entry_z`, does fading it pay?
 
     Convention (matches signals.py): the signal is read at bar t; the position
@@ -292,6 +294,20 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
     its mean:
 
         pnl_bps = -sign(z_t) * (residual_{t+1+k} - residual_{t+1}) * 1e4
+
+    **Pass `legs` whenever the residual's hedge ratio moves.** With
+    `legs=(log_a, log_b)` and `beta` (the ratio KNOWN AT THE SIGNAL BAR, held
+    fixed for the life of the trade) the outcome is the position's actual P&L:
+
+        pnl_bps = -sign(z_t) * [ (a_{t+1+k} - a_{t+1})
+                                 - beta_t * (b_{t+1+k} - b_{t+1}) ] * 1e4
+
+    The two forms agree exactly when beta is constant, and they must NOT be
+    confused when it is not. A residual built around a trailing fit — e.g.
+    `pair_minute_report.rolling_ols_residual` — contains the trailing mean
+    itself, so its change mixes the price coming back with the REFERENCE POINT
+    drifting toward the price. Only the second is tradable; measuring the
+    residual would credit a strategy for the window sliding underneath it.
 
     Events whose entry or exit would fall in a different session are dropped
     (`n_dropped`), never truncated silently — an intraday hypothesis may not
@@ -309,14 +325,22 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
     This is a MEASUREMENT tool. It applies no costs, no slippage and no
     capacity limit, so its output is an upper bound on any tradable effect.
     """
-    df = pd.concat({"res": residual, "z": z}, axis=1).dropna()
+    cols = {"res": residual, "z": z}
+    if legs is not None:
+        cols["la"], cols["lb"] = legs[0], legs[1]
+        cols["beta"] = (pd.Series(float(beta), index=residual.index)
+                        if beta is None or np.isscalar(beta) else beta)
+    df = pd.concat(cols, axis=1).dropna()
     if df.empty:
         return pd.DataFrame(columns=["horizon_bars", "n_events", "n_sessions",
-                                     "mean_bps", "sd_bps", "t_clustered",
-                                     "hit_rate", "n_dropped"])
+                                     "mean_bps", "mean_session_bps", "sd_bps",
+                                     "t_clustered", "hit_rate", "n_dropped"])
     res = df["res"].values.astype(float)
     zv = df["z"].values.astype(float)
     sess = session_ids(df.index)
+    la = df["la"].values.astype(float) if legs is not None else None
+    lb = df["lb"].values.astype(float) if legs is not None else None
+    bt = df["beta"].values.astype(float) if legs is not None else None
 
     az = np.abs(zv)
     cross = np.concatenate([[False], (az[1:] >= entry_z) & (az[:-1] < entry_z)])
@@ -334,17 +358,22 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
         e, x_, base = ev[ok], exit_[ok], entry[ok]
         if len(e) < min_events:
             rows.append({"horizon_bars": k, "n_events": len(e), "n_sessions": 0,
-                         "mean_bps": np.nan, "sd_bps": np.nan,
-                         "t_clustered": np.nan, "hit_rate": np.nan,
-                         "n_dropped": n_drop})
+                         "mean_bps": np.nan, "mean_session_bps": np.nan,
+                         "sd_bps": np.nan, "t_clustered": np.nan,
+                         "hit_rate": np.nan, "n_dropped": n_drop})
             continue
-        pnl = sign[e] * (res[x_] - res[base]) * 1e4
+        if legs is not None:
+            move = (la[x_] - la[base]) - bt[e] * (lb[x_] - lb[base])
+        else:
+            move = res[x_] - res[base]
+        pnl = sign[e] * move * 1e4
         per_session = pd.Series(pnl).groupby(pd.Series(sess[e])).mean()
         ns = len(per_session)
         t = (per_session.mean() / (per_session.std(ddof=1) / np.sqrt(ns))
              if ns > 2 and per_session.std(ddof=1) > 0 else np.nan)
         rows.append({"horizon_bars": k, "n_events": int(len(e)),
                      "n_sessions": int(ns), "mean_bps": float(pnl.mean()),
+                     "mean_session_bps": float(per_session.mean()),
                      "sd_bps": float(pnl.std(ddof=1)),
                      "t_clustered": float(t) if t == t else np.nan,
                      "hit_rate": float((pnl > 0).mean()), "n_dropped": n_drop})
