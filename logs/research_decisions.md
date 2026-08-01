@@ -151,3 +151,70 @@ Expected effect | Review required?
   notebooks without redesign.
 - **Review:** Yes — unblock via QC Research environment or LEAN CLI + data
   subscription.
+
+## D-010 — 2026-08-01 — PRE-REGISTRATION of the notebook-02 A-006 test (MES–MYM intraday)
+
+Written and committed **before any minute-level result was examined**, so that
+"no" is a reachable answer. Nothing below may be revised in response to an
+outcome; a revision voids the test and forces a fresh pre-registration.
+
+- **Decision — frozen data path.** Own-splice constructed MES (`Market.CME`)
+  and MYM (`Market.CBOT`, per L-009) minute series via D-009
+  (`index_roll_schedule`, `days_before=8`, splice 10:30 ET, CME holiday list
+  from `src/spread_research/calendars.py`). Window 2019-06-01 → free-tier clip
+  (~2026-05-04, disclosed with every result). RTH only, `(09:30, 16:00]` ET,
+  390 bars/session. No return, variance-ratio block, z-score window, or
+  holding period may cross a session close.
+- **Decision — acceptance gate, applied BEFORE analysis.** `splice_audit` runs
+  on each constructed close series. Analysis executes only if every roll is
+  unflagged, or each flag is individually adjudicated non-gap-shaped (splice
+  return far below the measured factor gap) and recorded with its numbers. A
+  series that fails the gate is not analysed; the run reports the failure.
+- **Decision — residual specifications.** All three are reported side by side;
+  none is privileged after the fact. S1: log ratio, β = 1 (estimation-free
+  anchor). S2: trailing 1950-bar OLS β on log prices, shifted (look-ahead
+  safe). S3: full-sample static β — look-ahead contaminated, a diagnostic
+  upper bound only, never evidence.
+- **Decision — primary statistic.** Conditional forward reversion: z from
+  `rolling_zscore(residual, 390)` (shifted); event = first crossing of
+  |z| ≥ entry_z; entry at the close of bar t+1, exit at the close of t+1+k;
+  k ∈ {5, 15, 30, 60, 120}; entry_z ∈ {1.5, 2.0, 2.5, 3.0}; inference
+  session-clustered. Chosen as primary because the t+1 fill makes it
+  structurally immune to first-order bid-ask bounce, which the variance ratio
+  is not.
+- **Decision — supporting statistics.** Variance-ratio curves over
+  q ∈ {2, 5, 15, 30, 60, 120} at base sampling 1/5/15 min, computed on the
+  residual AND on each leg alone (bounce baseline); within-session AR(1)
+  half-life of the z-score.
+- **Decision — verdict rule, declared now.**
+  - **REVERSION PRESENT** requires all of: (a) positive mean conditional
+    reversion with session-clustered |t| ≥ 3 at ≥ 2 adjacent horizons, in S1
+    *and* S2; (b) the residual VR curve still declining past q = 30 (not a
+    flat bounce floor) *and* materially below both legs' own VR curves;
+    (c) the effect strengthens with entry_z rather than living in one cell.
+  - **NO REVERSION** if session-clustered |t| < 2 across the grid, or the sign
+    disagrees between S1 and S2.
+  - **AMBIGUOUS / MICROSTRUCTURE** if (a) holds but (b) fails — detectable but
+    carrying the signature of bid-ask bounce rather than a pair relationship.
+    This does not advance the pair.
+  - Effect sizes are reported in bps in every branch. With n ≈ 690k bars,
+    statistical significance is not an edge claim: any result smaller than one
+    MES+MYM round-trip tick is labelled **ECONOMICALLY IMMATERIAL** regardless
+    of its t-statistic.
+- **Decision — preflight adoption rule (the item report 01 §5 deferred).**
+  Default adopted windows are pre-roll exclusion = `ceil(max_holding_bars/390)`
+  = 2 RTH days before OUR splice, and post-roll warm-up =
+  `zscore_lookback_bars` = 390 bars, both **re-anchored to the D-009 splice
+  timestamp**. Measured bucket diagnostics may tighten or loosen these, and the
+  direction must be justified from the numbers.
+- **Alternatives:** judge on the variance ratio alone (rejected — bounce
+  confound); on half-life alone (rejected — L-007 hedge-estimation inflation);
+  run a mini-backtest now (rejected — CLAUDE.md gate 1, and A-007/A-008 cost
+  assumptions are still unverified placeholders).
+- **Evidence:** grid is 4 entry_z × 5 horizons × 3 specs = 60 cells per pair;
+  rule (c) exists so no single cell can carry a conclusion
+  (`research_config.yaml` validation.multiple_testing_note).
+- **Expected effect:** an A-006 verdict for MES–MYM at intraday horizon that is
+  binding in either direction, plus adopted roll windows for notebooks 04+.
+- **Review:** Yes — a negative verdict closes MES–MYM at intraday horizon and
+  re-prioritizes the minute program per D-008.
