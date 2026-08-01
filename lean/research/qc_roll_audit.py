@@ -109,6 +109,15 @@ class DexterRollAudit(QCAlgorithm):
                     row["gap"] = round(row["pn"] - row["po"], 6)
                     row["gp"] = round(
                         (row["pn"] / row["po"] - 1.0) * 100.0, 4)
+                # Chart channel (QC free tier caps logs at 10KB/day; charts
+                # are read back via /api/v2/backtests/chart/read instead)
+                ch = "R-" + ticker
+                if row.get("gp") is not None:
+                    self.plot(ch, "gp", float(row["gp"]))
+                if row.get("dte") is not None:
+                    self.plot(ch, "dte", float(row["dte"]))
+                if row.get("vs") is not None:
+                    self.plot(ch, "vs", float(row["vs"]))
                 self.pending_roll[sym] = row
             if mapped is not None:
                 self.last_mapped[sym] = mapped
@@ -127,6 +136,7 @@ class DexterRollAudit(QCAlgorithm):
             if row is not None:
                 if pc:
                     row["ar"] = round((c / pc - 1.0) * 100.0, 4)
+                    self.plot("R-" + ticker, "ar", float(row["ar"]))
                 self.roll_rows.append(row)
             self.prev_close[sym] = c
 
@@ -142,4 +152,10 @@ class DexterRollAudit(QCAlgorithm):
                     {"s": ticker, "on_med_pct": round(med * 100.0, 4),
                      "on_mad_pct": round(mad * 100.0, 4), "n": len(arr)},
                     separators=(",", ":")))
+                # log-cap-proof duplicate of the baselines:
+                self.set_summary_statistic(
+                    "ONMED_" + ticker, str(round(med * 100.0, 4)))
+                self.set_summary_statistic(
+                    "ONMAD_" + ticker, str(round(mad * 100.0, 4)))
+                self.set_summary_statistic("ONN_" + ticker, str(len(arr)))
         self.log("DEXTER_ROLLAUDIT_END")
