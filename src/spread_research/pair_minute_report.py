@@ -19,7 +19,7 @@ import pandas as pd
 
 from .intraday_reversion import (
     conditional_reversion, event_clock_profile, half_life_within_session,
-    held_position_roll_shock, roll_window_diagnostics, rth_frame,
+    held_position_roll_shock, roll_window_diagnostics, rth_frame, session_ids,
     subsample_within_session, variance_ratio,
 )
 from .signals import rolling_zscore
@@ -51,8 +51,53 @@ def rolling_beta(y: pd.Series, x: pd.Series, window: int) -> pd.Series:
     return (cov / var.replace(0.0, np.nan)).shift(1)
 
 
+def vol_ratio_beta(y: pd.Series, x: pd.Series, window: int) -> pd.Series:
+    """Volatility-ratio hedge in LOG space: beta = sigma_y / sigma_x on
+    trailing within-session log returns, shifted so nothing at t is used.
+
+    Derivation (why prices and multipliers vanish). Holding 1 contract of A and
+    n_b of B, dollar P&L ~ mult_a*P_a*dlog(P_a) - n_b*mult_b*P_b*dlog(P_b).
+    Dollar-vol neutrality sets n_b = (mult_a*P_a*sigma_a)/(mult_b*P_b*sigma_b),
+    and normalising the spread by leg A's notional leaves
+
+        beta = n_b*mult_b*P_b / (mult_a*P_a) = sigma_a / sigma_b.
+
+    This is the estimation-LIGHT adaptive hedge D-008 mandates for the Treasury
+    pairs: it uses one robust moment per leg rather than a regression, so it
+    carries far less estimation noise than OLS (L-007), while still adapting to
+    the regime shifts the daily screen found (ZT-ZN 126d beta ranged 0.0-0.4
+    over 2010-26). A unit beta is NOT a sensible anchor across the curve — ZT
+    has roughly a fifth of ZN's duration, so a 1:1 log spread is just the long
+    leg with noise.
+    """
+    ry, rx = y.diff(), x.diff()
+    same = pd.Series(session_ids(y.index), index=y.index)
+    boundary = same != same.shift(1)
+    ry[boundary], rx[boundary] = np.nan, np.nan
+    sy = ry.rolling(window, min_periods=window // 2).std()
+    sx = rx.rolling(window, min_periods=window // 2).std()
+    return (sy / sx.replace(0.0, np.nan)).shift(1)
+
+
+def centered_residual(y: pd.Series, x: pd.Series, beta: pd.Series,
+                      window: int) -> pd.Series:
+    """Deviation from the TRAILING fitted line for ANY supplied (shifted) beta:
+
+        resid_t = (y_t - my_{t-1}) - beta_{t-1} * (x_t - mx_{t-1})
+
+    The centering is not cosmetic. Dropping it and computing `y_t - beta_t*x_t`
+    on log PRICES multiplies every wobble in beta by the log price LEVEL, and
+    that level is large: log(38,000) = 10.5 for MYM, log(110) = 4.7 for a
+    Treasury future. A beta moving just 0.001 between refits therefore injects
+    ~105 bps of spurious residual on MYM and ~5 bps on ZN — in both cases
+    larger than the effect under study (L-011).
+    """
+    mx, my = x.rolling(window).mean(), y.rolling(window).mean()
+    return ((y - my.shift(1)) - beta * (x - mx.shift(1))).dropna()
+
+
 def rolling_ols_residual(y: pd.Series, x: pd.Series, window: int) -> pd.Series:
-    """Deviation from the TRAILING fitted line, intercept included:
+    """Deviation from the TRAILING OLS fitted line, intercept included:
 
         resid_t = (y_t - my_{t-1}) - beta_{t-1} * (x_t - mx_{t-1})
 
@@ -61,32 +106,36 @@ def rolling_ols_residual(y: pd.Series, x: pd.Series, window: int) -> pd.Series:
 
     Why the intercept is not optional here. An OLS slope is defined on demeaned
     data, so the matching residual must be measured around the full fitted line.
-    Dropping the intercept and computing `y_t - beta_t * x_t` on log PRICES
-    multiplies every wobble in beta by the log price LEVEL: MYM near 38,000 has
-    log(x) ~ 10.5, so a beta that moves by only 0.001 between refits injects
-    ~10 bps of spurious residual movement — larger than the effect this study
-    is trying to measure, and it shows up as violent, sign-flipping "reversion"
-    that is pure hedge-estimation noise (L-007, L-011).
+    See `centered_residual` for the magnitude: on MYM a 0.001 beta wobble
+    injects ~105 bps of spurious residual, which shows up as violent,
+    sign-flipping "reversion" that is pure hedge-estimation noise (L-007,
+    L-011).
 
     `pair_builder.build_residual` deliberately keeps the no-intercept form,
     which is correct for a hedge ratio that is NOT fitted (notional, DV01).
     Fitted betas must come through this function instead.
     """
-    mx, my = x.rolling(window).mean(), y.rolling(window).mean()
-    cov = (x * y).rolling(window).mean() - mx * my
-    var = (x * x).rolling(window).mean() - mx * mx
-    beta = (cov / var.replace(0.0, np.nan)).shift(1)
-    return ((y - my.shift(1)) - beta * (x - mx.shift(1))).dropna()
+    return centered_residual(y, x, rolling_beta(y, x, window), window)
 
 
 def residual_specs(log_a: pd.Series, log_b: pd.Series, *,
-                   beta_lookback: int = BETA_LOOKBACK
-                   ) -> tuple[dict[str, pd.Series], dict]:
+                   beta_lookback: int = BETA_LOOKBACK,
+                   anchor: str = "unit") -> tuple[dict[str, pd.Series], dict]:
     """The three D-010 specifications. None is privileged after the fact.
 
-    S1  beta = 1 log ratio            estimation-free anchor
+    `anchor` selects what S1 is, and it is an ECONOMIC choice, not a knob:
+
+      "unit"      S1 = log ratio, beta = 1. Correct for the equity-index pairs,
+                  where both legs are large-cap index futures of similar
+                  duration and volatility.
+      "vol_ratio" S1 = volatility-ratio hedge, beta = sigma_a/sigma_b. Required
+                  for the Treasury pairs: ZT has ~1/5 of ZN's duration, so a
+                  1:1 log spread is the long leg plus noise, not a spread.
+                  This is also D-008's mandated adaptive hedge for the curve.
+
     S2  trailing OLS residual         look-ahead safe, carries L-007 hedge noise
-    S3  full-sample static OLS        LOOK-AHEAD CONTAMINATED — diagnostic only
+    S3  full-sample static OLS        LOOK-AHEAD CONTAMINATED — diagnostic only,
+                                      and per D-008 a CONTROL for Treasuries
 
     S2 and S3 are residuals around the FITTED LINE (intercept included) — see
     `rolling_ols_residual` for why omitting the intercept on log prices
@@ -95,11 +144,19 @@ def residual_specs(log_a: pd.Series, log_b: pd.Series, *,
     around the full OLS fit is the faithful reading of that, not a departure
     from it.
     """
+    if anchor not in ("unit", "vol_ratio"):
+        raise ValueError(f"unknown anchor {anchor!r}")
     beta_roll = rolling_beta(log_a, log_b, beta_lookback)
     beta_static, alpha_static = (float(v) for v in
                                  np.polyfit(log_b.values, log_a.values, 1))
+    if anchor == "unit":
+        beta_1 = pd.Series(1.0, index=log_a.index)
+        s1 = (log_a - log_b).rename("S1")
+    else:
+        beta_1 = vol_ratio_beta(log_a, log_b, beta_lookback)
+        s1 = centered_residual(log_a, log_b, beta_1, beta_lookback).rename("S1")
     specs = {
-        "S1": (log_a - log_b).rename("S1"),
+        "S1": s1,
         "S2": rolling_ols_residual(log_a, log_b, beta_lookback).rename("S2"),
         "S3": (log_a - alpha_static - beta_static * log_b).rename("S3"),
     }
@@ -107,11 +164,12 @@ def residual_specs(log_a: pd.Series, log_b: pd.Series, *,
     # conditional_reversion needs this to price a POSITION rather than to
     # difference a residual whose reference point moves (see its docstring).
     betas = {
-        "S1": pd.Series(1.0, index=log_a.index),
+        "S1": beta_1,
         "S2": beta_roll,
         "S3": pd.Series(beta_static, index=log_a.index),
     }
-    info = {"beta_static": beta_static, "beta_roll": beta_roll, "betas": betas}
+    info = {"beta_static": beta_static, "beta_roll": beta_roll,
+            "betas": betas, "anchor": anchor}
     return specs, info
 
 
@@ -119,7 +177,8 @@ def pair_minute_report(close_a: pd.Series, close_b: pd.Series, *,
                        roll_timestamps, factors_a: pd.Series,
                        factors_b: pd.Series, n_boot: int = 400,
                        q_grid=Q_GRID, entry_grid=ENTRY_GRID,
-                       horizons=HORIZONS, seed: int = SEED) -> dict[str, str]:
+                       horizons=HORIZONS, seed: int = SEED,
+                       anchor: str = "unit") -> dict[str, str]:
     """Full notebook-02 battery for one pair. Inputs are CONSTRUCTED
     (own-splice) close series that have already passed `splice_audit`; this
     function does not re-gate them and must not be called on unvetted data.
@@ -142,7 +201,12 @@ def pair_minute_report(close_a: pd.Series, close_b: pd.Series, *,
         f"last={df.index[-1].date()}|dropA={len(a) - len(df)}|"
         f"dropB={len(b) - len(df)}")
 
-    specs, info = residual_specs(log_a, log_b)
+    specs, info = residual_specs(log_a, log_b, anchor=anchor)
+    b1 = info["betas"]["S1"]
+    out["S_SPECS"] = (
+        f"anchor={anchor}|S1={'log_ratio_beta1' if anchor == 'unit' else 'vol_ratio_sigma_a_over_sigma_b'}"
+        f"|S1_beta_med={fmt(b1.median())}|S1_beta_p5={fmt(b1.quantile(.05))}"
+        f"|S1_beta_p95={fmt(b1.quantile(.95))}")
     br = info["beta_roll"]
     out["S_BETA"] = (
         f"static={fmt(info['beta_static'])}|roll_med={fmt(br.median())}|"

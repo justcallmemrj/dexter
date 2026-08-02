@@ -12,7 +12,7 @@ import pytest
 
 from spread_research.pair_minute_report import (
     fmt, pair_minute_report, residual_specs, rolling_beta,
-    rolling_ols_residual,
+    rolling_ols_residual, vol_ratio_beta,
 )
 
 BARS = 390
@@ -208,3 +208,69 @@ def test_omitting_the_ols_intercept_would_manufacture_hedge_noise():
     naive = (la - rolling_beta(la, lb, 1950) * lb).dropna()
     assert naive.std() > 20 * proper.std()
     assert proper.std() < 0.05          # residual stays in a sane bps range
+
+
+# --- treasury anchor: volatility-ratio hedge (notebook 03) ------------------
+
+
+def test_vol_ratio_beta_recovers_a_planted_volatility_ratio():
+    """beta must equal sigma_a/sigma_b, independent of price level or
+    multiplier — that is the whole point of the log-space derivation."""
+    rng = np.random.default_rng(3)
+    idx = _index()
+    n = len(idx)
+    for ratio, pa, pb in ((0.4, 110.0, 130.0), (2.5, 4000.0, 110.0)):
+        a = pd.Series(pa * np.exp(np.cumsum(rng.normal(0, ratio * 1e-4, n))), index=idx)
+        b = pd.Series(pb * np.exp(np.cumsum(rng.normal(0, 1e-4, n))), index=idx)
+        beta = vol_ratio_beta(np.log(a), np.log(b), 1950).dropna()
+        assert abs(beta.median() - ratio) / ratio < 0.10, (ratio, beta.median())
+
+
+def test_vol_ratio_beta_is_look_ahead_safe():
+    a, b = _pair(True)
+    la, lb = np.log(a), np.log(b)
+    ref = vol_ratio_beta(la, lb, 500)
+    bumped = lb.copy()
+    bumped.iloc[3000:] *= 1.01
+    assert ref.iloc[:3000].equals(vol_ratio_beta(la, bumped, 500).iloc[:3000])
+
+
+def test_vol_ratio_beta_ignores_overnight_gaps():
+    """An overnight jump must not inflate either leg's volatility estimate."""
+    a, b = _pair(True)
+    la, lb = np.log(a), np.log(b)
+    clean = vol_ratio_beta(la, lb, 500)
+    # A real overnight gap PERSISTS: step the level up at each session open and
+    # keep it there, so only the boundary return changes and every
+    # within-session return is untouched.
+    starts = np.flatnonzero(np.r_[True, np.diff(la.index.normalize().values.astype("int64")) != 0])
+    step = pd.Series(0.0, index=la.index)
+    step.iloc[starts[5:]] = 0.02
+    jumped = la + step.cumsum()
+    assert vol_ratio_beta(jumped, lb, 500).iloc[-1] == pytest.approx(clean.iloc[-1], rel=1e-9)
+
+
+def test_treasury_anchor_produces_a_centered_residual():
+    """The vol-ratio spec must go through centered_residual, or a drifting beta
+    times log(price) manufactures the L-011 artifact all over again."""
+    a, b = _pair(True)
+    la, lb = np.log(a), np.log(b)
+    specs, info = residual_specs(la, lb, beta_lookback=500, anchor="vol_ratio")
+    assert info["anchor"] == "vol_ratio"
+    assert not (info["betas"]["S1"] == 1.0).all()
+    naive = (la - info["betas"]["S1"] * lb).dropna()
+    assert naive.std() > 20 * specs["S1"].std()
+    assert abs(specs["S1"].mean()) < 5 * specs["S1"].std()
+
+
+def test_unknown_anchor_is_rejected():
+    a, b = _pair(True)
+    with pytest.raises(ValueError):
+        residual_specs(np.log(a), np.log(b), anchor="dv01")
+
+
+def test_report_records_which_anchor_was_used():
+    for anchor, tag in (("unit", "log_ratio_beta1"),
+                        ("vol_ratio", "vol_ratio_sigma_a_over_sigma_b")):
+        out = _report(True, anchor=anchor)
+        assert out["S_SPECS"].startswith(f"anchor={anchor}|S1={tag}")

@@ -61,7 +61,12 @@
   INTERCEPT. Computing `log(P_a) - beta_t * log(P_b)` with a rolling OLS beta
   but no intercept scales every beta wobble by the log price LEVEL — MYM near
   38,000 has log(x) ~ 10.5, so a beta moving 0.001 between refits injects
-  ~10 bps of residual movement, larger than the intraday effect under study.
+  **~105 bps** of residual movement, orders of magnitude larger than the
+  intraday effect under study. (Corrected 2026-08-02: this entry originally
+  said ~10 bps, understating it 10x — 0.001 x 10.545 = 0.0105 log units = 105
+  bps. The conclusion and the empirical -1,689 bps observation are unchanged.)
+  The same arithmetic applies to Treasuries at a smaller log level:
+  log(110) = 4.7, so 0.001 of beta drift is ~5 bps there.
   Caught on synthetic data during the notebook-02 dry run, where the
   no-intercept spec produced -1,689 bps "reversion" that vanished (to +1.7 bps,
   matching the estimation-free spec) once the intercept was restored. Fix:

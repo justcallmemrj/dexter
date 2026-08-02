@@ -531,3 +531,110 @@ existed. Last index pair in the D-008 priority order.
   QC-provided series was worst (19/28 bad factors).
 - **Review:** No re-test of MES–M2K under this protocol. The delayed-entry test
   is a NEW mechanism and gets its own pre-registration.
+
+## D-016 — 2026-08-02 — PRE-REGISTRATION of notebook 03: A-009 for ALL FOUR Treasury pairs
+
+Written before any Treasury series was built and before any Treasury statistic
+existed. **All four pairs are registered together, deliberately**, so that the
+protocol cannot be adjusted between pairs and the multiple-comparison structure
+is fixed in advance rather than reconstructed afterwards.
+
+- **Hypothesis under test:** A-009 — "Treasury pair residuals mean-revert at
+  intraday horizon in DV01/vol-hedged space."
+- **Pairs and ORDER, fixed now:** ZF–ZN (5s10s, the most liquid RV segment) →
+  ZT–ZF (2s5s) → ZN–ZB (10s30s) → ZT–ZN (2s10s, widest maturity gap and largest
+  structural component). Liquidity-first, because L-014 showed a thin leg
+  manufactures a lead-lag surface that mimics reversion.
+- **Protocol:** identical to notebook 02 — D-010 as amended by A1 (splice
+  adjudication is a bound) and A2 (primary statistic is position P&L with beta
+  frozen at the signal bar; session-clustered mean reported beside the pooled
+  mean). Same gate-before-analysis ordering, same 4x5 entry/horizon grid, same
+  variance-ratio curves with leg baselines and base-sampling checks, same
+  verdict rule (REVERSION PRESENT / NO REVERSION / AMBIGUOUS-MICROSTRUCTURE),
+  same seed 20260801, same signal configuration (L-013 stays unfixed until
+  notebook 06 so every pair in the program remains comparable).
+
+### The one deliberate change from notebook 02, and why
+
+**S1's anchor becomes the volatility-ratio hedge, beta = sigma_a/sigma_b,
+instead of beta = 1.** This is an economic correction, not a free parameter:
+
+- A unit beta is defensible for the index micros, whose legs are large-cap
+  index futures of similar duration and volatility. It is **wrong** across the
+  curve: ZT carries roughly a fifth of ZN's duration, so a 1:1 log spread is
+  the long leg plus noise, not a spread. Testing A-009 with beta = 1 would test
+  a position no one would hold.
+- **D-008 already mandates this**, on evidence: Treasury hedge ratios are
+  regime-driven (ZT–ZN 126-day beta ranged 0.0-0.4 across 2010-26), so adaptive
+  hedging is required and long-lookback static hedges are demoted to control.
+  The vol ratio is the estimation-LIGHT adaptive hedge — one robust moment per
+  leg rather than a regression, so it carries far less estimation noise than
+  OLS (L-007).
+- **DV01 was the first choice and is unavailable.** A true DV01 hedge needs the
+  cheapest-to-deliver bond's duration, which is not derivable from QC minute
+  bars and is not in `data/metadata/contract_specifications.csv`. Inventing
+  plausible DV01s would be fabricating an input. The vol ratio is the honest
+  substitute and is documented as such.
+- Derivation (in `vol_ratio_beta`): dollar-vol neutrality gives
+  n_b = (mult_a*P_a*sigma_a)/(mult_b*P_b*sigma_b); normalising the spread by
+  leg A's notional makes the log-space coefficient **sigma_a/sigma_b**, with
+  multipliers and price levels cancelling.
+- S1 is formed through `centered_residual` because a time-varying beta times a
+  log price level manufactures the L-011 artifact regardless of asset class
+  (log(110) = 4.7, so 0.001 of beta drift injects ~5 bps).
+- S2 (trailing OLS residual) and S3 (full-sample static OLS) are unchanged. Per
+  D-008, S3 is explicitly a **control** for Treasuries, not a candidate.
+
+### Roll construction (differs from the index pairs)
+
+`treasury_roll_schedule` — last business day of the month BEFORE the delivery
+month, splice 10:30 ET, CME holidays passed. Chain opens at U19 (the June-2019
+contract has already rolled off by the 2019-06-01 window start), giving 28
+codes and **27 rolls**, which reproduces the EXP-007 ZN acceptance exactly.
+QC's own OpenInterest flip is not used: report 01 §2 measured it at 18-36 days
+pre-expiry with only 15-52% volume share, i.e. the wrong event, mirroring the
+index case.
+
+### Declared in advance, so they cannot become excuses afterwards
+
+1. **The base-sampling check and the leg-VR baselines are DECISIVE, not
+   advisory** — the same clause D-014 carried, now standing for all four pairs.
+   L-014 is the reason: M2K produced a monotone, cost-clearing, t=5.7 surface
+   that was pure lead-lag. Any positive Treasury result must survive coarsening
+   to 5-minute base bars and must sit materially below BOTH legs' own VR.
+2. **Roll windows are pair-specific (L-015).** The 780-bar post-roll warm-up
+   adopted for the index pairs is NOT assumed here; each pair's buckets are
+   measured and its own windows adopted.
+3. **A-012 is live for ZN–ZB.** CTD switches and delivery-cycle effects are a
+   documented hazard at the long end; a structural jump must not be read as a
+   tradable dislocation. If ZN–ZB produces a positive result, the CTD-switch
+   dates are checked before anything else.
+4. **Session window.** RTH stays 09:30-16:00 ET per `research_config`
+   session_filter, the same window used for every index pair. This is NOT the
+   most liquid Treasury window — the cash open around 08:20 ET is excluded —
+   and that is a known limitation of holding A-013 constant for comparability,
+   to be revisited in the intraday-seasonality work, not silently varied here.
+5. **Multiple testing.** Notebook 02 examined 180 cells. These four pairs add
+   240 more, for 420 under one protocol. Verdict rule (c) — the effect must
+   strengthen with entry threshold rather than live in one cell — is what
+   guards against that, and it is unchanged.
+
+- **Prior, stated in advance:** the index book produced no tradable intraday
+  reversion (two falsified, one lead-lag artifact). The daily screen found every
+  Treasury pair trending secularly with no long-run anchor, but it explicitly
+  could not test the intraday hypothesis. Treasury curve trades have a genuine
+  structural story that the index pairs lack, so this is a real test rather than
+  a formality — but the same bar applies, and no result is accepted that fails
+  the base-sampling check.
+- **Alternatives:** run one pair, and only continue if it looks promising
+  (rejected — that is selection on the outcome); use beta = 1 for comparability
+  with notebook 02 (rejected — comparability is not worth testing an
+  economically meaningless position); wait for real DV01 data (rejected as a
+  blocker — the vol ratio is a documented, defensible substitute, and the
+  DV01 comparison is notebook 04's job).
+- **Expected effect:** an A-009 verdict per pair. If all four are negative or
+  microstructural, Version 1's core hypothesis has no surviving candidate at
+  intraday horizon and the program's honest conclusion is to report that —
+  a legitimate outcome under CLAUDE.md gate 4.
+- **Review:** No re-test of any Treasury pair under this protocol without a NEW
+  mechanism, pre-registered afresh.

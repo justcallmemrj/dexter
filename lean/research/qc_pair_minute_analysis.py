@@ -1,4 +1,4 @@
-"""Notebook 02 — minute-level MES/MYM pair analysis on OWN-SPLICE series.
+"""Notebooks 02/03 — minute-level PAIR analysis on OWN-SPLICE series.
 
 NOT the trading algorithm (CLAUDE.md gate 1). Zero orders; the only
 subscription exists so `future_chain_provider` can resolve contract symbols.
@@ -35,23 +35,41 @@ import pandas as pd
 from calendars import cme_holidays
 from pair_minute_report import fmt, pair_minute_report
 from roll_adjustment import (
-    build_continuous, index_roll_schedule, parse_contract, splice_audit,
-    third_friday,
+    build_continuous, index_roll_schedule, last_business_day_of_month,
+    parse_contract, splice_audit, third_friday, treasury_roll_schedule,
 )
 
-CODES = ["M19", "U19", "Z19", "H20", "M20", "U20", "Z20", "H21", "M21", "U21",
-         "Z21", "H22", "M22", "U22", "Z22", "H23", "M23", "U23", "Z23", "H24",
-         "M24", "U24", "Z24", "H25", "M25", "U25", "Z25", "H26", "M26"]
+# Quarterly chains over the research window. Index micros roll 8 days before a
+# 3rd-Friday expiry, so the June-2019 contract is still front on 2019-06-01 and
+# the chain opens at M19. Treasuries roll on the last business day of the month
+# BEFORE the delivery month, so ZxM19 has already rolled off by 2019-06-01 and
+# the chain opens at U19 — 28 codes / 27 rolls, matching the EXP-007 ZN
+# acceptance run exactly.
+CODES_INDEX = ["M19", "U19", "Z19", "H20", "M20", "U20", "Z20", "H21", "M21",
+               "U21", "Z21", "H22", "M22", "U22", "Z22", "H23", "M23", "U23",
+               "Z23", "H24", "M24", "U24", "Z24", "H25", "M25", "U25", "Z25",
+               "H26", "M26"]
+CODES_TREASURY = CODES_INDEX[1:]
+
+TREASURIES = ("ZT", "ZF", "ZN", "ZB")
 
 # Set PAIR to run a different pair; nothing else in this file needs editing.
-# Order matters: PAIR[0] is leg A (the numerator of the S1 log ratio).
-PAIR = ("MES", "M2K")
+# Order matters: PAIR[0] is leg A (the numerator/left leg of the S1 residual).
+PAIR = ("ZF", "ZN")
+
+# S1's anchor is an ECONOMIC choice, not a knob (see residual_specs):
+#   index micros  -> "unit"      (both legs comparable duration; beta = 1)
+#   treasuries    -> "vol_ratio" (ZT has ~1/5 of ZN's duration; D-008 mandates
+#                                 an ADAPTIVE hedge for the curve)
+ANCHOR = "vol_ratio" if PAIR[0] in TREASURIES else "unit"
 
 # L-009: MYM data exists ONLY under CBOT (CME serves zero bars for it). The
-# other index micros are CME. Wrong market here means a silent resolve failure,
-# so the mapping is explicit rather than defaulted.
+# other index micros are CME; all treasuries are CBOT. Wrong market here means
+# a silent resolve failure, so the mapping is explicit rather than defaulted.
 MARKETS = {"MES": Market.CME, "MNQ": Market.CME,
-           "M2K": Market.CME, "MYM": Market.CBOT}
+           "M2K": Market.CME, "MYM": Market.CBOT,
+           "ZT": Market.CBOT, "ZF": Market.CBOT,
+           "ZN": Market.CBOT, "ZB": Market.CBOT}
 LEGS = {sym: MARKETS[sym] for sym in PAIR}
 
 WINDOW_START = datetime(2019, 6, 1)              # micros launched 2019-05-06
@@ -116,15 +134,19 @@ class PairMinuteAnalysis(QCAlgorithm):
 
         a, b = PAIR
         sched_a, table_a = built[a][1], built[a][2]
-        self.results["S_PAIR"] = f"{a}_{b}|markets={LEGS[a]}/{LEGS[b]}"
+        self.results["S_PAIR"] = (
+            f"{a}_{b}|markets={LEGS[a]}/{LEGS[b]}|anchor={ANCHOR}|"
+            f"rolls={'treasury' if a in TREASURIES else 'index'}")
         self.results.update(pair_minute_report(
             built[a][0], built[b][0],
             roll_timestamps=list(pd.to_datetime(sched_a["timestamp"])),
             factors_a=table_a.set_index("timestamp")["factor"],
-            factors_b=built[b][2].set_index("timestamp")["factor"]))
+            factors_b=built[b][2].set_index("timestamp")["factor"],
+            anchor=ANCHOR))
 
     def _build(self, leg, market, hol):
-        codes = [leg + c for c in CODES]
+        is_tsy = leg in TREASURIES
+        codes = [leg + c for c in (CODES_TREASURY if is_tsy else CODES_INDEX)]
         fut = self.add_future(
             leg, Resolution.MINUTE, market=market, fill_forward=False,
             extended_market_hours=True,
@@ -133,9 +155,17 @@ class PairMinuteAnalysis(QCAlgorithm):
             contract_depth_offset=0)
         fut.set_filter(0, 0)
 
-        sched = index_roll_schedule(codes, days_before=8,
-                                    splice_time=time(10, 30), tz=None,
-                                    holidays=hol)
+        if is_tsy:
+            # Month-end before the delivery month. Report 01 section 2 showed QC
+            # flips treasuries 18-36 days pre-expiry at only 15-52% volume
+            # share, so its flip is the wrong event here just as it is for the
+            # index micros.
+            sched = treasury_roll_schedule(codes, splice_time=time(10, 30),
+                                           tz=None, holidays=hol)
+        else:
+            sched = index_roll_schedule(codes, days_before=8,
+                                        splice_time=time(10, 30), tz=None,
+                                        holidays=hol)
         times = list(pd.to_datetime(sched["timestamp"]))
         starts, ends = [WINDOW_START] + times, times + [WINDOW_END]
 
@@ -200,8 +230,9 @@ class PairMinuteAnalysis(QCAlgorithm):
         return not any(gapshaped)
 
     def _resolve(self, canonical, code):
-        _, month, year = parse_contract(code)
-        anchor = third_friday(year, month)
+        root, month, year = parse_contract(code)
+        anchor = (last_business_day_of_month(year, month) if root in TREASURIES
+                  else third_friday(year, month))
         for back in (25, 55, 85, 5):
             probe = datetime(anchor.year, anchor.month, anchor.day) - \
                 timedelta(days=back)
