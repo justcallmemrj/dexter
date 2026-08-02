@@ -26,8 +26,9 @@ FIG = REPO / "reports" / "figures"
 
 
 def variance_ratio_figure(pair: str) -> None:
-    """The heart of the negative result: the residual's VR curve looks like
-    reversion at 1-minute bars and like a random walk at 5-minute bars."""
+    """VR < 1 is only evidence if it survives two checks: it must keep decaying
+    past q ~ 30 rather than sitting on a bounce floor, and it must survive
+    coarser base sampling. The leg curves are the baseline it has to beat."""
     vr = pd.read_csv(MR / f"nb02_{pair}_variance_ratio.csv")
     leg_a, leg_b = pair.split("_")
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), sharey=True)

@@ -1,20 +1,30 @@
-# Validation Report 02 — Minute-Level MES–MYM Pair Relationships (A-006 / D-010)
+# Validation Report 02 — Minute-Level Index Pair Relationships (A-006)
 
 **Date:** 2026-08-01 · **Environment:** QC cloud project `dexter-rv-research`
 (34720894), free tier · **Pre-registration:** D-010 (+ amendments A1, A2), all
 written before the corresponding results existed
 **Code:** `src/spread_research/{intraday_reversion,pair_minute_report,calendars,
 roll_adjustment}.py`, driven by `lean/research/qc_pair_minute_analysis.py`
-**Runs:** gate "Emotional Fluorescent Orange Goat" → gate + analysis "Geeky
-Brown Flamingo" → final "Alert Magenta Rabbit" (the one reported here)
-**Machine-readable:** `reports/machine_readable/nb02_*.csv`,
-`qc_pair_minute_MES_MYM.json`
-**Figures:** `nb02_MES_MYM_conditional_reversion.png`, `nb02_MES_MYM_variance_ratio.png`,
-`nb02_MES_MYM_roll_preflight.png` (regenerate: `python scripts/nb02_figures.py --pair MES_MYM`)
+**Pairs:** MES–MYM (§1-§10, pre-registered D-010) · MES–MNQ (§11,
+pre-registered D-012)
+**Runs:** MES–MYM: gate "Emotional Fluorescent Orange Goat" → "Geeky Brown
+Flamingo" → final **"Alert Magenta Rabbit"**. MES–MNQ: **"Virtual Asparagus
+Pelican"** (single run; the pipeline was already validated).
+**Machine-readable:** `reports/machine_readable/nb02_<PAIR>_*.csv`,
+`qc_pair_minute_<PAIR>.json`
+**Figures:** `nb02_<PAIR>_{conditional_reversion,variance_ratio,roll_preflight}.png`
+(regenerate: `python scripts/nb02_figures.py --pair MES_MNQ`)
 
 ---
 
 ## 1. Verdict
+
+**A-006 is FALSIFIED for BOTH index pairs tested so far — MES–MYM and MES–MNQ —
+at intraday horizon.** Both returned the same answer under the same frozen
+protocol, and in both the only statistically significant cells point at
+*continuation*, not reversion. §1-§10 report MES–MYM; §11 reports MES–MNQ.
+
+### MES–MYM
 
 **A-006 is FALSIFIED for MES–MYM at intraday horizon.** The hedged residual
 does not mean-revert over 5–120 minute holding periods on the own-splice
@@ -287,3 +297,119 @@ reversion edge in MES–MYM that does not exist.
 - New limitations: L-012 (MYM 2019-12-12 boundary print), L-013 (open-clustered
   signals under a 390-bar overnight-spanning z-lookback).
 - D-009 constructor: third and fourth symbols validated (MES, MYM).
+
+---
+
+## 11. MES–MNQ (pre-registered D-012, run "Virtual Asparagus Pelican")
+
+Second pair in the D-008 priority order, run under the **identical frozen
+protocol** — same data path, gate, three specifications, 4×5 grid, variance-ratio
+curves, verdict rule and seed. The only permitted differences were the second
+leg symbol and its market (MNQ is `Market.CME`; the MYM/CBOT case was L-009).
+D-012 also froze the signal configuration deliberately, so L-013 is **not**
+fixed here — fixing it mid-sweep would make the two pairs non-comparable.
+
+### 11.1 Gate — the cleanest build in the program so far
+
+| | MES | MNQ |
+|---|---|---|
+| Rolls built | 28 | 28 |
+| `splice_audit` flags | **0** | **0** |
+| Factors by median ratio at full 390-bar overlap | 28/28 | 28/28 |
+
+Aligned RTH panel: **684,300 bars, 1,780 sessions**, 2019-06-03 → 2026-04-24.
+**Zero bars dropped on either leg** — MNQ prints every minute MES does, unlike
+MYM which was missing 1.1%. Against QC's own MNQ series, which carried bad
+factors at 4 of these same 28 rolls (validation report 01 §3), the constructed
+series is clean at all 28. This is now the **fourth and fifth** symbol on which
+the D-009 constructor has been validated (M2K, ZN, MES, MYM, MNQ).
+
+### 11.2 Primary statistic — same answer, same direction
+
+Session-mean P&L of fading, bps, with session-clustered t, at entry_z = 2.0:
+
+| Horizon | S1 (β=1) | S2 (rolling OLS) | S3 (static β, look-ahead) |
+|---|---|---|---|
+| 5 | −0.48 (t −3.46) | −0.42 (t −4.09) | −0.22 (t −1.97) |
+| 15 | −0.96 (t −3.95) | −0.65 (t −3.56) | −0.22 (t −1.18) |
+| 30 | −1.17 (t −3.49) | −0.84 (t −3.11) | −0.34 (t −1.40) |
+| 60 | −0.07 (t −0.15) | −0.54 (t −1.49) | +0.14 (t +0.43) |
+| 120 | +0.70 (t +1.29) | +0.23 (t +0.50) | +1.12 (t +2.74) |
+
+- **Zero cells** in S1 or S2 are positive with |t| ≥ 3. Criterion (a) fails
+  outright; REVERSION PRESENT is unreachable.
+- 22 of 60 cells reach |t| ≥ 3; **19 are negative**, again concentrated at
+  entry_z 1.5–2.0. The three positive significant cells are all in **S3**, the
+  look-ahead-contaminated diagnostic.
+- Largest session-mean in either honest spec: **+1.78 bps** (S1, entry_z 3.0,
+  h = 60) at t = 2.84 — below the significance bar *and* inside the ~2–3 bps
+  round-trip cost band.
+
+**[ESTABLISHED] Fading a 1.5–2.0 sigma MES–MNQ dislocation lost money over
+2019-2026, at horizons from 5 to 30 minutes, in both look-ahead-safe specs.**
+
+### 11.3 Variance ratios — weaker than MES–MYM, and weaker than its own legs
+
+| q | Residual S1 | Residual S2 | MES alone | MNQ alone |
+|---|---|---|---|---|
+| 2 | 0.946 | 0.899 | 0.988 | **1.017** |
+| 30 | 0.928 | 0.829 | 0.865 | 0.954 |
+| 120 | 0.922 | 0.852 | 0.831 | 0.930 |
+
+Two things stand out. First, the shape test fails exactly as before:
+VR(120)/VR(30) = **0.994** for the residual — flat, the bounce floor, not the
+~1/q decay of reversion. Second, and more damning, **the residual's VR at
+q = 120 (0.922) is ABOVE MES's own leg VR (0.831)**: the hedged spread shows
+*less* apparent reversion than one of its own legs traded outright. There is no
+pair relationship here to be found even before the microstructure correction.
+MNQ itself prints VR slightly **above** 1 at q = 2 (1.017), consistent with it
+being the tighter book of the two second legs.
+
+### 11.4 Preflight — and a structural roll cost that MES–MYM did not have
+
+Dispersion around the D-009 splice (baseline 2.29 bps): pre-roll day 1.18×,
+first post-roll day **1.71×**, second post-roll day **1.70×**, back to 1.11× by
+the third. The **780-bar post-roll warm-up adopted in §6.3 is exactly right for
+this pair too** — the elevation spans two RTH days and stops.
+
+The held-position shock is where MES–MNQ differs materially:
+
+| | MES–MYM | MES–MNQ |
+|---|---|---|
+| median \|shift\| | 11.8 bps | **17.4 bps** |
+| max | 15.5 bps | **29.0 bps** |
+| sign | mixed | **negative at all 28 rolls** |
+
+**[ESTABLISHED] The MES–MNQ roll shock is one-signed at every roll in the
+window.** Nasdaq's lower dividend yield gives NQ a higher net cost of carry than
+SPX, so the MNQ calendar spread is systematically wider and the factor
+differential never changes sign. A long-MES / short-MNQ spread carried across a
+roll therefore pays ≈17 bps *every quarter in the same direction* — on the order
+of **70 bps a year of structural drag**, not a symmetric risk that averages out.
+Any future index-pair design must treat this as a carry cost to be modelled, not
+as roll noise to be excluded. (The mirror position earns it, which is a
+financing spread, not an edge.)
+
+### 11.5 Other diagnostics
+
+- Hedge instability again: static β = 0.746, trailing β median 0.704 with
+  p5–p95 of **0.327–1.039**. L-011/L-007 apply identically.
+- Raw minute residual AR(1) half-life ≈ 107,000 bars (~275 RTH days) — no level
+  anchor at minute resolution, same as MES–MYM.
+- Event clock: **24.7%** of |z| ≥ 2 crossings in the first 30 minutes, against
+  24.3% for MES–MYM. Two independent pairs producing the same figure confirms
+  **L-013 is a property of the 390-bar overnight-spanning z-score
+  configuration, not of any pair.** Notebook 06 owns the fix.
+
+### 11.6 Verdict
+
+**A-006 is FALSIFIED for MES–MNQ at intraday horizon** (D-013). The pair with
+the highest daily co-movement (0.93) and the deepest second leg gives the same
+answer as the pair with the only daily-horizon cointegration. Two of the three
+index pairs are now closed at intraday horizon, both with significant
+continuation rather than reversion at the thresholds where the sample is
+largest.
+
+**Not concluded:** MES–M2K is untested and is the pair most dependent on the
+own-splice constructor (QC's M2K series had bad factors at 19 of 28 rolls). The
+index book is not closed until it runs.

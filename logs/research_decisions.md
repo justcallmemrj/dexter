@@ -391,3 +391,44 @@ existed. Second pair in the D-008 priority order.
   (A-009, notebook 03) becomes the program's remaining live hypothesis.
 - **Review:** No re-test of MES–MNQ at intraday horizon without a NEW mechanism,
   pre-registered afresh.
+
+## D-013 — 2026-08-02 — A-006 FALSIFIED for MES–MNQ; two of three index pairs closed
+
+- **Decision:** Close MES–MNQ as an intraday reversion candidate. The D-012
+  pre-registered rule (= D-010 as amended) returns **NO REVERSION**: zero of 60
+  cells are positive at session-clustered |t| >= 3 in either look-ahead-safe
+  spec, and 19 of the 22 significant cells are negative — continuation again, at
+  the same entry_z 1.5-2.0 where the sample is largest. Largest honest
+  session-mean +1.78 bps at t = 2.84, inside the ~2-3 bps round-trip band.
+- **Additional decision — treat the MES–MNQ roll shock as a modelled carry cost,
+  not roll noise.** The held-position shift is negative at all 28 rolls (median
+  17.4 bps, max 29.0), because NQ's lower dividend yield gives it a
+  systematically higher net cost of carry than SPX. That is ~70 bps/year of
+  one-directional drag on a long-MES/short-MNQ spread. Any future index-pair
+  design must model it; excluding roll windows does not remove it, it only
+  avoids taking it as a single hit.
+- **Alternatives:** (i) read the residual VR of 0.92-0.95 as weak reversion —
+  rejected on two counts: the curve is flat past q=30 (VR120/VR30 = 0.994) and
+  the residual sits ABOVE MES's own leg VR at q=120 (0.922 vs 0.831), i.e. the
+  hedged spread shows LESS apparent reversion than a single leg outright;
+  (ii) read S3's three positive significant cells as evidence — rejected, S3 is
+  look-ahead contaminated and pre-declared a diagnostic upper bound; (iii)
+  declare the index book closed now — rejected, MES–M2K is untested and D-008
+  committed to all seven pairs.
+- **Evidence:** validation report 02 §11; run "Virtual Asparagus Pelican"
+  (QC 34720894); EXP-009; `reports/machine_readable/nb02_MES_MNQ_*.csv`. Gate
+  passed with ZERO flags on both legs — the cleanest build in the program, and
+  the fourth/fifth symbol validating the D-009 constructor.
+- **Reason:** The pair with the highest daily co-movement and the deepest second
+  leg gives the same answer as the pair with the only daily cointegration. Two
+  independent pairs, same protocol, same direction.
+- **Expected effect:** MES–M2K is the last index pair; it is also the one most
+  dependent on the own-splice constructor (QC's M2K series had bad factors at 19
+  of 28 rolls), so it is a useful constructor test regardless of its verdict. If
+  it too returns negative, the index book is closed at intraday horizon and
+  notebook 03 / the Treasury curve (A-009) becomes the program's remaining live
+  hypothesis. That is a legitimate outcome under CLAUDE.md gate 4, not a failure
+  to be worked around.
+- **Review:** No re-test of MES–MNQ at intraday horizon without a NEW mechanism,
+  pre-registered afresh. The two negative results also raise the prior against
+  MES–M2K; if M2K comes back positive it must be scrutinised harder, not less.
