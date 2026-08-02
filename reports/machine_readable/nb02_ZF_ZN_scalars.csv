@@ -1,0 +1,9 @@
+key,value
+S_ALIGN,bars=675840|sessions=1746|medbars=390|first=2019-06-03|last=2026-04-24|dropA=0|dropB=0
+S_BETA,static=0.7679|roll_med=0.6381|roll_p5=0.3952|roll_p95=0.8048|n=673890
+S_HL,raw_b=-0.0045442|raw_hl=152.2|z_b=-0.0712665|z_hl=9.4|n=671760
+S_PF_SHOCK,n=27|med=12.97|p90=33.21|max=53.19|units=bps_of_S1_residual
+S_PF_NROLLS,in_window=27|total=27
+S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
+S_GATE,PASS|both legs adjudicated non-gap-shaped
+S_KEYS,55

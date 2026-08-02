@@ -638,3 +638,67 @@ index case.
   a legitimate outcome under CLAUDE.md gate 4.
 - **Review:** No re-test of any Treasury pair under this protocol without a NEW
   mechanism, pre-registered afresh.
+
+## D-017 — 2026-08-02 — ZF–ZN: statistically overwhelming, economically 11x too small; AMBIGUOUS / IMMATERIAL
+
+First Treasury pair under D-016. Run "Calculating Tan Cormorant".
+
+- **Decision:** ZF–ZN returns **AMBIGUOUS / MICROSTRUCTURE**, and is
+  additionally labelled **ECONOMICALLY IMMATERIAL** under the D-010 clause.
+  The pair does not advance. A-009 is UNRESOLVED for ZF–ZN.
+- **Criterion (a) is satisfied more strongly than anywhere in the program.**
+  20/20 cells in S1 and 20/20 in S3 are positive at session-clustered |t| >= 3
+  (18/20 in S2), with t reaching **9.44**. Every entry threshold, every horizon,
+  all three specifications, same sign.
+- **And it is untradeable by an order of magnitude.** The largest honest
+  session-mean is **+0.286 bps**. One round trip costs ~**3.1 bps** of residual
+  (ZF tick = 0.72 bps of its notional; ZN tick = 1.42 bps, contributing
+  beta*1.42 = 0.83 bps at beta = 0.583; crossing both legs in and out), before
+  the A-007 commission placeholder. **The effect is ~11x smaller than the cost
+  of harvesting it.** This is the case D-010 anticipated when it required effect
+  sizes in bps beside every t-statistic: at n = 675,840 bars, significance is
+  free and meaningless on its own.
+- **Criterion (b) fails decisively on the D-016 base-sampling check.** At
+  matched ~30 minutes elapsed the residual VR runs **0.134 (1-min bars) ->
+  0.467 (5-min) -> 0.827 (15-min)**. A VR of 0.10-0.13 at 1-minute sampling is
+  not a relationship; it is tick quantisation. Both legs are themselves
+  bounce-dominated (ZF 0.72, ZN 0.58 at q=120) because Treasury tick sizes are
+  coarse relative to minute-level volatility, and the vol-ratio hedge cancels
+  the common duration risk, leaving the quantisation noise as most of what
+  remains.
+- **Alternatives:** (i) call this REVERSION PRESENT on the strength of t = 9.44
+  (rejected — (b) fails and the effect is 11x below cost; either alone is
+  disqualifying); (ii) argue costs could fall enough to matter (rejected — an
+  11x gap is not a fee-schedule question, and A-007/A-008 are placeholders that
+  if anything understate cost); (iii) read the raw AR(1) half-life of 152 bars
+  as evidence of a real level anchor (rejected — see the caveat below).
+- **Interpretation caveat, important for the remaining pairs.** `S_HL`'s
+  `raw_hl` is NOT comparable between notebook 02 and notebook 03. For the index
+  pairs S1 was a raw log spread, so `raw_hl` measured a genuine level anchor
+  (70k-107k bars). For the Treasury pairs S1 is the CENTERED residual around a
+  trailing 1950-bar fit, so its half-life (152 bars here) is partly mechanical —
+  the reference point itself moves. The conditional statistic is unaffected,
+  because A2 made it price the position from the legs with beta frozen at entry.
+  Do not quote treasury `raw_hl` as a reversion speed.
+- **Two clean structural findings, both new:**
+  1. **Treasury roll windows are flat.** Residual dispersion around the splice
+     is 0.89x / 1.01x / 1.01x / 1.00x of baseline — no elevation at all, unlike
+     every index pair (which ran 1.6x-2.6x). Month-end rolls sit far from
+     expiry with continuous liquidity. **No post-roll warm-up extension is
+     needed for ZF–ZN**, in contrast to L-015 for M2K.
+  2. **L-013's open-clustering is absent.** Only 12.7% of crossings land in the
+     first 30 minutes here, against 22.7-24.7% for all three index pairs, and
+     the profile is nearly flat across the session. This confirms the mechanism:
+     the clustering was an equity-session-open artifact of scoring the first
+     bars against the previous session's mean. Treasuries have been trading
+     through the night, so 09:30 ET is not an open for them.
+- **The vol-ratio anchor was the right call.** Its beta is far more stable than
+  the OLS beta on the same pair (p5-p95 of 0.495-0.693 versus 0.395-0.805) and
+  its median of 0.583 is economically sensible for 5y-vs-10y. D-016's economic
+  argument is supported by the data rather than merely asserted.
+- **Evidence:** run "Calculating Tan Cormorant" (QC 34720894); EXP-011;
+  `reports/machine_readable/nb02_ZF_ZN_*.csv`. Gate: 27 rolls per leg, ZERO
+  flags on both, zero dropped bars.
+- **Review:** No re-test of ZF–ZN under this protocol. Continue to ZT–ZF, ZN–ZB,
+  ZT–ZN in the D-016 order; the remaining three are NOT cancelled by this
+  result, since D-016 fixed the order and skipping would be selection on outcome.
