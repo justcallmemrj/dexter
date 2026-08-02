@@ -432,3 +432,102 @@ existed. Second pair in the D-008 priority order.
 - **Review:** No re-test of MES–MNQ at intraday horizon without a NEW mechanism,
   pre-registered afresh. The two negative results also raise the prior against
   MES–M2K; if M2K comes back positive it must be scrutinised harder, not less.
+
+## D-014 — 2026-08-02 — PRE-REGISTRATION of the notebook-02 A-006 test (MES–M2K)
+
+Written before the MES–M2K series were built and before any MES–M2K statistic
+existed. Last index pair in the D-008 priority order.
+
+- **Decision:** Test A-006 for MES–M2K under the **identical frozen protocol**
+  used for MES–MYM and MES–MNQ (D-010 + A1 + A2). Data path, gate, three
+  specifications, 4x5 grid, variance-ratio curves with leg baselines and the
+  base-sampling check, verdict rule, and seed all carry over verbatim. Signal
+  configuration is again held constant: L-013 stays unfixed until notebook 06,
+  so all three index pairs remain mutually comparable.
+- **Only permitted differences:** the second leg symbol (M2K, `Market.CME`).
+- **This run has a SECOND purpose that is independent of the verdict.** M2K is
+  the symbol whose QC-provided continuous series was worst — bad factors at
+  **19 of 28** rolls (validation report 01 §3), against 14 for MYM and 4 for
+  MNQ. It is therefore the strongest live test of the D-009 own-splice
+  constructor. The EXP-007 acceptance run already built M2K standalone and
+  produced exactly one conservative flag (M2KM19 2019-06-13: −6 bp splice
+  return against a +26 bp factor gap). **Prediction, recorded in advance:** that
+  same roll should flag again, and the A1 bound should classify it
+  `sign_mismatch` (the splice return and the gap have opposite signs), leaving
+  the gate PASSED. If instead the gate fails, or a different set of rolls flags,
+  the constructor is not deterministic and that finding outranks the A-006
+  question.
+- **Prior, stated in advance.** MES–MYM (the only daily-cointegrating pair) and
+  MES–MNQ (the highest co-mover, deepest book) both returned NO REVERSION with
+  significant continuation at entry_z 1.5-2.0. M2K is the weakest co-mover of
+  the three (0.87 daily) and the thinnest book, so a negative result is strongly
+  expected. **A POSITIVE result here must be scrutinised HARDER, not accepted
+  more readily** — on this pair a spurious VR < 1 from bid-ask bounce is more
+  likely, not less. Before any positive verdict is written: check the residual
+  VR against BOTH leg baselines, and confirm the effect survives 5-minute base
+  sampling. Those checks are already in the battery; this clause fixes in
+  advance that they are decisive rather than advisory.
+- **Alternatives:** skip M2K and declare the index book closed on two negatives
+  (rejected — D-008 committed to testing the pairs, and skipping the one that
+  best exercises the constructor would waste the run's second purpose); loosen
+  the rule because two pairs already failed (rejected outright).
+- **Expected effect:** an A-006 verdict for MES–M2K plus a determinism check on
+  the D-009 constructor. If negative, the index book is closed at intraday
+  horizon and notebook 03 / the Treasury curve (A-009) becomes the program's
+  remaining live hypothesis — a legitimate outcome under CLAUDE.md gate 4.
+- **Review:** No re-test without a NEW mechanism, pre-registered afresh.
+
+## D-015 — 2026-08-02 — MES–M2K returns AMBIGUOUS / MICROSTRUCTURE; index book closed as an intraday reversion book
+
+- **Decision:** MES–M2K returns the **AMBIGUOUS / MICROSTRUCTURE** branch of the
+  frozen D-010 rule. Criteria (a) and (c) are SATISFIED — positive with
+  session-clustered |t| >= 3 across adjacent horizons in S1 AND S2, monotone in
+  entry threshold, and at +6.31 bps the largest cell would clear the ~2-3 bps
+  round-trip. Criterion (b) FAILS. **The pair does not advance, and A-006 for
+  MES–M2K is UNRESOLVED — neither confirmed nor falsified.**
+- **What decided it, exactly as D-014 fixed in advance.** The base-sampling
+  check: at matched ~30 minutes elapsed the residual VR runs 0.813 (1-min bars)
+  -> 0.897 (5-min) -> 0.956 (15-min), and at 5-minute base sampling with q=30/60
+  the VR is 0.942/0.940 at bootstrap p = 0.13/0.15 — not significantly below 1.
+  The shape check agrees: VR(120)/VR(30) = 0.947, a floor rather than the ~1/q
+  decay of mean reversion (module calibration: planted AR(1) 0.66, planted
+  bounce >0.85).
+- **Mechanism [PLAUSIBLE]:** lead-lag, not reversion. M2K's own VR at q=2 is
+  **1.012 (p_lt_1 = 0.935), ABOVE 1** — lagged price adjustment, opposite in
+  sign to the bounce depressing MES (0.988). A spread against a lagging leg
+  mechanically converges as the laggard catches up, most strongly when the
+  dislocation is largest — which is the monotone-in-entry_z surface observed —
+  and the effect disappears once bars are coarse enough to contain the catch-up.
+- **Alternatives:** (i) call it REVERSION PRESENT on the strength of (a)+(c)
+  and the cost-clearing effect size (rejected — (b) is not optional, and D-014
+  pre-committed the base-sampling check as decisive precisely so this decision
+  could not be made after seeing the number); (ii) dismiss it as multiple
+  testing across 180 cells (rejected as the primary argument — a monotone
+  surface with t up to 5.7 in two specs is not what 180 independent draws
+  produce; the base-sampling result is the honest reason, not the cell count);
+  (iii) run the delayed-entry test opportunistically right now and report
+  whichever answer it gives (rejected — that test must be pre-registered on its
+  own terms, not bolted onto a run whose result is already known).
+- **Consequence for the program.** All three index pairs are done: two FALSIFIED,
+  one UNRESOLVED-with-a-microstructure-signature. **No index pair has produced a
+  tradable intraday reversion result.** The index book is closed as an intraday
+  reversion book. The Treasury curve (A-009, notebook 03) is now the program's
+  primary live hypothesis — a legitimate outcome under CLAUDE.md gate 4.
+- **The one open thread, and its price.** The MES–M2K delayed-entry test
+  (entry at t+2 / t+5 / t+15 instead of t+1, plus leg-return cross-correlation
+  at lags ±1..5) would settle lead-lag versus reversion in a single run. It is
+  worth doing because a confirmed lead-lag effect in the thinnest micro is
+  itself a documented finding, and because leaving A-006 unresolved for one pair
+  is untidy. It is NOT worth doing before notebook 03: a lead-lag effect in the
+  least liquid contract of the universe is the least likely of the remaining
+  candidates to survive execution modelling (notebook 07). Sequence: notebook 03
+  first, then this.
+- **Evidence:** validation report 02 §12; run "Well Dressed Green Tapir"
+  (QC 34720894); EXP-010; `reports/machine_readable/nb02_MES_M2K_*.csv`.
+- **Also established by this run:** the D-009 constructor is **deterministic**.
+  D-014 predicted in writing which roll would flag (M2KM19 2019-06-13), with
+  what numbers (-6 bp splice vs +26 bp gap) and what classification
+  (`sign_mismatch`); all three reproduced exactly, on the symbol whose
+  QC-provided series was worst (19/28 bad factors).
+- **Review:** No re-test of MES–M2K under this protocol. The delayed-entry test
+  is a NEW mechanism and gets its own pre-registration.

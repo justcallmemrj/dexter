@@ -94,6 +94,25 @@
   or explicitly test the open-gap subset as its own hypothesis. Does not affect
   the report-02 verdict, which is negative with or without those events.
 
+- **L-014:** M2K shows **lagged price adjustment**, not bid-ask bounce: its own
+  variance ratio at q=2 is 1.012 with bootstrap p_lt_1 = 0.935, i.e. ABOVE 1
+  (positive autocorrelation), where MES sits at 0.988 and MNQ at 1.017-with-a
+  -declining-curve. Consequence (validation report 02 section 12): any spread
+  against M2K mechanically "reverts" as the lagging leg catches up, producing a
+  monotone, cost-clearing, statistically strong surface that is NOT a pair
+  relationship and that vanishes once bars are coarse enough to contain the
+  catch-up. This is the reason MES–M2K returned AMBIGUOUS rather than positive.
+  **Any future work on a thin leg (M2K, and by extension any low-volume
+  contract) must run the base-sampling check before believing a reversion
+  result.** Unresolved test: delayed entry (t+2/t+5/t+15) — pre-register
+  separately.
+- **L-015:** The adopted 780-bar post-roll warm-up (report 02 section 6.3) is
+  calibrated on MES–MYM and confirmed on MES–MNQ, but is **insufficient for
+  M2K**, whose residual dispersion is still 1.58x baseline in the THIRD RTH day
+  after the splice (1.93x first day, 1.66x second) where the other two pairs
+  had returned to ~1.1x. M2K work needs >= 1,170 bars and a re-measurement.
+  Roll-window parameters are pair-specific, not universal.
+
 ## Closed
 
 - **L-002 (closed 2026-08-01):** Contract specifications were verified only

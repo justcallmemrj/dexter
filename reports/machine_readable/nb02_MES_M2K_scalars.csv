@@ -1,0 +1,11 @@
+key,value
+S_ALIGN,bars=684300|sessions=1780|medbars=390|first=2019-06-03|last=2026-04-24|dropA=0|dropB=0
+S_BETA,static=1.1376|roll_med=0.5668|roll_p5=0.0533|roll_p95=1.0243|n=682350
+S_HL,raw_b=-9.8e-06|raw_hl=70490.6|z_b=-0.011822|z_hl=58.3|n=682128
+S_BUILD_MES,rolls=28|flags=0|med_ovl=390|nonmedian=0
+S_PF_SHOCK,n=28|med=6.51|p90=11.79|max=12.48|units=bps_of_S1_residual
+S_PF_NROLLS,in_window=28|total=28
+S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
+S_GATE,PASS|both legs adjudicated non-gap-shaped
+S_KEYS,55
+S_FLAG_M2K190613,sr=-0.06|gap=0.2563|thr=0.05|mad=0.0|ratio=0.23|gapshaped=0|why=sign_mismatch

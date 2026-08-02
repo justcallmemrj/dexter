@@ -45,7 +45,7 @@ CODES = ["M19", "U19", "Z19", "H20", "M20", "U20", "Z20", "H21", "M21", "U21",
 
 # Set PAIR to run a different pair; nothing else in this file needs editing.
 # Order matters: PAIR[0] is leg A (the numerator of the S1 log ratio).
-PAIR = ("MES", "MNQ")
+PAIR = ("MES", "M2K")
 
 # L-009: MYM data exists ONLY under CBOT (CME serves zero bars for it). The
 # other index micros are CME. Wrong market here means a silent resolve failure,

@@ -5,8 +5,7 @@
 written before the corresponding results existed
 **Code:** `src/spread_research/{intraday_reversion,pair_minute_report,calendars,
 roll_adjustment}.py`, driven by `lean/research/qc_pair_minute_analysis.py`
-**Pairs:** MES–MYM (§1-§10, pre-registered D-010) · MES–MNQ (§11,
-pre-registered D-012)
+**Pairs:** MES–MYM (§1-§10, D-010) · MES–MNQ (§11, D-012) · MES–M2K (§12, D-014)
 **Runs:** MES–MYM: gate "Emotional Fluorescent Orange Goat" → "Geeky Brown
 Flamingo" → final **"Alert Magenta Rabbit"**. MES–MNQ: **"Virtual Asparagus
 Pelican"** (single run; the pipeline was already validated).
@@ -19,10 +18,19 @@ Pelican"** (single run; the pipeline was already validated).
 
 ## 1. Verdict
 
-**A-006 is FALSIFIED for BOTH index pairs tested so far — MES–MYM and MES–MNQ —
-at intraday horizon.** Both returned the same answer under the same frozen
-protocol, and in both the only statistically significant cells point at
-*continuation*, not reversion. §1-§10 report MES–MYM; §11 reports MES–MNQ.
+**All three index pairs are now tested under one frozen protocol.**
+
+| Pair | Verdict | Note |
+|---|---|---|
+| MES–MYM (§1-§10) | **A-006 FALSIFIED** | significant cells point at continuation |
+| MES–MNQ (§11) | **A-006 FALSIFIED** | same, plus ~70 bps/yr one-signed roll carry |
+| MES–M2K (§12) | **AMBIGUOUS / MICROSTRUCTURE** | (a)+(c) pass, (b) fails on base sampling; lead-lag, not reversion |
+
+Two pairs are closed. The third is **unresolved, not positive**: it produced a
+real, monotone, cost-clearing surface that does not survive coarser base
+sampling, with M2K's own VR above 1 at q=2 pointing at lagged price adjustment.
+One pre-registered follow-up (delayed entry) would settle it. **No index pair
+has produced a tradable intraday reversion result.**
 
 ### MES–MYM
 
@@ -413,3 +421,131 @@ largest.
 **Not concluded:** MES–M2K is untested and is the pair most dependent on the
 own-splice constructor (QC's M2K series had bad factors at 19 of 28 rolls). The
 index book is not closed until it runs.
+
+---
+
+## 12. MES–M2K (pre-registered D-014, run "Well Dressed Green Tapir")
+
+The last index pair, and **the only one of the three that did not cleanly
+fail.** D-014 anticipated this case and fixed the scrutiny in advance; that
+clause is what decides the verdict below.
+
+### 12.1 Gate — and a determinism check the pre-registration predicted
+
+| | MES | M2K |
+|---|---|---|
+| Rolls built | 28 | 28 |
+| `splice_audit` flags | 0 | **1** |
+
+**D-014 predicted, in writing and before the run:** M2K should flag exactly the
+roll that the standalone EXP-007 acceptance flagged (M2KM19 2019-06-13, −6 bp
+splice return against a +26 bp factor gap), the A1 bound should classify it
+`sign_mismatch`, and the gate should PASS.
+
+Observed: `S_FLAG_M2K190613 = sr=-0.06 | gap=0.2563 | ratio=0.23 |
+gapshaped=0 | why=sign_mismatch`, gate **PASS**. Same roll, same −6 bp splice
+return, same +25.6 bp gap, same classification. **[ESTABLISHED] The D-009
+constructor is deterministic across independent runs**, and it reproduces on
+the symbol whose QC-provided series was worst (bad factors at 19 of 28 rolls,
+validation report 01 §3) with a single non-artifact flag. That is the strongest
+constructor evidence in the program.
+
+Aligned panel: 684,300 bars, 1,780 sessions, zero dropped bars on either leg.
+
+### 12.2 Primary statistic — criteria (a) and (c) are SATISFIED
+
+Session-mean P&L of fading, bps (session-clustered t), spec S1 (β = 1):
+
+| Horizon | z≥1.5 | z≥2.0 | z≥2.5 | z≥3.0 |
+|---|---|---|---|---|
+| 5 | −0.63 (−3.73) | −0.31 (−1.49) | +0.22 (0.71) | +1.02 (2.07) |
+| 15 | −1.29 (−4.60) | −0.76 (−2.17) | +1.14 (2.28) | +2.28 (**3.30**) |
+| 30 | −1.86 (−4.55) | −0.49 (−0.96) | +2.40 (**3.59**) | +4.62 (**5.69**) |
+| 60 | −1.97 (−3.36) | +0.70 (1.01) | +3.87 (**4.63**) | +5.57 (**5.70**) |
+| 120 | −1.08 (−1.40) | +2.65 (**3.08**) | +5.10 (**5.12**) | +6.31 (**5.31**) |
+
+- **Criterion (a) is satisfied**: positive with |t| ≥ 3 across ≥2 adjacent
+  horizons, in S1 (z=2.5 and z=3.0) *and* in S2 (z=3.0: h=15 t=3.23, h=30
+  t=3.37, h=120 t=3.51). This is the first time either honest spec has produced
+  a positive significant cell anywhere in this notebook.
+- **Criterion (c) is satisfied**: the effect strengthens monotonically with
+  entry threshold — at h=60, S1 runs −1.97 → +0.70 → +3.87 → +5.57 bps across
+  z = 1.5 → 3.0. It is not one lucky cell; it is a coherent surface.
+- **Materiality is not the objection either.** The largest honest cell is
+  **+6.31 bps** (S1, z=3.0, h=120, n=3,679 events) against a ~2–3 bps
+  round-trip. Unlike MES–MYM and MES–MNQ, this would clear costs.
+- Note the sign flip: at low thresholds (z=1.5) M2K behaves like the other two
+  pairs — significant *continuation*. The positive result lives only in the tail.
+
+### 12.3 Criterion (b) FAILS — and the mechanism is identifiable
+
+VR at 1-minute base sampling:
+
+| q | Residual S1 | MES alone | M2K alone |
+|---|---|---|---|
+| 2 | 0.955 | 0.988 | **1.012** |
+| 30 | 0.813 | 0.865 | 0.935 |
+| 120 | 0.771 | 0.831 | 0.866 |
+
+The residual does sit below both legs. But the two decisive checks fail:
+
+1. **Shape.** VR(120)/VR(30) = **0.947**. Against the module's own calibration —
+   a planted AR(1) decays to 0.66, a planted bid-ask bounce flattens above 0.85
+   — this is a floor, not the ~1/q decay of a mean-reverting process.
+2. **Base sampling — the check D-014 fixed in advance as decisive.** At matched
+   elapsed time of ~30 minutes the residual VR runs **0.813 (1-min bars) → 0.897
+   (5-min) → 0.956 (15-min)**, marching back toward 1 as the bars coarsen. At
+   5-minute base sampling with q = 30 and 60 the VR is 0.942 and 0.940 with
+   bootstrap p = 0.13 and 0.15 — **not significantly below 1 at all**. The
+   effect does not survive coarsening.
+
+**[PLAUSIBLE] The mechanism is lead-lag, not reversion.** M2K's own variance
+ratio at q = 2 is **1.012 with p_lt_1 = 0.935 — above 1**, the signature of
+*lagged price adjustment*, and the opposite sign to the bid-ask bounce that
+depresses MES (0.988). M2K is the thinnest book in the universe and adjusts to
+common index moves with a delay. A spread against a lagging leg mechanically
+"reverts" as the laggard catches up, and that catch-up is largest exactly when
+the dislocation is largest — which is precisely the monotone-in-entry_z surface
+in §12.2. It also explains why the effect evaporates at 5- and 15-minute
+sampling: by then the catch-up has already happened inside the bar.
+
+### 12.4 Verdict — AMBIGUOUS / MICROSTRUCTURE (D-015)
+
+Under the frozen D-010 rule, (a) holding while (b) fails is **exactly** the
+AMBIGUOUS / MICROSTRUCTURE branch: statistically detectable, but carrying the
+signature of a microstructure effect rather than a pair relationship. **This
+does not advance the pair**, and A-006 is neither confirmed nor falsified for
+MES–M2K — it is unresolved.
+
+Stating the multiple-testing position plainly: this is the 3rd pair × 60 cells
+= **180 cells** examined under one protocol. A coherent monotone surface with
+t up to 5.7 across two specs is not what 180 independent draws produce, so
+multiple testing does not by itself dismiss the finding. The base-sampling
+result does.
+
+**The single test that would resolve it** (to be pre-registered fresh, not run
+opportunistically now): re-run the conditional statistic with the entry delayed
+to t+2, t+5 and t+15 instead of t+1. If this is M2K catching up, the effect
+decays sharply with entry delay — a lagging leg has already converged. If it is
+genuine reversion toward a fair value, it survives a few minutes of delay. The
+cross-correlation of leg returns at lags ±1..5 should be measured in the same
+run. Until that runs, no MES–M2K result may be quoted as an edge.
+
+### 12.5 Pair-specific preflight finding — 780 bars is NOT enough for M2K
+
+Dispersion around the splice (baseline 3.98 bps): pre-roll day 1.51×, first
+post-roll day **1.93×**, second **1.66×**, **third still 1.58×**. Unlike
+MES–MYM and MES–MNQ, where dispersion returned to ~1.1× baseline by the third
+RTH day, **M2K is still elevated at 1,170 bars**. The adopted 780-bar post-roll
+warm-up (§6.3) is sufficient for the other two index pairs but **not** for
+M2K; any future M2K work must extend it to at least 1,170 bars and re-measure.
+Held-position shock is milder here (median 6.5 bps, max 12.5) and flips sign
+around 2022 with the carry regime, unlike MES–MNQ's one-signed drag.
+
+Hedge instability is extreme: trailing β median 0.567 with p5–p95 of
+**0.053–1.024**. A 5th-percentile beta of 0.05 is economically meaningless for
+two equity indices and is further reason S2 carries little weight here.
+
+Event clock: 22.7% of crossings in the first 30 minutes (MYM 24.3%, MNQ 24.7%)
+— a third independent confirmation that L-013 is a z-score-configuration
+property.
