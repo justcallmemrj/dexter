@@ -348,3 +348,46 @@ computed; the statistic, the grid and the verdict rule are unchanged.
 - **Review:** No re-test of MES–MYM at intraday horizon without a NEW
   mechanism, pre-registered afresh. Re-running the same grid on the same window
   after seeing this result would be a multiple-testing violation.
+
+## D-012 — 2026-08-02 — PRE-REGISTRATION of the notebook-02 A-006 test (MES–MNQ)
+
+Written before the MES–MNQ series were built and before any MES–MNQ statistic
+existed. Second pair in the D-008 priority order.
+
+- **Decision:** Test A-006 for MES–MNQ under the **identical frozen protocol
+  used for MES–MYM** — D-010 as amended by A1 (splice adjudication is a bound)
+  and A2 (the primary statistic is position P&L with beta frozen at the signal
+  bar, reported with a session-clustered mean alongside the pooled mean). Data
+  path, acceptance gate, the three residual specifications, the 4x5 entry/horizon
+  grid, the variance-ratio curves with their leg baselines and base-sampling
+  check, and the verdict rule (REVERSION PRESENT / NO REVERSION / AMBIGUOUS-
+  MICROSTRUCTURE) all carry over verbatim. Nothing is re-tuned for this pair.
+- **Deliberately held constant: the signal configuration.** L-013 (24.3% of
+  MES–MYM crossings fire in the first 30 minutes because the 390-bar z-window
+  spans the overnight break) is a real defect and is NOT fixed here. Fixing it
+  mid-sweep would make MES–MNQ non-comparable to MES–MYM and would amount to
+  searching over signal definitions between pairs. It is fixed once, in
+  notebook 06, after which BOTH pairs are re-run on the corrected definition.
+- **Only permitted differences from the MES–MYM run:** the second leg symbol
+  and its market (MNQ is `Market.CME`; the MYM/CBOT special case was L-009).
+  Same contract chain M19..M26, same expiry−8d 10:30 ET roll rule, same CME
+  holiday list, same RTH window, same seed (20260801).
+- **Prior, stated in advance so it cannot be adjusted afterwards:** MES–MYM was
+  the only pair with daily-horizon cointegration (D-008) and it returned NO
+  REVERSION with the significant cells pointing at continuation. That is
+  evidence against the index book generally, so a negative MES–MNQ result is the
+  expected outcome rather than a surprise. MES–MNQ is still worth testing
+  because it is a genuinely different microstructure — highest co-movement of
+  the index pairs (0.93 daily) and the deeper book of the two second legs,
+  where MYM was the thinner leg (1.1% of MES bars had no simultaneous MYM
+  print). A POSITIVE result here would therefore be a strong claim and must
+  clear the same bar, not a lower one.
+- **Alternatives:** skip MES–MNQ and close the index book on the MES–MYM result
+  alone (rejected — one pair is not the book, and D-008 committed to testing all
+  seven at minute resolution); loosen the verdict rule because the first pair
+  failed (rejected outright — that is the definition of moving goalposts).
+- **Expected effect:** an A-006 verdict for MES–MNQ. If negative, MES–M2K is the
+  last index pair and the index book is close to closed; the Treasury curve
+  (A-009, notebook 03) becomes the program's remaining live hypothesis.
+- **Review:** No re-test of MES–MNQ at intraday horizon without a NEW mechanism,
+  pre-registered afresh.

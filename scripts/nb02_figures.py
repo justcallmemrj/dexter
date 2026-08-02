@@ -1,14 +1,18 @@
-"""Figures for validation report 02 (MES-MYM minute-level pair relationships).
+"""Figures for the notebook-02 minute-level pair reports.
 
 Reads the ingested CSVs written by `ingest_qc_pair_minute.py` — no QC access
 needed, and no numbers are recomputed here, so a figure can never disagree with
 the report's table.
 
-    python scripts/nb02_figures.py
+    python scripts/nb02_figures.py --pair MES_MNQ
+
+Outputs are namespaced by pair so one pair's figures can never silently
+overwrite another's.
 """
 
 from __future__ import annotations
 
+import argparse
 import pathlib
 
 import matplotlib
@@ -21,18 +25,19 @@ MR = REPO / "reports" / "machine_readable"
 FIG = REPO / "reports" / "figures"
 
 
-def variance_ratio_figure() -> None:
+def variance_ratio_figure(pair: str) -> None:
     """The heart of the negative result: the residual's VR curve looks like
     reversion at 1-minute bars and like a random walk at 5-minute bars."""
-    vr = pd.read_csv(MR / "nb02_variance_ratio.csv")
+    vr = pd.read_csv(MR / f"nb02_{pair}_variance_ratio.csv")
+    leg_a, leg_b = pair.split("_")
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), sharey=True)
 
     ax = axes[0]
     p = vr[vr.base_step_min == 1].pivot(index="q", columns="series", values="vr")
     styles = {"RES1": ("o-", "#b2182b", "residual S1 (beta=1)"),
               "RES2": ("s-", "#ef8a62", "residual S2 (rolling OLS)"),
-              "LEGA": ("^--", "#2166ac", "MES alone"),
-              "LEGB": ("v--", "#67a9cf", "MYM alone")}
+              "LEGA": ("^--", "#2166ac", f"{leg_a} alone"),
+              "LEGB": ("v--", "#67a9cf", f"{leg_b} alone")}
     for col, (st, c, lab) in styles.items():
         if col in p:
             ax.plot(p.index, p[col], st, color=c, label=lab, ms=5)
@@ -70,16 +75,16 @@ def variance_ratio_figure() -> None:
     ax.legend(fontsize=7.5, loc="lower left")
     ax.grid(alpha=0.25)
 
-    fig.suptitle("MES-MYM variance ratios: VR < 1 is bid-ask bounce, not reversion",
+    fig.suptitle(f"{pair.replace('_', '-')} variance ratios: is VR < 1 reversion or bid-ask bounce?",
                  fontsize=11)
     fig.tight_layout()
-    fig.savefig(FIG / "nb02_variance_ratio.png", dpi=150)
+    fig.savefig(FIG / f"nb02_{pair}_variance_ratio.png", dpi=150)
     plt.close(fig)
 
 
-def conditional_reversion_figure() -> None:
+def conditional_reversion_figure(pair: str) -> None:
     """Session-mean P&L of fading a dislocation. Positive = reversion pays."""
-    cr = pd.read_csv(MR / "nb02_conditional_reversion.csv")
+    cr = pd.read_csv(MR / f"nb02_{pair}_conditional_reversion.csv")
     specs = [("S1", "beta = 1 (estimation-free)"),
              ("S2", "trailing OLS residual"),
              ("S3", "static beta (LOOK-AHEAD, diagnostic only)")]
@@ -107,18 +112,18 @@ def conditional_reversion_figure() -> None:
     axes[2].text(0.98, 0.04, "grey band = round-trip cost scale (~2-3 bps)\n"
                              "ringed markers: |t| >= 3 (session-clustered)",
                  transform=axes[2].transAxes, ha="right", fontsize=7, color="0.3")
-    fig.suptitle("Fading an MES-MYM dislocation: negative almost everywhere it "
-                 "is significant", fontsize=11)
+    fig.suptitle(f"Fading a {pair.replace('_', '-')} dislocation "
+                 f"(positive = fading pays)", fontsize=11)
     fig.tight_layout()
-    fig.savefig(FIG / "nb02_conditional_reversion.png", dpi=150)
+    fig.savefig(FIG / f"nb02_{pair}_conditional_reversion.png", dpi=150)
     plt.close(fig)
 
 
-def roll_window_figure() -> None:
+def roll_window_figure(pair: str) -> None:
     """Preflight: dispersion around OUR splice, and the shock a held position
     absorbs at every roll."""
-    rb = pd.read_csv(MR / "nb02_roll_buckets.csv")
-    hs = pd.read_csv(MR / "nb02_held_shock.csv")
+    rb = pd.read_csv(MR / f"nb02_{pair}_roll_buckets.csv")
+    hs = pd.read_csv(MR / f"nb02_{pair}_held_shock.csv")
     order = ["[-1170,-780)", "[-780,-390)", "[-390,0)", "[0,390)",
              "[390,780)", "[780,1170)"]
     rb = rb.set_index("bucket")
@@ -151,18 +156,20 @@ def roll_window_figure() -> None:
     ax.grid(alpha=0.25, axis="y")
 
     fig.tight_layout()
-    fig.savefig(FIG / "nb02_roll_preflight.png", dpi=150)
+    fig.savefig(FIG / f"nb02_{pair}_roll_preflight.png", dpi=150)
     plt.close(fig)
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--pair", default="MES_MYM")
+    pair = ap.parse_args().pair
     FIG.mkdir(parents=True, exist_ok=True)
-    variance_ratio_figure()
-    conditional_reversion_figure()
-    roll_window_figure()
-    for name in ("nb02_variance_ratio.png", "nb02_conditional_reversion.png",
-                 "nb02_roll_preflight.png"):
-        print(f"  wrote reports/figures/{name}")
+    variance_ratio_figure(pair)
+    conditional_reversion_figure(pair)
+    roll_window_figure(pair)
+    for kind in ("variance_ratio", "conditional_reversion", "roll_preflight"):
+        print(f"  wrote reports/figures/nb02_{pair}_{kind}.png")
 
 
 if __name__ == "__main__":

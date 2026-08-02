@@ -160,6 +160,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True, help="JSON file of the statistics dict")
     ap.add_argument("--run", default="", help="QC backtest name, for provenance")
+    ap.add_argument("--pair", default=None,
+                    help="e.g. MES_MNQ. Namespaces the output files so one "
+                         "pair's results can never overwrite another's. "
+                         "Defaults to the run's S_PAIR key when present.")
     args = ap.parse_args()
 
     stats = json.loads(pathlib.Path(args.input).read_text(encoding="utf-8"))
@@ -168,15 +172,18 @@ def main() -> int:
         print("no S_* keys found — is this the right statistics dict?")
         return 1
 
+    pair = args.pair or str(stats.get("S_PAIR", "MES_MYM")).split("|")[0]
     frames = parse(stats)
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "qc_pair_minute_MES_MYM.json").write_text(
-        json.dumps({"run": args.run, "statistics": stats}, indent=1), encoding="utf-8")
+    (OUT / f"qc_pair_minute_{pair}.json").write_text(
+        json.dumps({"run": args.run, "pair": pair, "statistics": stats}, indent=1),
+        encoding="utf-8")
     for name, df in frames.items():
-        path = OUT / f"nb02_{name}.csv"
+        path = OUT / f"nb02_{pair}_{name}.csv"
         df.to_csv(path, index=False)
-        print(f"  {path.name:<34} {len(df):>4} rows")
-    print(f"\n{len(stats)} statistics keys ingested (run={args.run!r})")
+        print(f"  {path.name:<40} {len(df):>4} rows")
+    print(f"\n{len(stats)} statistics keys ingested "
+          f"(pair={pair}, run={args.run!r})")
     return 0
 
 

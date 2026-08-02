@@ -43,7 +43,16 @@ CODES = ["M19", "U19", "Z19", "H20", "M20", "U20", "Z20", "H21", "M21", "U21",
          "Z21", "H22", "M22", "U22", "Z22", "H23", "M23", "U23", "Z23", "H24",
          "M24", "U24", "Z24", "H25", "M25", "U25", "Z25", "H26", "M26"]
 
-LEGS = {"MES": Market.CME, "MYM": Market.CBOT}   # L-009: MYM lives on CBOT only
+# Set PAIR to run a different pair; nothing else in this file needs editing.
+# Order matters: PAIR[0] is leg A (the numerator of the S1 log ratio).
+PAIR = ("MES", "MNQ")
+
+# L-009: MYM data exists ONLY under CBOT (CME serves zero bars for it). The
+# other index micros are CME. Wrong market here means a silent resolve failure,
+# so the mapping is explicit rather than defaulted.
+MARKETS = {"MES": Market.CME, "MNQ": Market.CME,
+           "M2K": Market.CME, "MYM": Market.CBOT}
+LEGS = {sym: MARKETS[sym] for sym in PAIR}
 
 WINDOW_START = datetime(2019, 6, 1)              # micros launched 2019-05-06
 WINDOW_END = datetime(2026, 4, 27)               # inside the free-tier clip
@@ -105,12 +114,14 @@ class PairMinuteAnalysis(QCAlgorithm):
             return
         self.results["S_GATE"] = "PASS|both legs adjudicated non-gap-shaped"
 
-        sched_a, table_a = built["MES"][1], built["MES"][2]
+        a, b = PAIR
+        sched_a, table_a = built[a][1], built[a][2]
+        self.results["S_PAIR"] = f"{a}_{b}|markets={LEGS[a]}/{LEGS[b]}"
         self.results.update(pair_minute_report(
-            built["MES"][0], built["MYM"][0],
+            built[a][0], built[b][0],
             roll_timestamps=list(pd.to_datetime(sched_a["timestamp"])),
             factors_a=table_a.set_index("timestamp")["factor"],
-            factors_b=built["MYM"][2].set_index("timestamp")["factor"]))
+            factors_b=built[b][2].set_index("timestamp")["factor"]))
 
     def _build(self, leg, market, hol):
         codes = [leg + c for c in CODES]

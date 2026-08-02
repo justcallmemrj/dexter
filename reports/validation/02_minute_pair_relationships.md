@@ -9,8 +9,8 @@ roll_adjustment}.py`, driven by `lean/research/qc_pair_minute_analysis.py`
 Brown Flamingo" → final "Alert Magenta Rabbit" (the one reported here)
 **Machine-readable:** `reports/machine_readable/nb02_*.csv`,
 `qc_pair_minute_MES_MYM.json`
-**Figures:** `nb02_conditional_reversion.png`, `nb02_variance_ratio.png`,
-`nb02_roll_preflight.png` (regenerate: `python scripts/nb02_figures.py`)
+**Figures:** `nb02_MES_MYM_conditional_reversion.png`, `nb02_MES_MYM_variance_ratio.png`,
+`nb02_MES_MYM_roll_preflight.png` (regenerate: `python scripts/nb02_figures.py --pair MES_MYM`)
 
 ---
 
@@ -90,7 +90,7 @@ Across the full 60-cell grid (3 specs × 4 entry thresholds × 5 horizons):
 
 **[ESTABLISHED] Fading a 1.5–2.0 sigma MES–MYM dislocation lost money over
 2019-2026, at every horizon from 5 to 120 minutes, in both look-ahead-safe
-specifications.** Figure: `reports/figures/nb02_conditional_reversion.png` —
+specifications.** Figure: `reports/figures/nb02_MES_MYM_conditional_reversion.png` —
 every significant marker in S1 and S2 sits below zero, and the only positive
 significant markers are in the look-ahead spec, inside the cost band.
 
@@ -123,7 +123,7 @@ reversion. Both pre-registered guards say otherwise:
 
 Note also that both legs individually sit at VR ≈ 0.83–0.87 by q = 120, so the
 residual's 0.75 is not a large step beyond the bounce baseline its own legs set.
-Figure: `reports/figures/nb02_variance_ratio.png` — the right panel compares
+Figure: `reports/figures/nb02_MES_MYM_variance_ratio.png` — the right panel compares
 base frequencies at MATCHED elapsed horizons, which is the honest comparison
 (a 15-minute bar at q = 15 spans 225 minutes, not 15).
 
@@ -167,7 +167,7 @@ Bar-offset buckets around OUR splice timestamps, in bars of the RTH series
 | [780,1170) | 10,920 | 1.95 | 1.10× | 1.26 | 0.168 |
 | baseline | 611,040 | 1.77 | 1.00× | 1.25 | 0.164 |
 
-Figure: `reports/figures/nb02_roll_preflight.png`.
+Figure: `reports/figures/nb02_MES_MYM_roll_preflight.png`.
 
 **[ESTABLISHED] Residual dispersion is elevated from one RTH day before the
 splice to two RTH days after it**, peaking at 2.6× baseline on the first
