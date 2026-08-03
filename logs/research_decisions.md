@@ -810,3 +810,176 @@ First Treasury pair under D-016. Run "Calculating Tan Cormorant".
   window's results as evidence.
 - **Review:** Revisit only if one of the open threads returns a result, or if
   the user funds a Version 2 with a different mechanism.
+
+## D-020 — 2026-08-03 — PRE-REGISTRATION of notebook 06: session-anchored z-score (L-013)
+
+Written before the session-anchored z-score existed in code and before any
+number under it existed. Open thread 1 of D-018/D-019. Nothing below may be
+revised in response to an outcome; a revision voids the test and forces a fresh
+pre-registration.
+
+### What is actually being tested, stated honestly first
+
+L-013: the configured z-window is 390 bars = one RTH day, so it reaches back
+ACROSS the overnight break and the first bars of a session are scored against
+yesterday's mean. Measured consequence: **22.7-24.7% of |z| >= 2 crossings in
+the three index pairs land in the first 30 minutes** (MYM 24.3, MNQ 24.7, M2K
+22.7), against **12.7-13.6% in the four Treasury pairs**, whose profile is
+nearly flat. Treasuries trade through the night, so 09:30 ET is not an open for
+them — which is why the same configuration produces clustering in one asset
+class and not the other, and why this is a property of the SIGNAL DEFINITION.
+
+**This is a robustness test of a negative conclusion, not a second attempt at a
+positive one, and the reason is structural rather than a matter of taste.**
+Criterion (b) of the D-010 verdict rule — the variance-ratio shape and
+base-sampling checks — is computed on the RESIDUAL and does not involve the
+z-score at all. Changing the signal definition therefore cannot change (b), and
+(b) already failed in all seven pairs. Under the frozen rule a pair can move
+from NO REVERSION to AMBIGUOUS / MICROSTRUCTURE under a new signal; **it cannot
+reach REVERSION PRESENT.** That is stated here, in advance, so that a positive
+(a) result under the new signal cannot later be presented as more than it is.
+
+What the test can genuinely settle: whether the program's measured effects — in
+particular the significant CONTINUATION at entry_z 1.5-2.0 that falsified
+MES-MYM and MES-MNQ — were an artifact of scoring overnight repricings as
+intraday dislocations, or survive their removal.
+
+### Decision — the three signal definitions, fixed now
+
+All three are computed in the same run on the same bars, and all three are
+reported side by side. None is privileged after the fact.
+
+- **Z0 — the current definition (baseline, already spent).**
+  `rolling_zscore(residual, 390)`, shifted; window spans the overnight break.
+  Re-emitted in this run for one purpose only: it must REPRODUCE the banked
+  notebook-02 numbers for the same pair. See the validity gate below.
+- **Z1 — session-anchored (the fix under test).** At bar t of session s, mean
+  and standard deviation are taken over the bars of session s strictly before
+  t, i.e. an expanding within-session window, with no bar from any prior
+  session entering. Note this is the SAME object as "trailing 390 bars
+  truncated at the session open", because an RTH session is exactly 390 bars —
+  so the fix introduces no new window-length parameter.
+  **Warm-up: z is undefined (NaN, no event) for the first 30 bars of each
+  session.** Fixed at 30 now, and justified before the fact: a standard
+  deviation from fewer than ~30 observations has over 13% relative standard
+  error, so a shorter warm-up would replace an overnight-gap artifact with an
+  estimation artifact; 30 minutes is also the bucket width the event clock
+  already uses, so the diagnostic and the signal agree on the same grid.
+- **Z2 — Z0 with first-30-minute events excluded (the decomposition).** The
+  unchanged 390-bar overnight-spanning score, with events whose signal bar is
+  in the first 30 minutes of the session dropped. Z2 exists because Z1 changes
+  two things at once — how the open is SCORED and whether the open TRADES — and
+  without Z2 a change in the grid could not be attributed to either. Z2 removes
+  the open without re-scoring; Z1 does both.
+
+Everything else is frozen exactly as in D-010 as amended by A1 and A2: the same
+own-splice constructed data path and acceptance gate, the same three residual
+specifications (S1/S2/S3 with S3 look-ahead and never evidence), the same 4x5
+entry/horizon grid, the same position-P&L primary statistic with beta frozen at
+the signal bar, the same session-clustered inference, the same seed 20260801,
+and the same anchor per asset class (`unit` for index, `vol_ratio` for
+Treasuries).
+
+### Decision — pairs, and why not all seven
+
+Four runs: **MES-MYM, MES-MNQ, MES-M2K** — the three pairs in which L-013 is
+present — plus **ZF-ZN as a negative control**, the pair in which it is absent
+(12.7% at the open, flat profile). The control is the point of including a
+Treasury pair at all: the session anchor should move the index pairs and should
+NOT materially move ZF-ZN, and if it moves ZF-ZN just as much then the fix is
+doing something other than what it claims.
+
+The other three Treasury pairs are NOT run. Their disqualification is a cost
+ratio of 7-9x, and no re-definition of the entry signal can raise a 0.166-0.664
+bps effect through a 1.4-5.9 bps cost. Running them would burn free-tier
+backtests to re-confirm a conclusion the signal cannot reach. This scope is
+fixed now so it cannot be widened after seeing the four results.
+
+### Decision — VR blocks are NOT recomputed, and why that is not a shortcut
+
+The variance-ratio curves, the leg baselines and the base-sampling checks are
+functions of the residual and the sampling interval only. No z-score enters
+them. They are therefore carried forward unchanged from EXP-008/009/010/011 and
+criterion (b) keeps its existing value for each pair. Recomputing them would
+consume most of the run's output budget to reproduce identical numbers.
+
+### Decision — validity gates, applied BEFORE the grid is read
+
+Both are pass/fail on mechanics, not on outcome, and either failure voids the
+run rather than producing a result to interpret.
+
+1. **Reproduction gate.** The Z0 grid emitted by this run must reproduce the
+   banked notebook-02/03 grid for the same pair (`nb02_<PAIR>_conditional_
+   reversion.csv`) cell for cell, to the emitted precision. If it does not, the
+   pipeline changed and no comparison between Z0 and Z1 is meaningful.
+2. **Implementation gate.** Under Z1 the share of |z| >= 2 crossings in the
+   first 30 minutes must be **zero by construction** (the warm-up forbids them),
+   and the share in the 30-60 minute bucket must fall below the Z0 share for the
+   same bucket in the same pair. If the profile does not flatten, the anchor is
+   not doing what L-013 says it does and the implementation is wrong.
+
+### Decision — verdict rule, declared now
+
+Per pair, the D-010 rule is re-applied to the Z1 grid unchanged: (a) positive
+with session-clustered |t| >= 3 at >= 2 adjacent horizons in S1 AND S2;
+(b) inherited from the pair's existing variance-ratio evidence; (c) the effect
+strengthens with entry threshold. Effect sizes in bps beside every t-statistic.
+
+Program-level readings, fixed in advance:
+
+- **L-013 IMMATERIAL** if every pair's Z1 verdict equals its Z0 verdict. The
+  D-019 no-go stands, strengthened: the negative outcome is not an artifact of
+  the signal definition, and L-013 closes.
+- **L-013 MATERIAL — DIRECTION ONLY** if a Z1 verdict differs from its Z0
+  verdict. The pair does NOT advance on this evidence: (b) is unchanged and the
+  window is the same one already spent, so a flip is HYPOTHESIS-GENERATING and
+  requires a fresh window, venue or resolution to confirm. What it would change
+  is the priority of open thread 3, not the program's conclusion.
+- **IMPLEMENTATION DEFECT** if either validity gate fails: no verdict is read
+  and the run is repeated after the defect is fixed.
+
+Multiple testing, stated rather than reconstructed: this adds 4 pairs x 3 specs
+x 4 entries x 5 horizons x 2 new signal definitions = **480 cells** to the 420
+already examined. That is precisely why a flip cannot advance a pair here, and
+why the interpretation bar above is set on direction rather than on any single
+cell.
+
+### Prior, stated in advance
+
+The index pairs' significant cells are CONTINUATION concentrated at entry_z
+1.5-2.0, which is where the event count is largest and therefore where
+open-clustered events are most heavily represented. If those events are
+overnight repricings that keep repricing, removing them should move the index
+grids TOWARD zero rather than toward positive. The expected outcome is
+therefore weaker continuation, unchanged verdicts, and L-013 closing as
+immaterial. ZF-ZN is expected to be almost unchanged.
+
+### Secondary, and explicitly EXPLORATORY
+
+The open subset itself — events whose signal bar is in the first 30 minutes
+under Z0 — is reported as its own conditional statistic, because L-013 listed
+"test the open-gap subset as its own hypothesis" as one of the three legitimate
+fixes. It is labelled EXPLORATORY and no verdict is issued on it: overnight-gap
+reversion is a DIFFERENT hypothesis from A-006, the residual variance ratio is
+not the right supporting statistic for it, and inventing a verdict rule for it
+after seeing this run's numbers is exactly what pre-registration exists to
+prevent. A positive here buys a fresh pre-registration and nothing else.
+
+- **Alternatives:** (i) fix L-013 by lengthening the z-window to 1,950 bars so
+  the overnight break is a smaller fraction of it (rejected — it dilutes the
+  break rather than removing it, and it changes the horizon the signal is
+  normalised against, which is a second confound); (ii) drop the first 30
+  minutes from the DATA rather than from the events (rejected — that also
+  removes those bars from every residual, variance-ratio and half-life estimate
+  and would make this run non-comparable to notebook 02); (iii) run all seven
+  pairs (rejected — see scope above); (iv) tune the warm-up length after seeing
+  the event clock (rejected outright — that is the specification search this
+  project's whole method exists to avoid).
+- **Evidence to be produced:** report
+  `reports/validation/06_signal_definition_and_session_anchoring.md`, machine-
+  readable `nb06_<PAIR>_*.csv`, EXP-015 onward, one QC run per pair.
+- **Expected effect:** L-013 resolved in one direction or the other, and the
+  D-019 conclusion either strengthened or given a documented caveat.
+- **Review:** No re-run of any pair under this protocol on this window. If a
+  verdict flips, the follow-up is a different window/venue, pre-registered
+  afresh — not another pass over these bars.
