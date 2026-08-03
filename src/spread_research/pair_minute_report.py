@@ -18,9 +18,10 @@ import numpy as np
 import pandas as pd
 
 from .intraday_reversion import (
-    conditional_reversion, event_clock_profile, half_life_within_session,
-    held_position_roll_shock, roll_window_diagnostics, rth_frame, session_ids,
-    subsample_within_session, variance_ratio,
+    conditional_reversion, event_clock_profile, first_minutes_mask,
+    half_life_within_session, held_position_roll_shock, roll_window_diagnostics,
+    rth_frame, session_anchored_zscore, session_ids, subsample_within_session,
+    variance_ratio,
 )
 from .signals import rolling_zscore
 
@@ -30,6 +31,14 @@ ENTRY_GRID = (1.5, 2.0, 2.5, 3.0)
 HORIZONS = (5, 15, 30, 60, 120)
 Q_GRID = (2, 5, 15, 30, 60, 120)
 SEED = 20260801
+
+# D-020 (notebook 06 / L-013). Both are frozen by the pre-registration and are
+# not tuning parameters: the warm-up is set by the precision of a standard
+# deviation from n observations, and the open window matches the event clock's
+# leading bucket so the signal and the diagnostic cannot disagree about which
+# events are "at the open".
+SESSION_WARMUP_BARS = 30
+OPEN_WINDOW_MINUTES = 30
 
 
 def fmt(x, nd: int = 4) -> str:
@@ -314,4 +323,127 @@ def _vr_blocks(specs, log_a, log_b, q_grid, n_boot, seed) -> dict[str, str]:
                 parts.append(f"{q}:{fmt(v['vr'])}:{fmt(v['ci_lo'])}:"
                              f"{fmt(v['ci_hi'])}:{fmt(v['p_lt_1'], 3)}")
             out[f"S_VR_{tag}_s{st}"] = "|".join(parts)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Notebook 06 — signal definition (L-013), pre-registered in D-020
+# ---------------------------------------------------------------------------
+
+
+def pair_signal_report(close_a: pd.Series, close_b: pd.Series, *,
+                       entry_grid=ENTRY_GRID, horizons=HORIZONS,
+                       anchor: str = "unit",
+                       warmup_bars: int = SESSION_WARMUP_BARS,
+                       open_minutes: int = OPEN_WINDOW_MINUTES,
+                       ) -> dict[str, str]:
+    """The D-020 battery: one pair, one data path, three signal definitions.
+
+    Z0  `rolling_zscore(residual, 390)` — the configured score, whose window is
+        exactly one RTH session and therefore reaches back across the overnight
+        break. Re-emitted here ONLY as a reproduction gate: it must match the
+        banked notebook-02/03 grid for the same pair cell for cell, otherwise
+        the pipeline changed and no Z0-vs-Z1 comparison means anything.
+    Z1  `session_anchored_zscore(residual, warmup_bars)` — the fix under test.
+    Z2  Z0's events with those in the first `open_minutes` of the session
+        dropped. Z2 exists because Z1 changes two things at once (how the open
+        is SCORED and whether it TRADES); without Z2 a difference could not be
+        attributed to either.
+
+    Everything else is frozen as in D-010/A1/A2: same residual specifications,
+    same 4x5 grid, same position-P&L outcome with beta frozen at the signal
+    bar, same session-clustered inference.
+
+    Variance-ratio blocks are deliberately absent. They are functions of the
+    residual and the sampling interval only — no z-score enters them — so
+    criterion (b) is inherited unchanged from EXP-008/009/010/011 and
+    recomputing it here would spend the run's output budget reproducing
+    identical numbers. This is also why the D-020 test CANNOT move a pair to
+    REVERSION PRESENT: (b) already failed everywhere and a signal change cannot
+    touch it.
+
+    The open-only subset is reported for S1 alone and is EXPLORATORY: overnight
+    gap reversion is a different hypothesis from A-006, and D-020 issues no
+    verdict on it.
+    """
+    out: dict[str, str] = {}
+    a, b = rth_frame(close_a), rth_frame(close_b)
+    df = pd.concat({"a": a, "b": b}, axis=1, join="inner").dropna()
+    if df.empty:
+        return {"S_ALIGN": "EMPTY|no overlapping RTH bars"}
+    log_a, log_b = np.log(df["a"]), np.log(df["b"])
+
+    per_session = pd.Series(1, index=df.index).groupby(df.index.normalize()).sum()
+    out["S_ALIGN"] = (
+        f"bars={len(df)}|sessions={len(per_session)}|"
+        f"medbars={int(per_session.median())}|first={df.index[0].date()}|"
+        f"last={df.index[-1].date()}|dropA={len(a) - len(df)}|"
+        f"dropB={len(b) - len(df)}")
+    out["S_SIGDEF"] = (f"z0=rolling{ZS_LOOKBACK}|z1=session_anchored"
+                       f"|warmup={warmup_bars}|open_win={open_minutes}"
+                       f"|vr=inherited_from_nb02")
+
+    specs, info = residual_specs(log_a, log_b, anchor=anchor)
+    betas, legs = info["betas"], (log_a, log_b)
+    b1 = betas["S1"]
+    out["S_SPECS"] = (
+        f"anchor={anchor}|S1_beta_med={fmt(b1.median())}|"
+        f"S1_beta_p5={fmt(b1.quantile(.05))}|S1_beta_p95={fmt(b1.quantile(.95))}")
+
+    for name, res in specs.items():
+        z0 = rolling_zscore(res, ZS_LOOKBACK)
+        z1 = session_anchored_zscore(res, warmup_bars)
+        not_open = ~first_minutes_mask(res.index, open_minutes)
+
+        variants = [("0", z0, None, False), ("1", z1, None, True),
+                    ("2", z0, not_open, False)]
+        if name == "S1":
+            variants.append(("O", z0, ~not_open, False))    # EXPLORATORY
+        for tag, z, filt, bounded in variants:
+            for ez in entry_grid:
+                cr = conditional_reversion(
+                    res, z, entry_z=ez, horizons=horizons, legs=legs,
+                    beta=betas[name], event_filter=filt,
+                    session_bounded_events=bounded)
+                out[f"S_CR{tag}_{name}_{str(ez).replace('.', '')}"] = "|".join(
+                    f"{int(r['horizon_bars'])}:{fmt(r['mean_bps'], 3)}:"
+                    f"{fmt(r['mean_session_bps'], 3)}:{fmt(r['t_clustered'], 2)}:"
+                    f"{fmt(r['hit_rate'], 3)}:{int(r['n_events'])}"
+                    for _, r in cr.iterrows())
+
+        if name == "S1":
+            out.update(_signal_diagnostics(res, z0, z1, open_minutes))
+    return out
+
+
+def _signal_diagnostics(res: pd.Series, z0: pd.Series, z1: pd.Series,
+                        open_minutes: int) -> dict[str, str]:
+    """The D-020 implementation gate, plus the coverage cost of the warm-up.
+
+    The gate is mechanical and is read BEFORE any grid: under Z1 the share of
+    crossings inside the warm-up must be zero by construction, and the profile
+    must flatten. If it does not, the anchor is not doing what L-013 says it
+    does and the run is void rather than interesting.
+    """
+    out: dict[str, str] = {}
+    for tag, z, bounded in (("0", z0, False), ("1", z1, True)):
+        prof = event_clock_profile(z, 2.0, session_bounded=bounded)
+        out[f"S_CLOCK{tag}"] = "|".join(
+            f"{int(r['minutes_from_open'])}:{fmt(r['share'], 3)}"
+            for _, r in prof.iterrows())
+        lead = prof[prof["minutes_from_open"] < open_minutes]["share"].sum()
+        out[f"S_OPENSHARE{tag}"] = (
+            f"share={fmt(lead, 4)}|n_events={int(prof['n_events'].sum())}")
+
+    sess = session_ids(res.index)
+    first_bar = np.concatenate([[True], sess[1:] != sess[:-1]])
+    az0 = z0.abs().values
+    cross0 = np.concatenate([[False], (az0[1:] >= 2.0) & (az0[:-1] < 2.0)])
+    out["S_ZCOVER"] = (
+        f"z0_defined={int(z0.notna().sum())}|z1_defined={int(z1.notna().sum())}|"
+        f"bars={len(res)}|z0_first_bar_events={int((cross0 & first_bar).sum())}")
+
+    hl = half_life_within_session(z1.dropna())
+    out["S_HL1"] = (f"z1_b={fmt(hl['b'], 7)}|z1_hl={fmt(hl['half_life_bars'], 1)}|"
+                    f"n={int(hl['n'])}")
     return out

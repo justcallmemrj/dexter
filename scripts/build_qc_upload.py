@@ -37,8 +37,16 @@ MODULES = [
     ("src/spread_research/roll_adjustment.py", "roll_adjustment.py"),
     ("src/spread_research/intraday_reversion.py", "intraday_reversion.py"),
     ("src/spread_research/pair_minute_report.py", "pair_minute_report.py"),
-    ("lean/research/qc_pair_minute_analysis.py", "main.py"),
 ]
+
+# Which driver becomes `main.py`. The shipped modules are identical in every
+# case — only the entry point changes — so a notebook-06 run and a notebook-02
+# run execute byte-identical statistics code, which is what makes D-020's
+# reproduction gate meaningful.
+DRIVERS = {
+    "pair": "lean/research/qc_pair_minute_analysis.py",        # notebooks 02/03
+    "signal": "lean/research/qc_signal_definition_analysis.py",  # notebook 06
+}
 
 RELATIVE_IMPORT = re.compile(r"^(\s*from\s+)\.(\w+)(\s+import\s+)", re.MULTILINE)
 
@@ -52,9 +60,9 @@ def flatten(text: str) -> tuple[str, int]:
     return out, n
 
 
-def build() -> dict:
+def build(driver: str = "pair") -> dict:
     files, manifest = {}, []
-    for src, dest in MODULES:
+    for src, dest in MODULES + [(DRIVERS[driver], "main.py")]:
         path = REPO / src
         raw = path.read_text(encoding="utf-8")
         text, n = flatten(raw)
@@ -71,9 +79,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--chunk", type=int, default=7000)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--driver", choices=sorted(DRIVERS), default="pair",
+                    help="which driver is uploaded as main.py")
     args = ap.parse_args()
 
-    bundle = build()
+    bundle = build(args.driver)
     blob = base64.b64encode(
         gzip.compress(json.dumps(bundle["files"]).encode(), 9)).decode()
 

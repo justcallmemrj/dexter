@@ -141,6 +141,75 @@ def subsample_within_session(x: pd.Series, step: int) -> pd.Series:
 
 
 # ---------------------------------------------------------------------------
+# Session-anchored signal definition (L-013, pre-registered in D-020)
+# ---------------------------------------------------------------------------
+
+
+def session_anchored_zscore(x: pd.Series, warmup_bars: int = 30) -> pd.Series:
+    """Z-score against the statistics of THIS SESSION ONLY, up to bar t-1.
+
+    The configured `rolling_zscore(residual, 390)` uses a 390-bar window, which
+    is exactly one RTH session — so at the open it reaches back across the
+    overnight break and scores the first bars of a session against yesterday's
+    mean. An overnight repricing then registers as an intraday dislocation:
+    22.7-24.7% of |z| >= 2 crossings in the index pairs land in the first 30
+    minutes, against 12.7-13.6% in the Treasury pairs, which trade through the
+    night and for which 09:30 ET is not an open at all (L-013).
+
+    This is the fix: an expanding within-session window, so no bar from any
+    prior session enters. Because an RTH session is 390 bars, this is the SAME
+    object as "trailing 390 bars truncated at the session open" — the fix
+    introduces no new window-length parameter.
+
+    `warmup_bars` bars at the start of each session return NaN, because a
+    standard deviation from a handful of observations is noisier than the
+    artifact being removed (at n = 30 its relative standard error is still
+    ~13%). No event can fire inside the warm-up.
+
+    Same convention as `signals.rolling_zscore`: bar t is compared against
+    statistics ending at t-1, so the current bar never contributes to its own
+    normalization. A NaN anywhere in a session propagates to the rest of that
+    session rather than being silently skipped — callers pass NaN-free
+    residuals, and a silent skip would corrupt the window rather than announce
+    itself.
+    """
+    if warmup_bars < 2:
+        raise ValueError(f"warmup_bars must be >= 2, got {warmup_bars}")
+    v = x.values.astype(float)
+    out = np.full(len(v), np.nan)
+    for lo, hi in _session_slices(session_ids(x.index)):
+        seg = v[lo:hi]
+        n = len(seg)
+        if n <= warmup_bars:
+            continue
+        k = np.arange(n, dtype=float)                    # prior bars available
+        c1 = np.concatenate([[0.0], np.cumsum(seg)])[:n]
+        c2 = np.concatenate([[0.0], np.cumsum(seg * seg)])[:n]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            mean = c1 / k
+            var = (c2 - k * mean ** 2) / (k - 1.0)
+            sd = np.sqrt(np.where(var > 0, var, np.nan))
+            z = (seg - mean) / sd
+        z[:warmup_bars] = np.nan
+        out[lo:hi] = z
+    return pd.Series(out, index=x.index, name="zscore_session")
+
+
+def first_minutes_mask(index: pd.DatetimeIndex, minutes: int = 30, *,
+                       open_t: time = RTH_OPEN) -> pd.Series:
+    """True for bars inside the first `minutes` of the session.
+
+    Uses the same arithmetic as `event_clock_profile`, so "first 30 minutes"
+    here is exactly that profile's leading bucket and the two diagnostics
+    cannot disagree about which events are "at the open".
+    """
+    mins = np.asarray((index.hour * 60 + index.minute)
+                      - (open_t.hour * 60 + open_t.minute))
+    return pd.Series((mins >= 0) & (mins < minutes), index=index,
+                     name=f"first_{minutes}min")
+
+
+# ---------------------------------------------------------------------------
 # Variance ratio
 # ---------------------------------------------------------------------------
 
@@ -285,7 +354,9 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
                           require_full_horizon: bool = True,
                           min_events: int = 20,
                           legs: tuple[pd.Series, pd.Series] | None = None,
-                          beta: pd.Series | float | None = None) -> pd.DataFrame:
+                          beta: pd.Series | float | None = None,
+                          event_filter: pd.Series | None = None,
+                          session_bounded_events: bool = False) -> pd.DataFrame:
     """Event study: when |z| first crosses `entry_z`, does fading it pay?
 
     Convention (matches signals.py): the signal is read at bar t; the position
@@ -324,8 +395,27 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
 
     This is a MEASUREMENT tool. It applies no costs, no slippage and no
     capacity limit, so its output is an upper bound on any tradable effect.
+
+    Two options exist for the D-020 signal-definition work and both default OFF
+    so that notebook-02/03 results reproduce bit for bit:
+
+    `event_filter` — a boolean Series over the residual's index; only crossings
+    whose SIGNAL bar is True are kept. Used to build a subset of an existing
+    signal's events (e.g. dropping the first 30 minutes of the session) without
+    touching the z-score, so the subset is a strict subset of the same events.
+
+    `session_bounded_events` — require the bar before the crossing to be in the
+    same session. It matters when z carries a per-session warm-up: those bars
+    are dropped by the alignment below, which would otherwise leave a session's
+    first scored bar adjacent to the PREVIOUS session's last bar and let a
+    crossing be detected across the close. It is left off for the 390-bar
+    overnight-spanning score, where such crossings are part of the artifact
+    under study (L-013) rather than an alignment defect, and where turning it
+    on would silently change the baseline.
     """
     cols = {"res": residual, "z": z}
+    if event_filter is not None:
+        cols["evf"] = event_filter.reindex(residual.index).fillna(False).astype(float)
     if legs is not None:
         cols["la"], cols["lb"] = legs[0], legs[1]
         cols["beta"] = (pd.Series(float(beta), index=residual.index)
@@ -344,6 +434,10 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
 
     az = np.abs(zv)
     cross = np.concatenate([[False], (az[1:] >= entry_z) & (az[:-1] < entry_z)])
+    if session_bounded_events:
+        cross &= np.concatenate([[False], sess[1:] == sess[:-1]])
+    if event_filter is not None:
+        cross &= df["evf"].values.astype(bool)
     ev = np.flatnonzero(cross)
     sign = -np.sign(zv)
 
@@ -381,7 +475,8 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
 
 
 def event_clock_profile(z: pd.Series, entry_z: float,
-                        bucket_minutes: int = 30) -> pd.DataFrame:
+                        bucket_minutes: int = 30,
+                        session_bounded: bool = False) -> pd.DataFrame:
     """Where in the session |z| crossings happen.
 
     The z-score lookback (390 bars = one RTH day, per config) reaches back
@@ -390,11 +485,18 @@ def event_clock_profile(z: pd.Series, entry_z: float,
     pile up right after the open and the "intraday reversion" being measured is
     really an open-gap effect. This profile is what makes that visible instead
     of invisible.
+
+    `session_bounded` mirrors `conditional_reversion`'s option of the same name
+    and must be set for any z-score carrying a per-session warm-up, so that the
+    two diagnostics count the same events.
     """
     zz = z.dropna()
     az = zz.abs()
     cross = np.concatenate([[False], (az.values[1:] >= entry_z)
                             & (az.values[:-1] < entry_z)])
+    if session_bounded:
+        s = session_ids(zz.index)
+        cross &= np.concatenate([[False], s[1:] == s[:-1]])
     idx = zz.index[cross]
     if len(idx) == 0:
         return pd.DataFrame(columns=["minutes_from_open", "n_events", "share"])
