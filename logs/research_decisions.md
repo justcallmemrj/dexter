@@ -754,3 +754,59 @@ First Treasury pair under D-016. Run "Calculating Tan Cormorant".
   chooses to fund.
 - **Review:** No re-test of any of the seven pairs under this protocol on this
   window. The window is spent for this hypothesis.
+
+## D-019 — 2026-08-03 — Version 1 concluded NO-GO at intraday horizon; the negative outcome is banked as the deliverable
+
+- **Decision:** Record the program's outcome as a **no-go for Version 1 as an
+  intraday relative-value reversion program**, in notebook 13 and
+  `reports/13_final_research_summary.md`. No LEAN build is recommended and the
+  `PROCEED TO LEAN BUILD` token is not sought. Notebooks 04-12 as originally
+  scoped are moot for Version 1: with zero candidates there is nothing to select
+  a hedge for, size, cost-model, walk-forward, stress-test or allocate.
+- **What this decision adds to D-018.** D-018 closed the last hypothesis; this
+  one closes the PROGRAM and states what survives it. Nothing new was measured:
+  the summary recomputes every headline figure from the banked run outputs
+  rather than re-typing reports 02 and 03. No new experiment ID is issued
+  precisely because no new statistic was computed — inventing an EXP row for a
+  reconciliation would overstate what was done.
+- **The reconciliation is enforced, not asserted.**
+  `src/spread_research/program_summary.py` reads only
+  `reports/machine_readable/nb02_<PAIR>_*.csv`, and
+  `tests/unit/test_program_summary.py` pins every published effect size,
+  t-statistic, variance-ratio walk, treasury cost and open-clustering share
+  against those same CSVs. If a validation report and its own evidence ever
+  drift apart, the test fails rather than the summary quietly agreeing with the
+  prose. All seven pairs reconciled on the first run; 168 tests green.
+- **Cost accounting, stated so it cannot be quietly widened later.** Treasury
+  round-trip costs are derived in code from the VERIFIED tick specs (A-003) and
+  each pair's own median vol-ratio beta, reproducing report 03's table to two
+  decimals. Index-pair costs are carried as report 02 §5's 2-3 bps band, whose
+  LOW end is used so the comparison is as generous to the effect as the evidence
+  allows. MNQ and M2K are deliberately absent from `TICK_BPS`: no representative
+  notional for them is established anywhere in this repo, and inventing one to
+  make a table symmetric would be fabricating an input (a test pins their
+  absence).
+- **What is recorded as surviving the conclusion:** the D-009 own-splice
+  constructor (validated on all eight instruments, deterministic twice, against
+  a FALSIFIED A-004); the tested battery; the one-signed MES-MNQ roll carry
+  (~70 bps/yr); asset-class-specific roll windows (L-015/L-017); and above all
+  the four near-miss fake edges with the three-part rule they imply — measure the
+  position's P&L, compare against BOTH legs' own variance ratios, and confirm the
+  result survives coarser base sampling.
+- **Alternatives:** (i) leave the program undocumented and move straight to the
+  open threads (rejected — the negative outcome IS the deliverable, and an
+  unbanked negative gets silently re-litigated); (ii) present the Treasury
+  t-statistics as a "promising" result pending better execution (rejected —
+  CLAUDE.md gate 3, and a 7-11x shortfall is not a fee-schedule question);
+  (iii) soften MES-M2K to "unresolved, leaning positive" (rejected — it is
+  UNRESOLVED, and the delayed-entry test is what decides it, not prose).
+- **Evidence:** `reports/13_final_research_summary.md`; notebook 13 executed
+  locally with outputs banked; `reports/machine_readable/nb13_program_summary.csv`
+  and `nb13_funnel.csv`; `reports/figures/nb13_{effect_vs_cost,base_sampling}.png`;
+  validation reports 01/02/03; EXP-005 - EXP-014.
+- **Expected effect:** the program's record is closed and self-contained. The
+  three open threads (notebook 06 / L-013, MES-M2K delayed entry, different
+  resolution or venue) each require fresh pre-registration and may not reuse this
+  window's results as evidence.
+- **Review:** Revisit only if one of the open threads returns a result, or if
+  the user funds a Version 2 with a different mechanism.

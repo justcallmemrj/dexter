@@ -1,0 +1,7 @@
+gate,pairs
+pairs in the locked universe (D-002),7
+pairs with a passed data-acceptance gate,7
+pairs satisfying criterion (a) in a look-ahead-safe spec,5
+... and also surviving the base-sampling check (b),0
+... and also clearing round-trip cost,0
+pairs advancing to notebooks 04-12,0
