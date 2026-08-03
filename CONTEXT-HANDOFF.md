@@ -2,7 +2,7 @@
 
 Paste this whole file into a new session to restore full context. Owner:
 **Derrick Johnson**. Repo `C:\Users\Mrder\dexter`, branch
-`claude/futures-relative-value-research-fpv6m3`, HEAD **`8650e2f`**.
+`claude/futures-relative-value-research-fpv6m3`, HEAD **`295ff28`**.
 QC cloud project **34720894** (free tier). Educational research; internal R&D
 only — not investment advice.
 
@@ -13,6 +13,8 @@ only — not investment advice.
 **All seven pairs in the locked universe have been tested at minute resolution
 under one frozen, pre-registered protocol. Not one is tradable at intraday
 horizon. Version 1's core hypothesis has NO SURVIVING CANDIDATE (D-018).**
+The program outcome is written up in `reports/13_final_research_summary.md`
+and notebook 13, and concluded as a **no-go (D-019)**.
 
 Under CLAUDE.md hard gate 4 ("no forced positive conclusion") this is a
 legitimate research outcome. It is recorded as the finding, not worked around.
@@ -20,6 +22,11 @@ legitimate research outcome. It is recorded as the finding, not worked around.
 **What is NOT concluded:** that these markets contain no structure. They contain
 a real, consistent, correctly-signed reversion effect. It is simply smaller than
 the tick, and most of what looked large was microstructure.
+
+**Open thread 1 (notebook 06 / L-013) has since RUN — D-021, report 06.** The
+no-go survived it, but one supporting claim did not: the significant
+*continuation* that falsified MES–MYM and MES–MNQ is carried by first-30-minute
+events. See §1b. Reports 02 and 13 carry inline amendments where this bites.
 
 `lean/algorithm/` is still empty and stays empty: the LEAN build remains
 hard-gated on Derrick writing the exact token **`PROCEED TO LEAN BUILD`**.
@@ -39,6 +46,36 @@ hard-gated on Derrick writing the exact token **`PROCEED TO LEAN BUILD`**.
 Reports: `reports/validation/02_minute_pair_relationships.md` (index, §12 is
 M2K) and `03_treasury_pair_relationships.md` (curve).
 Data: `reports/machine_readable/nb02_<PAIR>_*.csv` for all seven.
+
+## 1b. THE SIGNAL-DEFINITION RE-TEST (D-020 → D-021, report 06)
+
+Pre-registered before the code existed. Four pairs re-run under three signal
+definitions in one pass: **Z0** (the configured 390-bar overnight-spanning
+score, re-emitted as a reproduction gate), **Z1** (session-anchored expanding
+window, 30-bar warm-up), **Z2** (Z0 with first-30-minute events dropped —
+the decomposition), plus an exploratory open-only subset.
+
+- **Both validity gates passed in all four runs.** Z0 reproduced the banked
+  notebook-02/03 grid **60/60 cells exactly** in every pair (so the data path is
+  byte-identical, and it is a 4th determinism check on D-009); the Z1 event
+  clock goes to 0.0% inside the warm-up.
+- **The finding:** MES–MYM's 16 significant honest cells (all NEGATIVE under Z0)
+  become 25 (all POSITIVE) under Z2; MES–MNQ's 15 all-negative become 21
+  all-positive. The open-only subset is negative at every horizon in all three
+  index pairs and is the **only** negative row anywhere in the ZF–ZN control.
+- **Nothing advanced, and could not have.** Criterion (b) is computed on the
+  RESIDUAL — no z-score enters it — so it is unchanged and still fails; the
+  ceiling a signal change can reach is AMBIGUOUS/MICROSTRUCTURE, stated in
+  D-020 before the numbers existed. The window is also spent.
+- **L-013 reads MATERIAL — DIRECTION ONLY** because MES–M2K's criterion (a)
+  flips (satisfied under Z0, fails under Z1).
+- **Session-anchoring is NOT a strict improvement (L-018):** under Z1, S2
+  produces **zero** cells at |t| ≥ 3 anywhere in any index pair while S1
+  satisfies adjacency. Choosing a signal definition changes which hedge spec
+  can pass.
+- Runs: "Hyper Active Tan Hippopotamus" (MYM), "Muscular Blue Goshawk" (MNQ),
+  "Crawling Magenta Barracuda" (M2K), "Measured Black Lion" (ZF–ZN control).
+  Data: `nb06_<PAIR>_{signal_grids,event_clocks,scalars}.csv`.
 
 ## 2. THE FOUR NEAR-MISS FAKE EDGES (the real deliverable)
 
@@ -102,35 +139,59 @@ P&L, not the residual's change; (ii) compare against BOTH legs' own VR;
   driver + `MARKETS` map; `ingest_qc_pair_minute.py` and `nb02_figures.py` take
   `--pair` and namespace every output. **128 tests green.**
 
-## 5. THE FOUR OPEN THREADS — Derrick's call
+## 5. OPEN THREADS — Derrick's call
 
 Each is a NEW program needing fresh pre-registration. **None may reuse this
 window's results as evidence** — the window is spent for this hypothesis.
 
-1. **Final research summary (notebook 13 / report 13).** Write up the negative
-   program outcome with its evidence. The honest default deliverable.
-2. **Notebook 06 / L-013 fix.** Session-anchor the z-score, re-run the closed
-   pairs. Changes the SIGNAL definition, not the hypothesis — the cheapest
-   remaining test of whether the whole grid was mis-specified.
+1. ~~**Final research summary (notebook 13 / report 13).**~~ **DONE 2026-08-03
+   (D-019)** — `reports/13_final_research_summary.md`, notebook 13 executed
+   with outputs banked, `nb13_program_summary.csv`, two figures. Every headline
+   figure is recomputed from the banked CSVs by
+   `src/spread_research/program_summary.py` and pinned by unit test, so a report
+   can no longer drift from its own evidence.
+2. ~~**Notebook 06 / L-013 fix.**~~ **DONE 2026-08-03 (D-020 → D-021)** — see
+   §1b and `reports/validation/06_signal_definition_and_session_anchoring.md`.
 3. **MES–M2K delayed entry (D-015).** Entry at t+2/t+5/t+15 instead of t+1,
    plus leg-return cross-correlation at lags ±1..5. If lead-lag, the effect
    decays sharply with delay; if genuine reversion, it survives. Settles the
-   one non-negative index result.
+   one non-negative index result. **Note D-021 raised its stakes**: under the
+   open-excluded signal M2K's best honest cell is +6.77 bps at t = 5.14, still
+   the largest in the program.
 4. **Different resolution or venue.** Every negative here is MINUTE resolution,
    TRADE bars, equity RTH (09:30–16:00 ET). Quote data, a treasury-native
    session (08:20 ET cash open), or second/tick resolution are DIFFERENT
    EXPERIMENTS, not re-runs. `research_config.data.later_resolutions` anticipates it.
+   **D-021 promoted this**: a signal artifact this large at the session boundary
+   is an argument for testing a different SESSION, not a different threshold.
+5. **(New, optional) Open-window continuation as its own hypothesis.** L-018
+   documents a consistent, correctly-signed continuation effect in the first 30
+   minutes across four pairs including the Treasury control. It is a DIFFERENT
+   hypothesis from A-006, the residual variance ratio is not its supporting
+   statistic, and D-020 deliberately issued no verdict on it. Needs its own
+   pre-registration and its own verdict rule.
 
-Suggested order: **1 then 2** — bank the finding first, then spend one cheap
-run on the signal definition before concluding the design was right and the
-markets simply do not cooperate.
+Suggested order now: **3 then 4** — settle the one non-negative index result,
+then decide whether to spend a new window on a different session or resolution.
 
 ## 6. OPERATIONAL FACTS
 
-- **7 commits are LOCAL and UNPUSHED.** `git push` is blocked by the harness
-  permission classifier; Derrick must run it.
+- **12 commits are LOCAL and UNPUSHED.** `git push` is blocked by the harness
+  permission classifier; Derrick must run it. Commits are authored as
+  `Claude <noreply@anthropic.com>` via `git -c user.name=... -c user.email=...`
+  because the repo has no committer identity configured.
 - Local env: `.venv` Python 3.14.5 — always `.venv/Scripts/python.exe`.
-  `pytest tests/` → 128 green.
+  `pytest tests/` → 182 green.
+- **Uploading only what changed:** `python scripts/build_qc_upload.py --driver
+  {pair|signal} --only a.py,b.py` skips unchanged modules and prints a
+  line-ending-normalised sha for every file, so the copies already in the
+  project can be VERIFIED in-browser instead of re-uploaded. Verified in this
+  session — 3 of 6 files needed uploading and all 6 hashes matched afterwards.
+- **Reading results back is the slow part.** Use `browser_batch` to request
+  five `window.__json.slice(a,b)` calls in ONE round trip (900-char slices;
+  output truncates near 1,030). Reassemble locally and CHECK THE SHA-256
+  against the browser's before ingesting — one slice boundary silently lost
+  four characters in this session and the hash caught it immediately.
 - **QC browser ops** (this is the fiddly part, full detail in the memory file
   `dexter_rv_research_project.md`):
   - The in-app Claude browser is NOT logged in. Use **claude-in-chrome**.
@@ -159,5 +220,12 @@ markets simply do not cooperate.
 - **A-012** (CTD / delivery-cycle contamination in ZB/ZN) remains UNVERIFIED —
   ZN–ZB was disqualified on cost and microstructure before A-012 could bind.
 - **A-013** (RTH-only captures the signal) is untested and is a live limitation
-  for treasuries specifically, whose liquid session starts ~08:20 ET.
+  for treasuries specifically, whose liquid session starts ~08:20 ET. **D-021
+  strengthened the case for testing it.**
 - **L-012** (MYM 2019-12-12 boundary print) is a watch item, not resolved.
+- **L-018** (open-window continuation; session-anchoring is not a strict
+  improvement) is new as of D-021 and binds any future signal work.
+- Two of the four near-miss fake edges in §2 now have a fifth sibling worth
+  naming: **a minority of events can own the pooled sign of an entire grid.**
+  22.7–24.7% of events flipped three index pairs from negative to positive.
+  Always report the subset an artifact selects, separately.
