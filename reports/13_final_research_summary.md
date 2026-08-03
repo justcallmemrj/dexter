@@ -120,6 +120,21 @@ of **continuation**: fading a 1.5–2.0 sigma dislocation lost money at every
 horizon from 5 to 120 minutes, in both look-ahead-safe specifications, across
 2019–2026.
 
+> **AMENDED 2026-08-03 by validation report 06 (D-021), after this report was
+> written.** That continuation is carried by the first 30 minutes of the
+> session — 22.7–24.7% of index events under the configured z-score. Removing
+> those events and changing nothing else flips every significant honest cell in
+> both pairs from negative to positive (largest +2.40 bps for MES–MYM, +3.12
+> for MES–MNQ). **The no-go recorded in §1 and §12 stands**, because criterion
+> (b) is computed on the residual, is untouched by any signal definition, and
+> still fails in all seven pairs — but the sentence above describes an
+> equity-open effect rather than intraday behaviour away from the open. §11's
+> funnel row "satisfied criterion (a)" counts the three index pairs as 1 of 3;
+> on the open-excluded signal all three satisfy it. Only four pairs were re-run
+> (D-020 fixed that scope in advance), so the funnel is left as measured rather
+> than extrapolated to the three Treasury pairs that were not. See report 06
+> and L-018.
+
 ## 4. The one pair that cleared its cost, and why it does not count
 
 MES–M2K produced the only cost-clearing surface in the program: +6.31 bps at

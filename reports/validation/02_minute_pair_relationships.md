@@ -108,7 +108,21 @@ Across the full 60-cell grid (3 specs × 4 entry thresholds × 5 horizons):
 
 **[ESTABLISHED] Fading a 1.5–2.0 sigma MES–MYM dislocation lost money over
 2019-2026, at every horizon from 5 to 120 minutes, in both look-ahead-safe
-specifications.** Figure: `reports/figures/nb02_MES_MYM_conditional_reversion.png` —
+specifications.**
+
+> **AMENDED 2026-08-03 by validation report 06 (D-021) — read this with the
+> paragraph above.** That statement is true of the events this configuration
+> selects, and the A-006 verdict below is unchanged. But the *continuation* is
+> not a property of the pair away from the open: it is carried by the 24.3% of
+> events that fire in the first 30 minutes (L-013). Removing those events and
+> changing nothing else flips all 16 significant honest cells from negative to
+> positive (largest +2.40 bps at t = 6.01). The pair still does not advance —
+> criterion (b) is computed on the residual, is untouched by any signal
+> definition, and still fails — but "the dislocation continues rather than
+> reverts" describes an equity-open effect, not intraday MES–MYM behaviour.
+> See L-018 and report 06 §3.
+
+Figure: `reports/figures/nb02_MES_MYM_conditional_reversion.png` —
 every significant marker in S1 and S2 sits below zero, and the only positive
 significant markers are in the look-ahead spec, inside the cost band.
 
@@ -355,6 +369,13 @@ Session-mean P&L of fading, bps, with session-clustered t, at entry_z = 2.0:
 
 **[ESTABLISHED] Fading a 1.5–2.0 sigma MES–MNQ dislocation lost money over
 2019-2026, at horizons from 5 to 30 minutes, in both look-ahead-safe specs.**
+
+> **AMENDED 2026-08-03 by validation report 06 (D-021).** Same correction as
+> §3: the continuation is carried by the 24.7% of events in the first 30
+> minutes. Drop those and all 15 significant honest cells flip positive, the
+> largest reaching +3.12 bps at t = 6.13 — above the index cost band. The
+> A-006 verdict is unchanged, because criterion (b) is a residual property that
+> no signal definition touches and it still fails. See L-018.
 
 ### 11.3 Variance ratios — weaker than MES–MYM, and weaker than its own legs
 

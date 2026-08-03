@@ -810,6 +810,12 @@ First Treasury pair under D-016. Run "Calculating Tan Cormorant".
   window's results as evidence.
 - **Review:** Revisit only if one of the open threads returns a result, or if
   the user funds a Version 2 with a different mechanism.
+- **AMENDED 2026-08-03 by D-021 (open thread 1 was funded and ran the same
+  day).** The no-go stands and no pair advanced. One supporting claim in
+  report 13 §3 is corrected: the significant CONTINUATION in MES-MYM and
+  MES-MNQ is carried by first-30-minute events, not by intraday behaviour away
+  from the open. Report 13 carries the amendment inline; the conclusion,
+  the funnel and the recommendation are unchanged.
 
 ## D-020 — 2026-08-03 — PRE-REGISTRATION of notebook 06: session-anchored z-score (L-013)
 
@@ -983,3 +989,81 @@ prevent. A positive here buys a fresh pre-registration and nothing else.
 - **Review:** No re-run of any pair under this protocol on this window. If a
   verdict flips, the follow-up is a different window/venue, pre-registered
   afresh — not another pass over these bars.
+
+## D-021 — 2026-08-03 — L-013 is MATERIAL (direction only); the index "continuation" was an open-window effect; D-019 stands
+
+Four runs under D-020: MES–MYM "Hyper Active Tan Hippopotamus", MES–MNQ
+"Muscular Blue Goshawk", MES–M2K "Crawling Magenta Barracuda", ZF–ZN "Measured
+Black Lion". EXP-015 - EXP-018, validation report 06.
+
+- **Decision:** Read L-013 as **MATERIAL — DIRECTION ONLY**, the branch D-020
+  fixed in advance for the case where a Z1 verdict differs from its Z0 verdict.
+  MES–M2K's does: criterion (a) is satisfied under Z0 (D-015, AMBIGUOUS) and
+  fails under Z1. **No pair advances**, and the D-019 no-go stands.
+- **Both validity gates passed in all four runs, and were read first.** Gate 1:
+  the Z0 grid reproduced the banked notebook-02/03 grid **60/60 cells exactly**
+  in every pair, so the data path is byte-identical and the Z0-vs-Z1 comparison
+  is a measurement rather than a comparison of two pipelines (also a fourth
+  determinism check on the D-009 constructor). Gate 2: the Z1 event clock goes
+  to 0.0% inside the warm-up in every pair, against 22.7-24.7% (index) and
+  12.7% (Treasury control) under Z0. Enforced in code by
+  `ingest_qc_signal_definition.py --compare-nb02`, which writes nothing on a
+  failure.
+- **The finding, and it corrects how an earlier result must be read.** The
+  significant CONTINUATION that falsified MES–MYM (D-011) and MES–MNQ (D-013)
+  was carried by events in the first 30 minutes of the session. Removing those
+  events and nothing else (Z2 — same score, same grid, same specs, same
+  inference) flips every significant honest cell from negative to positive:
+  MES–MYM 16 significant cells all negative becomes 25 all positive; MES–MNQ 15
+  all negative becomes 21 all positive. The open subset alone (ZO) is negative
+  at every horizon in all three index pairs AND is the only negative row
+  anywhere in the Treasury control's grid (-0.15 bps at t = -3.87). An
+  overnight repricing scored against yesterday's mean is a level change that
+  persists, not a dislocation that reverts.
+- **Why this does not advance anything, exactly as pre-registered.**
+  (i) Criterion (b) is computed on the RESIDUAL — no z-score enters it — so it
+  is unchanged and still fails in all four pairs; the best branch reachable is
+  AMBIGUOUS / MICROSTRUCTURE, and D-020 said so before these numbers existed.
+  (ii) This is the same window already spent, so a sign flip is
+  hypothesis-generating, not evidence. (iii) The effect sizes that now sit at
+  or above the index cost band (Z2: MYM +2.40, MNQ +3.12, M2K +6.77 bps against
+  ~2-3 bps) rest on A-007/A-008 placeholders, which is precisely the regime
+  where a real fee schedule would decide it.
+- **Z1 and Z2 disagree, and the decomposition is what says why.** Z1 removes the
+  continuation but does NOT reach criterion (a) in any index pair, and the
+  failure is uniform: **S2 produces zero cells at |t| >= 3 anywhere** in all
+  three, while S1 does satisfy the adjacency requirement. [PLAUSIBLE]
+  estimation-noise stacking — S2 is already a deviation from a trailing
+  1,950-bar fit, and normalising it again against a short early-session
+  dispersion divides a noisy numerator by a noisy denominator (L-007/L-011).
+  **Session-anchoring is therefore not a strict improvement**; it removes a
+  documented artifact and adds a documented cost that falls on the fitted-hedge
+  spec. Logged as L-018.
+- **The negative control did its job.** ZF–ZN, where L-013 is absent (12.7%,
+  flat profile), keeps criterion (a) under all three definitions and moves from
+  10.9x to 8.7x below its round-trip cost. No signal definition closes an
+  order-of-magnitude gap, and the fact that the same change does NOT flip the
+  control is what makes the index flip attributable to the open window.
+- **Alternatives:** (i) present the Z2 flip as a recovered edge (rejected — (b)
+  is unchanged and failing, the window is spent, and D-020 pre-committed the
+  ceiling); (ii) adopt Z1 as the project's signal definition on the strength of
+  its cleaner event clock (rejected — it fails (a) through S2 in every index
+  pair, so adopting it would be choosing a definition by its diagnostic rather
+  than by its result); (iii) tune the 30-bar warm-up now that the numbers are
+  visible (rejected outright — that is the specification search the method
+  exists to prevent); (iv) extend to the three untested Treasury pairs
+  (rejected — D-020 fixed the scope before the results, and their 7-9x cost
+  gaps are untouchable by a signal change).
+- **Evidence:** validation report 06; `nb06_<PAIR>_{signal_grids,event_clocks,
+  scalars}.csv`; `nb06_<PAIR>_signal_definitions.png`, `nb06_event_clocks.png`;
+  EXP-015 - EXP-018.
+- **Expected effect:** validation report 02's mechanism sentence ("the
+  dislocation continues rather than reverts") is annotated as an open-window
+  effect rather than intraday pair behaviour; report 13 and D-019 carry the
+  same caveat. The program conclusion is unchanged. Open thread 3 (resolution
+  and venue) gains priority: a signal artifact this large at the session
+  boundary is an argument for testing a different session, not a different
+  threshold.
+- **Review:** No further pass over this window under any signal definition.
+  Confirming the Z2 sign flip requires a fresh window, venue or resolution,
+  pre-registered afresh.

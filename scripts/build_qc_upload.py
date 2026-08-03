@@ -60,18 +60,33 @@ def flatten(text: str) -> tuple[str, int]:
     return out, n
 
 
-def build(driver: str = "pair") -> dict:
+def normalized_sha(text: str) -> str:
+    """Hash of the UPLOADED form with line endings normalised.
+
+    QC stores whatever its editor last wrote, so a file that is byte-identical
+    in substance can differ in line endings. Comparing this hash against the
+    same computation over a QC file's content is what lets an upload skip the
+    modules that have not changed without giving up provenance.
+    """
+    return hashlib.sha256(text.replace("\r\n", "\n").encode()).hexdigest()[:16]
+
+
+def build(driver: str = "pair", only: set[str] | None = None) -> dict:
     files, manifest = {}, []
     for src, dest in MODULES + [(DRIVERS[driver], "main.py")]:
         path = REPO / src
         raw = path.read_text(encoding="utf-8")
         text, n = flatten(raw)
-        files[dest] = text
-        manifest.append({
+        entry = {
             "src": src, "dest": dest, "bytes": len(text.encode()),
             "sha256_src": hashlib.sha256(raw.encode()).hexdigest()[:16],
+            "sha256_upload_norm": normalized_sha(text),
             "imports_flattened": n,
-        })
+            "uploaded": only is None or dest in only,
+        }
+        manifest.append(entry)
+        if entry["uploaded"]:
+            files[dest] = text
     return {"files": files, "manifest": manifest}
 
 
@@ -81,9 +96,15 @@ def main() -> int:
     ap.add_argument("--out", default=None)
     ap.add_argument("--driver", choices=sorted(DRIVERS), default="pair",
                     help="which driver is uploaded as main.py")
+    ap.add_argument("--only", default=None,
+                    help="comma-separated destination names to include; the "
+                         "rest are listed with their normalised hash so the "
+                         "copies already in the project can be VERIFIED rather "
+                         "than re-uploaded")
     args = ap.parse_args()
 
-    bundle = build(args.driver)
+    only = set(args.only.split(",")) if args.only else None
+    bundle = build(args.driver, only)
     blob = base64.b64encode(
         gzip.compress(json.dumps(bundle["files"]).encode(), 9)).decode()
 
@@ -96,7 +117,9 @@ def main() -> int:
         json.dumps(bundle["manifest"], indent=2), encoding="utf-8")
 
     for m in bundle["manifest"]:
-        print(f"  {m['dest']:<28} {m['bytes']:>6}B  sha={m['sha256_src']}  "
+        print(f"  {'UP  ' if m['uploaded'] else 'keep'} {m['dest']:<26} "
+              f"{m['bytes']:>6}B  sha={m['sha256_src']}  "
+              f"norm={m['sha256_upload_norm']}  "
               f"rel-imports flattened={m['imports_flattened']}")
     print(f"\npayload: {len(blob)} b64 chars in {len(chunks)} chunk(s) -> {out}")
     return 0

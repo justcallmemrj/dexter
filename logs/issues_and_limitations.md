@@ -88,7 +88,31 @@
   index-wide move. One minute of ~1.36M, at a roll boundary the adopted
   exclusion window keeps positions out of; revisit if a second symbol shows the
   same signature at the same timestamp.
-- **L-013:** Under the current config (`zscore_lookback_bars: 390`, one RTH day)
+- **L-018 (supersedes the OPEN part of L-013; validation report 06, D-021):**
+  **The first 30 minutes of the equity session carry a CONTINUATION effect, and
+  under the 390-bar score they are large enough to flip the sign of a whole
+  grid.** Fading a dislocation that fires in that window lost money at every
+  horizon in all three index pairs (t to -3.5) and produced the ONLY negative
+  row anywhere in the ZF-ZN Treasury control (-0.15 bps at t = -3.87). Because
+  those events are 22.7-24.7% of index samples, removing them and nothing else
+  flips MES-MYM from 16 significant cells all NEGATIVE to 25 all POSITIVE, and
+  MES-MNQ from 15 all negative to 21 all positive. They are 12.7% of the
+  Treasury control's sample and there they flip nothing.
+  Two consequences bind future work:
+  (i) **any intraday result computed under an overnight-spanning z-score must
+  report the open-window subset separately**, because a minority of events can
+  own the pooled sign;
+  (ii) **session-anchoring is not a strict improvement.** Under the
+  session-anchored score, S2 (the trailing-OLS residual) produced ZERO cells at
+  |t| >= 3 anywhere in any index pair, where S1 satisfied the adjacency
+  requirement — [PLAUSIBLE] estimation-noise stacking, since S2 is already a
+  deviation from a trailing fit and is then normalised again against a short
+  early-session dispersion (L-007/L-011). Choosing a signal definition changes
+  which hedge specification can pass; the two are not separable.
+  Not resolved: whether the open-window continuation is tradable. That is a
+  DIFFERENT hypothesis from A-006 and needs its own pre-registration.
+- **L-013 (diagnosis RESOLVED 2026-08-03, consequences moved to L-018):** Under
+  the current config (`zscore_lookback_bars: 390`, one RTH day)
   the z-score window reaches back across the overnight break, so the first bars
   of a session are scored against the previous session's mean. Consequence
   measured in validation report 02 §6.4: **24.3% of |z| >= 2 crossings occur in
@@ -98,6 +122,11 @@
   session-anchor the z-score (reset at the open), add a warm-up after the open,
   or explicitly test the open-gap subset as its own hypothesis. Does not affect
   the report-02 verdict, which is negative with or without those events.
+  **Notebook 06 ran all three (D-020/D-021, validation report 06). The
+  diagnosis is confirmed and the verdict statement above is confirmed — report
+  02's VERDICT is unchanged — but the last clause was too generous about its
+  REASONING: report 02's significant continuation does not survive removing
+  those events, it is produced by them. See L-018.**
 
 - **L-014:** M2K shows **lagged price adjustment**, not bid-ask bounce: its own
   variance ratio at q=2 is 1.012 with bootstrap p_lt_1 = 0.935, i.e. ABOVE 1

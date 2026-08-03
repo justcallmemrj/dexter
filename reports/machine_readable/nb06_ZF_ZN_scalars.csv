@@ -1,0 +1,16 @@
+key,value
+S_SPECS,anchor=vol_ratio|S1_beta_med=0.583|S1_beta_p5=0.4946|S1_beta_p95=0.6932
+S_SIGDEF,z0=rolling390|z1=session_anchored|warmup=30|open_win=30|vr=inherited_from_nb02
+S_OPENSHARE0,share=0.1275|n_events=25358
+S_OPENSHARE1,share=0.0|n_events=33306
+S_BUILD_ZN,rolls=27|flags=0|med_ovl=390|nonmedian=0
+S_GATE,PASS|both legs adjudicated non-gap-shaped
+S_ZCOVER,z0_defined=673500|z1_defined=621660|bars=673890|z0_first_bar_events=863
+S_KEYS,67
+S_HL1,z1_b=-0.2132257|z1_hl=2.9|n=619919
+S_ALIGN,bars=675840|sessions=1746|medbars=390|first=2019-06-03|last=2026-04-24|dropA=0|dropB=0
+S_PAIR,ZF_ZN|markets=cbot/cbot|anchor=vol_ratio|rolls=treasury|nb=06
+S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
+S_BUILD_ZF,rolls=27|flags=0|med_ovl=390|nonmedian=0
+D020_GATE1_REPRODUCTION,PASS|60 cells reproduced exactly
+D020_GATE2_IMPLEMENTATION,PASS|open share 12.7% (Z0) -> 0.0% (Z1)
