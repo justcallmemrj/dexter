@@ -702,3 +702,55 @@ First Treasury pair under D-016. Run "Calculating Tan Cormorant".
 - **Review:** No re-test of ZF–ZN under this protocol. Continue to ZT–ZF, ZN–ZB,
   ZT–ZN in the D-016 order; the remaining three are NOT cancelled by this
   result, since D-016 fixed the order and skipping would be selection on outcome.
+
+## D-018 — 2026-08-03 — A-009 closed on all four Treasury pairs; Version 1 has no surviving intraday candidate
+
+- **Decision:** All four Treasury pairs return **AMBIGUOUS / MICROSTRUCTURE and
+  ECONOMICALLY IMMATERIAL** under the D-016 pre-registration. None advances.
+  A-009 is unresolved-but-immaterial for ZF-ZN, ZT-ZF, ZN-ZB and ZT-ZN.
+- **Consistency of the result.** Criterion (a) is satisfied in every pair
+  (16-20 of 20 S1 cells positive at session-clustered |t| >= 3, t up to 9.4),
+  the sign is right everywhere, and the effect is 7-11x below the round-trip
+  cost computed from VERIFIED tick specifications in every pair. The
+  base-sampling check fails in every pair, with the residual VR walking 3-6x
+  back toward 1 as bars coarsen from 1 to 15 minutes.
+- **The program-level consequence, stated plainly.** All seven pairs in the
+  locked universe have now been tested at minute resolution under one frozen
+  protocol: three index pairs (D-011, D-013, D-015) and four Treasury pairs
+  (this decision). **Not one has produced a tradable intraday reversion
+  result.** Version 1's core hypothesis — that hedged index or curve residuals
+  mean-revert at intraday horizon by enough to trade — has **no surviving
+  candidate**. Under CLAUDE.md gate 4 this is a legitimate research outcome and
+  is recorded as the finding, not worked around.
+- **What is NOT concluded.** That these markets contain no structure. They
+  contain a real, consistent, correctly-signed effect that is simply smaller
+  than the tick. What is concluded is that it is not harvestable at the cost
+  scale and resolution this project targets.
+- **Alternatives considered:** (i) declare a Treasury pair viable on the
+  strength of t = 9.4 (rejected — 7-11x below cost, and the base-sampling check
+  D-016 pre-committed as decisive fails); (ii) assume better execution closes
+  the gap (rejected — a threefold cost improvement still leaves every pair
+  uneconomic, so the conclusion is robust to the A-007/A-008 placeholders being
+  badly wrong); (iii) try more hedge methods on the same data until something
+  passes (rejected outright — that is a specification search, and D-008 already
+  fixed the hedge question for this asset class).
+- **The three genuinely open threads, in priority order.** Each is a NEW
+  program requiring fresh pre-registration; none may reuse this window's
+  results as evidence.
+  1. **Notebook 06 / L-013:** session-anchor the z-score and re-run the closed
+     pairs. This changes the SIGNAL definition, not the hypothesis, and is the
+     cheapest remaining test of whether the whole grid was mis-specified.
+  2. **MES-M2K delayed entry (D-015):** t+2 / t+5 / t+15 to separate lead-lag
+     from reversion. Confirms or kills the one non-negative index result.
+  3. **Resolution and venue:** every negative here is at MINUTE resolution on
+     TRADE bars during equity RTH. Quote data, a Treasury-native session
+     (08:20 ET), or second/tick resolution are different experiments, not
+     re-runs. `research_config.data.later_resolutions` already anticipates this.
+- **Expected effect:** notebooks 04-13 as originally scoped are moot for
+  Version 1 in their current form: there is no candidate to select a hedge for,
+  size, cost-model or walk-forward. The honest next deliverable is the
+  final research summary (notebook 13 / report 13) recording a negative
+  program outcome with its evidence, plus whichever open thread the user
+  chooses to fund.
+- **Review:** No re-test of any of the seven pairs under this protocol on this
+  window. The window is spent for this hypothesis.

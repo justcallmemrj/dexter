@@ -118,6 +118,25 @@
   had returned to ~1.1x. M2K work needs >= 1,170 bars and a re-measurement.
   Roll-window parameters are pair-specific, not universal.
 
+- **L-016:** Treasury futures are quoted in ticks that are COARSE relative to
+  their minute-level volatility (1 tick = 0.38 bps of notional for ZT, 0.72 ZF,
+  1.42 ZN, 2.72 ZB). Two consequences, both established in validation report 03:
+  (i) a hedged Treasury residual at 1-minute sampling is dominated by tick
+  quantisation, producing variance ratios of 0.13-0.32 that look like violent
+  mean reversion and evaporate toward 1.0 at 15-minute sampling in all four
+  pairs; (ii) the same coarseness makes round-trip costs large in bps (1.4-5.9
+  bps per pair), which is why effects with t up to 9.4 are still 7-11x too
+  small to trade. **Any future minute-resolution work on Treasury futures must
+  run the base-sampling check before interpreting a low variance ratio**, and
+  must quote effect sizes against tick-derived costs rather than against zero.
+- **L-017:** Roll-window behaviour is ASSET-CLASS specific, not universal.
+  Index micros show 1.6-2.6x baseline residual dispersion around the D-009
+  splice (M2K still elevated in the third RTH day, L-015); all four Treasury
+  pairs show 0.89-1.03x, i.e. no elevation at all, because month-end rolls sit
+  far from expiry with continuous liquidity. The 780-bar post-roll warm-up
+  adopted in report 02 section 6.3 applies to the index pairs and must NOT be
+  assumed for Treasuries or for any new asset class without re-measuring.
+
 ## Closed
 
 - **L-002 (closed 2026-08-01):** Contract specifications were verified only

@@ -55,7 +55,7 @@ TREASURIES = ("ZT", "ZF", "ZN", "ZB")
 
 # Set PAIR to run a different pair; nothing else in this file needs editing.
 # Order matters: PAIR[0] is leg A (the numerator/left leg of the S1 residual).
-PAIR = ("ZF", "ZN")
+PAIR = ("ZT", "ZN")
 
 # S1's anchor is an ECONOMIC choice, not a knob (see residual_specs):
 #   index micros  -> "unit"      (both legs comparable duration; beta = 1)

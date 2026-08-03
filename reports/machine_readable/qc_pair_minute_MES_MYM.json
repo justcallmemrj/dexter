@@ -1,5 +1,5 @@
 {
- "run": "Alert Magenta Rabbit",
+ "run": "",
  "pair": "MES_MYM",
  "statistics": {
   "S_ALIGN": "bars=676560|sessions=1744|medbars=390|first=2019-06-03|last=2026-04-24|dropA=7740|dropB=0",

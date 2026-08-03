@@ -2,11 +2,12 @@ key,value
 S_ALIGN,bars=676560|sessions=1744|medbars=390|first=2019-06-03|last=2026-04-24|dropA=7740|dropB=0
 S_BETA,static=1.3257|roll_med=0.9763|roll_p5=0.3161|roll_p95=1.468|n=674610
 S_HL,raw_b=-8.2e-06|raw_hl=84392.4|z_b=-0.0128705|z_hl=53.5|n=674425
-S_BUILD_MES,rolls=28|flags=0|med_ovl=390|nonmedian=0
-S_BUILD_MYM,rolls=28|flags=1|med_ovl=390|nonmedian=0
 S_PF_SHOCK,n=28|med=11.82|p90=13.85|max=15.46|units=bps_of_S1_residual
 S_PF_NROLLS,in_window=28|total=28
 S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
 S_GATE,PASS|both legs adjudicated non-gap-shaped
 S_KEYS,54
+S_CLOCK,0:0.243|30:0.135|60:0.133|90:0.109|120:0.082|150:0.06|180:0.039|210:0.037|240:0.031|270:0.028|300:0.024|330:0.029|360:0.046|390:0.003
+S_BUILD_MES,rolls=28|flags=0|med_ovl=390|nonmedian=0
+S_BUILD_MYM,rolls=28|flags=1|med_ovl=390|nonmedian=0
 S_FLAG_MYM191212,sr=-0.0815|gap=-0.0108|thr=0.0531|mad=0.00358|ratio=7.55|gapshaped=0|why=gap_immaterial

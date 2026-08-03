@@ -142,11 +142,16 @@ def parse(stats: dict) -> dict[str, pd.DataFrame]:
 
     # --- scalars -----------------------------------------------------------
     scalar = {}
-    for key in ("S_ALIGN", "S_BETA", "S_HL", "S_BUILD_MES", "S_BUILD_MYM",
+    for key in ("S_ALIGN", "S_BETA", "S_SPECS", "S_PAIR", "S_HL",
                 "S_PF_SHOCK", "S_PF_NROLLS", "S_HOLIDAYS", "S_GATE", "S_KEYS",
-                "S_FATAL", "S_FATAL_TB", "S_RESOLVE_FAIL", "S_DATA_FAIL"):
+                "S_CLOCK", "S_FATAL", "S_FATAL_TB", "S_RESOLVE_FAIL",
+                "S_DATA_FAIL"):
         if key in stats:
             scalar[key] = str(stats[key])
+    # S_BUILD_<LEG> is per-symbol, so match by prefix rather than by name
+    for key, val in stats.items():
+        if key.startswith("S_BUILD_"):
+            scalar[key] = str(val)
     for key, val in stats.items():
         if key.startswith("S_FLAG_"):
             scalar[key] = str(val)

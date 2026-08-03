@@ -1,9 +1,14 @@
 key,value
 S_ALIGN,bars=675840|sessions=1746|medbars=390|first=2019-06-03|last=2026-04-24|dropA=0|dropB=0
 S_BETA,static=0.7679|roll_med=0.6381|roll_p5=0.3952|roll_p95=0.8048|n=673890
+S_SPECS,anchor=vol_ratio|S1=vol_ratio_sigma_a_over_sigma_b|S1_beta_med=0.583|S1_beta_p5=0.4946|S1_beta_p95=0.6932
+S_PAIR,ZF_ZN|markets=cbot/cbot|anchor=vol_ratio|rolls=treasury
 S_HL,raw_b=-0.0045442|raw_hl=152.2|z_b=-0.0712665|z_hl=9.4|n=671760
 S_PF_SHOCK,n=27|med=12.97|p90=33.21|max=53.19|units=bps_of_S1_residual
 S_PF_NROLLS,in_window=27|total=27
 S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
 S_GATE,PASS|both legs adjudicated non-gap-shaped
 S_KEYS,55
+S_CLOCK,0:0.127|30:0.134|60:0.14|90:0.1|120:0.073|150:0.06|180:0.053|210:0.049|240:0.048|270:0.048|300:0.045|330:0.051|360:0.067|390:0.004
+S_BUILD_ZF,rolls=27|flags=0|med_ovl=390|nonmedian=0
+S_BUILD_ZN,rolls=27|flags=0|med_ovl=390|nonmedian=0

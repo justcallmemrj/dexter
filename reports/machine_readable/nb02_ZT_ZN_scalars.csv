@@ -1,0 +1,15 @@
+key,value
+S_ALIGN,bars=675840|sessions=1746|medbars=390|first=2019-06-03|last=2026-04-24|dropA=0|dropB=0
+S_BETA,static=0.4135|roll_med=0.2172|roll_p5=0.0331|roll_p95=0.4072|n=673890
+S_SPECS,anchor=vol_ratio|S1=vol_ratio_sigma_a_over_sigma_b|S1_beta_med=0.2597|S1_beta_p5=0.1973|S1_beta_p95=0.3558
+S_PAIR,ZT_ZN|markets=cbot/cbot|anchor=vol_ratio|rolls=treasury
+S_HL,raw_b=-0.0018788|raw_hl=368.6|z_b=-0.0350276|z_hl=19.4|n=671760
+S_PF_SHOCK,n=27|med=21.79|p90=32.08|max=77.56|units=bps_of_S1_residual
+S_PF_NROLLS,in_window=27|total=27
+S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
+S_GATE,PASS|both legs adjudicated non-gap-shaped
+S_KEYS,56
+S_CLOCK,0:0.133|30:0.123|60:0.143|90:0.108|120:0.074|150:0.062|180:0.055|210:0.049|240:0.048|270:0.045|300:0.046|330:0.046|360:0.062|390:0.005
+S_BUILD_ZN,rolls=27|flags=0|med_ovl=390|nonmedian=0
+S_BUILD_ZT,rolls=27|flags=1|med_ovl=390|nonmedian=0
+S_FLAG_ZT230831,sr=-0.0614|gap=0.4312|thr=0.05|mad=0.0|ratio=0.14|gapshaped=0|why=sign_mismatch

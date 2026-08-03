@@ -1,10 +1,13 @@
 key,value
 S_ALIGN,bars=684300|sessions=1780|medbars=390|first=2019-06-03|last=2026-04-24|dropA=0|dropB=0
 S_BETA,static=0.7463|roll_med=0.7035|roll_p5=0.3269|roll_p95=1.0391|n=682350
+S_PAIR,MES_MNQ|markets=cme/cme
 S_HL,raw_b=-6.5e-06|raw_hl=107365.7|z_b=-0.0125643|z_hl=54.8|n=682128
-S_BUILD_MES,rolls=28|flags=0|med_ovl=390|nonmedian=0
 S_PF_SHOCK,n=28|med=17.41|p90=20.89|max=29.01|units=bps_of_S1_residual
 S_PF_NROLLS,in_window=28|total=28
 S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
 S_GATE,PASS|both legs adjudicated non-gap-shaped
 S_KEYS,54
+S_CLOCK,0:0.247|30:0.15|60:0.13|90:0.112|120:0.082|150:0.059|180:0.039|210:0.032|240:0.023|270:0.023|300:0.024|330:0.026|360:0.046|390:0.005
+S_BUILD_MES,rolls=28|flags=0|med_ovl=390|nonmedian=0
+S_BUILD_MNQ,rolls=28|flags=0|med_ovl=390|nonmedian=0
