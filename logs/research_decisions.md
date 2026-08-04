@@ -498,6 +498,11 @@ existed. Last index pair in the D-008 priority order.
   mechanically converges as the laggard catches up, most strongly when the
   dislocation is largest — which is the monotone-in-entry_z surface observed —
   and the effect disappears once bars are coarse enough to contain the catch-up.
+  *AMENDED 2026-08-04 by D-023 (report 14): the pre-registered test ran. The
+  lead-lag is REAL but one bar deep and ~0.03 of correlation — withdrawn as
+  the explanation of the conditional surface, which survives delayed entry
+  (DELAY-ROBUST). The base-sampling evaporation this bullet tried to explain
+  is now an open puzzle. Verdict branch unchanged.*
 - **Alternatives:** (i) call it REVERSION PRESENT on the strength of (a)+(c)
   and the cost-clearing effect size (rejected — (b) is not optional, and D-014
   pre-committed the base-sampling check as decisive precisely so this decision
@@ -1423,3 +1428,84 @@ DELAY-ROBUST and nothing more is claimed for it.
   fresh-window/venue/resolution pre-registration (the session/resolution
   thread); if LEAD-LAG CONFIRMED or MIXED, the MES–M2K thread is closed on
   this window entirely.
+
+## D-023 — 2026-08-04 — MES–M2K survives delayed entry: DELAY-ROBUST; the surface is NOT the laggard catching up; D-019 stands
+
+Two runs under D-022: part 1 (Z0 half) "Creative Tan Antelope", part 2
+(Z2 half + cross-correlation) "Swimming Red Pigeon". EXP-019, validation
+report 14. Verdict computed by `delayed_entry_summary.py` from the banked
+CSVs and pinned by unit test (210 green).
+
+- **Decision:** Read the delayed-entry test as **DELAY-ROBUST**, the branch
+  D-022 fixed for ρ(5) ≥ 2/3 AND S(5) ≥ 0.50 AND ρ(15) ≥ 1/3. Observed, on
+  the frozen 37-cell read set with all 37 included (zero exclusions):
+  **ρ(2) = 0.932, ρ(5) = 0.849, ρ(15) = 0.536; S(5) = 0.73, S(15) = 0.59.**
+  A catch-up mechanism predicts ~0 by d = 5; the observed profile is
+  nowhere near that, landing close to — though uniformly below — the AR(1)
+  prediction at the measured 37–58-bar half-lives (0.93–0.95 predicted at
+  d = 5 vs 0.849 observed; the shortfall grows with delay, see the
+  counter-note below). **No pair advances, and the D-019 no-go stands** — criterion
+  (b) is inherited unchanged and failing, the window is spent, and D-022
+  pre-committed this ceiling before any number existed.
+- **All eight validity gates passed, read first.** Both emissions
+  set-identical to their frozen manifests (54 + 57 keys — the L-019
+  two-part design closed the silent-loss hole); the unmatched d = 1 grids
+  reproduced the banked nb02 AND nb06 grids **60/60 cells exactly** each
+  (proving the L-020 module split changed nothing); matched n_events
+  constant across delays in all 80 cell families; the two parts' shared
+  diagnostics character-identical (a fifth determinism demonstration of the
+  D-009 constructor); cross-correlation machinery sound (c0 = 0.788, 15
+  finite CIs, exactly 1,000 replicates).
+- **The cross-correlation found the lead-lag — and measured it too small to
+  matter.** ab_1 = corr(r_MES(t−1), r_M2K(t)) = **+0.033** [+0.021, +0.047]
+  against a mirror of +0.004 [−0.010, +0.016]; asym_1 = +0.029 with CI
+  excluding zero ⇒ X = TRUE. Every k = 2..5 correlation is ≈ 0. So M2K
+  genuinely lags MES — by ONE bar, worth ~0.03 of correlation — and the t+1
+  entry convention already excludes that bar from every banked number. Both
+  probes agree: **the conditional surface is not carried by laggard
+  catch-up.** X does not gate the DELAY-ROBUST branch, exactly as
+  pre-registered ("a lead-lag component in the returns can coexist with
+  convergence that survives it").
+- **Honest counter-note, on the record:** retention sits BELOW the AR(1)
+  band at EVERY delay, and the shortfall grows: 0.932 vs 0.981–0.988 at
+  d = 2, 0.849 vs 0.93–0.95 at d = 5, 0.536 (Z2 subset 0.453, descriptive)
+  vs 0.77–0.85 at d = 15 — the observed d ≤ 5 decay alone implies a
+  ~10–17-bar half-life. The profile discriminates cleanly AGAINST catch-up
+  without being a clean AR(1) fit, though it stays far above the 1/3
+  LEAD-LAG ceiling. And the
+  criterion-(b) base-sampling evaporation (report 02 §12.3) is now an OPEN
+  PUZZLE rather than an explained artifact: the unconditional VR washes out
+  at 5-minute bars while the conditional effect survives a 15-minute
+  delayed entry. These measure different things (every bar vs |z| ≥ 2
+  events); discriminating between the reconciling mechanisms is precisely a
+  fresh-resolution/session question.
+- **Consequences, exactly as D-022 fixed them:** (i) hypothesis-generating
+  ONLY — the result buys a sharpened, banked target for the
+  session/resolution thread (+6.68 bps decaying to +2.24 as entry slips 15
+  minutes, in the thinnest micro) and nothing else; (ii) report 13 is not
+  softened; (iii) nothing here is quotable as an edge (A-007/A-008
+  placeholders; 1,300 cells now examined on this window); (iv) D-015's
+  mechanism sentence and L-014 are amended inline — the [PLAUSIBLE]
+  lead-lag attribution correctly identified a real feature of M2K that
+  turns out not to explain the surface; L-014's base-sampling discipline
+  for thin legs binds unchanged.
+- **Alternatives:** (i) read the strong retention as evidence of a tradable
+  edge (rejected — the D-022 ceiling was fixed in advance, (b) still fails,
+  and costs are placeholders); (ii) read the d = 15 shortfall vs AR(1) as
+  MIXED (rejected — the frozen rule reads the frozen thresholds, and the
+  shortfall is recorded in the decision instead of moving the goalposts);
+  (iii) run a confirming pass on this window (rejected — barred by D-022's
+  Review clause).
+- **Evidence:** validation report 14; `nb14_MES_M2K_{delay_grids,crosscorr,
+  scalars}.csv`; `nb14_MES_M2K_delay_decay.png`, `nb14_MES_M2K_crosscorr.png`;
+  EXP-019; `delayed_entry_summary.py` pins.
+- **Operational facts logged:** L-019 (the summary-statistic channel
+  silently dropped the 12-key S_RL block in every nb06 run; ≤ ~57 keys per
+  backtest and set-equality manifests are now binding), L-020 (files/update
+  rejects files > 32,000 chars → `crosscorr.py` split), and the launch
+  lesson: cancelling the import-rewrite modal during the free-tier
+  "Requesting Backtest" phase aborts the deployment — dismiss it only after
+  "Waiting for Results" appears.
+- **Review:** Per D-022: no re-run of any part of this protocol on this
+  window. The follow-up is a fresh-window/venue/resolution
+  pre-registration (the session/resolution thread), on Derrick's call.

@@ -140,6 +140,15 @@
   contract) must run the base-sampling check before believing a reversion
   result.** Unresolved test: delayed entry (t+2/t+5/t+15) — pre-register
   separately.
+  *AMENDED 2026-08-04 by D-023 (notebook 14): the delayed-entry test RAN.
+  The lead-lag is REAL but one bar deep and tiny (ab_1 = +0.033, mirror
+  +0.004, k >= 2 all ~0) — and the t+1 entry convention already skips that
+  bar, so it does not carry the conditional surface: the effect survives
+  delayed entry (rho(5) = 0.849, rho(15) = 0.536 on matched event sets;
+  DELAY-ROBUST). The base-sampling discipline above binds unchanged — the
+  VR evaporation at coarse bars is now an OPEN PUZZLE (unconditional
+  property vs conditional-event property), not an explained artifact. No
+  advance: criterion (b) unchanged, window spent, D-019 stands.*
 - **L-015:** The adopted 780-bar post-roll warm-up (report 02 section 6.3) is
   calibrated on MES–MYM and confirmed on MES–MNQ, but is **insufficient for
   M2K**, whose residual dispersion is still 1.58x baseline in the THIRD RTH day
@@ -181,6 +190,15 @@
   the RETRIEVED key set against a frozen expected manifest AS A SET and
   against the emitted S_KEYS count — count-only or subset checks pass exactly
   the failure that happened here.
+- **L-020 (2026-08-04, notebook-14 upload):** **QC `files/update` rejects any
+  file above 32,000 characters.** `intraday_reversion.py` crossed the cap
+  when the delayed-entry machinery was added and the upload failed with an
+  explicit error (not silently). Resolution: `leg_crosscorr_profile` moved to
+  its own module `crosscorr.py` (uploaded as a sixth flat file); the double
+  60/60 reproduction gate in notebook 14 proves the split changed nothing.
+  Consequence: any module approaching ~30k characters must be split BEFORE
+  the run day, and `build_qc_upload.py`'s per-file byte counts are the early
+  warning to watch.
 
 ## Closed
 

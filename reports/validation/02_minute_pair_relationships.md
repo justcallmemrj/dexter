@@ -24,12 +24,12 @@ Pelican"** (single run; the pipeline was already validated).
 |---|---|---|
 | MES–MYM (§1-§10) | **A-006 FALSIFIED** | significant cells point at continuation |
 | MES–MNQ (§11) | **A-006 FALSIFIED** | same, plus ~70 bps/yr one-signed roll carry |
-| MES–M2K (§12) | **AMBIGUOUS / MICROSTRUCTURE** | (a)+(c) pass, (b) fails on base sampling; lead-lag, not reversion |
+| MES–M2K (§12) | **AMBIGUOUS / MICROSTRUCTURE** | (a)+(c) pass, (b) fails on base sampling; mechanism probed 2026-08-04 — NOT laggard catch-up, open puzzle (§12.3–12.4, report 14) |
 
 Two pairs are closed. The third is **unresolved, not positive**: it produced a
 real, monotone, cost-clearing surface that does not survive coarser base
 sampling, with M2K's own VR above 1 at q=2 pointing at lagged price adjustment.
-One pre-registered follow-up (delayed entry) would settle it. **No index pair
+One pre-registered follow-up (delayed entry) RAN on 2026-08-04 — DELAY-ROBUST, not laggard catch-up (report 14); the pair stays unresolved-not-positive. **No index pair
 has produced a tradable intraday reversion result.**
 
 ### MES–MYM
@@ -530,6 +530,19 @@ the dislocation is largest — which is precisely the monotone-in-entry_z surfac
 in §12.2. It also explains why the effect evaporates at 5- and 15-minute
 sampling: by then the catch-up has already happened inside the bar.
 
+> **AMENDED 2026-08-04 by validation report 14 (D-022 → D-023).** The
+> pre-registered test ran. The lead-lag is REAL but **one bar deep and tiny**
+> (corr(r_MES(t−1), r_M2K(t)) = +0.033 against a mirror of +0.004; every
+> k = 2..5 correlation ≈ 0) — and the t+1 entry convention already skips that
+> bar, so it cannot carry this surface. The surface itself **survives delayed
+> entry** on matched event sets (retention 0.932 / 0.849 / 0.536 at
+> d = 2 / 5 / 15; DELAY-ROBUST). The catch-up sentence above is therefore
+> WITHDRAWN as the explanation of the conditional surface; the base-sampling
+> evaporation it tried to explain stands as an open puzzle (an unconditional
+> property of every bar, where the event study conditions on |z| ≥ 2). The
+> verdict below is unchanged — (b) is inherited and still fails, and no
+> outcome of the mechanism probe could advance the pair (D-022 ceiling).
+
 ### 12.4 Verdict — AMBIGUOUS / MICROSTRUCTURE (D-015)
 
 Under the frozen D-010 rule, (a) holding while (b) fails is **exactly** the
@@ -551,6 +564,13 @@ decays sharply with entry delay — a lagging leg has already converged. If it i
 genuine reversion toward a fair value, it survives a few minutes of delay. The
 cross-correlation of leg returns at lags ±1..5 should be measured in the same
 run. Until that runs, no MES–M2K result may be quoted as an edge.
+
+> **AMENDED 2026-08-04:** that test ran (validation report 14, D-022 → D-023)
+> and returned **DELAY-ROBUST** — the effect survives delayed entry, and the
+> real-but-tiny one-bar lead-lag does not carry it. Still no MES–M2K result
+> may be quoted as an edge: (b) unchanged, costs are placeholders, the window
+> is spent, and the verdict is hypothesis-generating for a fresh
+> window/resolution only.
 
 ### 12.5 Pair-specific preflight finding — 780 bars is NOT enough for M2K
 

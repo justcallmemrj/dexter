@@ -1,0 +1,29 @@
+key,value
+S_SPECS,anchor=unit|S1_beta_med=1.0|S1_beta_p5=1.0|S1_beta_p95=1.0
+S_GATE,PASS|both legs adjudicated non-gap-shaped
+S_KEYS,57
+S_ALIGN,bars=684300|sessions=1780|medbars=390|first=2019-06-03|last=2026-04-24|dropA=0|dropB=0
+S_PAIR,MES_M2K|markets=cme/cme|anchor=unit|rolls=index|nb=14|part=2
+S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
+S_BUILD_MES,rolls=28|flags=0|med_ovl=390|nonmedian=0
+S_FLAG_M2K190613,sr=-0.06|gap=0.2563|thr=0.05|mad=0.0|ratio=0.23|gapshaped=0|why=sign_mismatch
+S_BUILD_M2K,rolls=28|flags=1|med_ovl=390|nonmedian=0
+S_DELAYCFG_P1,"delays=1,2,5,15|feasible=15|part=1|xlags=1,2,3,4,5|nboot=1000|open_win=30|z=Z0_rolling390+Z2_open_excluded"
+S_DELAYCFG_P2,"delays=1,2,5,15|feasible=15|part=2|xlags=1,2,3,4,5|nboot=1000|open_win=30|z=Z0_rolling390+Z2_open_excluded"
+RUN_P1,Creative Tan Antelope
+RUN_P2,Swimming Red Pigeon
+D022_GATE_4_PART_1_EMISSION,"PASS|54 keys, set-identical to the part-1 manifest"
+D022_GATE_4_PART_2_EMISSION,"PASS|57 keys, set-identical to the part-2 manifest"
+D022_GATE_1_Z0_VS_NB02,PASS|60 cells reproduced exactly
+D022_GATE_1_Z2_VS_NB06,PASS|60 cells reproduced exactly
+D022_GATE_2_PART_1_MATCHED,"PASS|n_events constant across {1,2,5,15} in all 40 cells"
+D022_GATE_2_PART_2_MATCHED,"PASS|n_events constant across {1,2,5,15} in all 40 cells"
+D022_GATE_2B_CROSS_PART,PASS|7 shared diagnostics identical
+D022_GATE_3_CROSSCORR,"PASS|c0 = 0.788, 15 finite CIs, 1000 replicates"
+code_sha_calendars.py,6c30074951c23c48
+code_sha_signals.py,df9e42ad8d855b33
+code_sha_roll_adjustment.py,73bc9d47946c9055
+code_sha_intraday_reversion.py,600e30cf3f265dda
+code_sha_crosscorr.py,3d7c78950512629e
+code_sha_pair_minute_report.py,3e660752a6e901cc
+code_sha_main.py,97a3087b58a553ef

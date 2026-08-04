@@ -1,8 +1,9 @@
-# CONTEXT-HANDOFF — dexter intraday RV research (complete state, 2026-08-03)
+# CONTEXT-HANDOFF — dexter intraday RV research (complete state, 2026-08-04)
 
 Paste this whole file into a new session to restore full context. Owner:
 **Derrick Johnson**. Repo `C:\Users\Mrder\dexter`, branch
-`claude/futures-relative-value-research-fpv6m3`, HEAD **`295ff28`**.
+`claude/futures-relative-value-research-fpv6m3` (all work committed AND
+pushed — `git push` works from the harness; check `git log --oneline -8`).
 QC cloud project **34720894** (free tier). Educational research; internal R&D
 only — not investment advice.
 
@@ -28,6 +29,13 @@ no-go survived it, but one supporting claim did not: the significant
 *continuation* that falsified MES–MYM and MES–MNQ is carried by first-30-minute
 events. See §1b. Reports 02 and 13 carry inline amendments where this bites.
 
+**The MES–M2K delayed-entry thread has ALSO now RUN — D-022 (pre-registered
+2026-08-04) → D-023, validation report 14, notebook 14.** Verdict:
+**DELAY-ROBUST** — the one cost-clearing surface in the program SURVIVES
+delayed entry and is NOT the laggard catching up. See §1c. The no-go still
+stands (criterion (b) untouched and failing; ceiling pre-committed). Reports
+02/13, L-014 and the A-006 register row carry fresh inline amendments.
+
 `lean/algorithm/` is still empty and stays empty: the LEAN build remains
 hard-gated on Derrick writing the exact token **`PROCEED TO LEAN BUILD`**.
 
@@ -37,7 +45,7 @@ hard-gated on Derrick writing the exact token **`PROCEED TO LEAN BUILD`**.
 |---|---|---|---|
 | MES–MYM | **A-006 FALSIFIED** | D-011 | 0/60 positive at \|t\|>=3; 24 of 26 significant cells NEGATIVE (continuation) |
 | MES–MNQ | **A-006 FALSIFIED** | D-013 | same; residual VR sits ABOVE its own leg. Roll carries ~70 bps/yr one-signed drag |
-| MES–M2K | **AMBIGUOUS / MICROSTRUCTURE** | D-015 | (a)+(c) pass, +6.31 bps at t=5.31 would clear cost — but (b) fails; M2K's own VR>1 = lead-lag |
+| MES–M2K | **AMBIGUOUS / MICROSTRUCTURE** | D-015 | (a)+(c) pass, +6.31 bps at t=5.31 would clear cost — but (b) fails; VR>1 = lead-lag (probed 2026-08-04: real but NOT the carrier — §1c) |
 | ZF–ZN | **AMBIGUOUS / IMMATERIAL** | D-017 | 20/20 cells positive, t to 9.44, effect **11x below cost** |
 | ZT–ZF | **AMBIGUOUS / IMMATERIAL** | D-018 | 20/20, **7x below cost** |
 | ZN–ZB | **AMBIGUOUS / IMMATERIAL** | D-018 | 20/20, **9x below cost**, largest roll shock in universe |
@@ -77,6 +85,41 @@ the decomposition), plus an exploratory open-only subset.
   "Crawling Magenta Barracuda" (M2K), "Measured Black Lion" (ZF–ZN control).
   Data: `nb06_<PAIR>_{signal_grids,event_clocks,scalars}.csv`.
 
+## 1c. THE DELAYED-ENTRY RE-TEST (D-022 -> D-023, report 14, notebook 14)
+
+Pre-registered before any code existed; the interpretation ceiling (no branch
+can advance the pair) was frozen with it. Two QC backtests BY DESIGN (L-019):
+part 1 "Creative Tan Antelope" (Z0 half), part 2 "Swimming Red Pigeon" (Z2
+half + cross-correlation); both compute everything, each emits <= 57 keys.
+
+- **All eight validity gates passed and were read first.** Both emissions
+  set-identical to frozen manifests (54 + 57 keys); unmatched d=1 grids
+  reproduced banked nb02 AND nb06 **60/60 cells exactly** each; matched
+  n_events constant across delays in all 80 families; the two parts' shared
+  diagnostics character-identical (5th D-009 determinism demonstration);
+  crosscorr machinery sound (c0 = 0.788, 15 finite CIs, 1,000 replicates).
+- **The finding:** on the frozen 37-cell read set (all included), retention
+  ratio_d = ms(d)/ms(1) at entry t+d on MATCHED event sets is
+  **rho(2)=0.932, rho(5)=0.849, rho(15)=0.536; S(5)=0.73, S(15)=0.59** — the
+  DELAY-ROBUST branch. Catch-up predicts ~0 by d=5. Headline: Z2 S1 3.0/120
+  runs +6.68 -> +5.89 -> +4.74 -> +2.24 bps across d = 1/2/5/15.
+- **The cross-correlation found the lead-lag and measured it too small to
+  matter:** ab_1 = corr(r_MES(t-1), r_M2K(t)) = **+0.033** [+0.021, +0.047]
+  vs mirror +0.004; every k=2..5 ~ 0; X = TRUE. One bar deep, ~0.03 — and
+  the t+1 convention already skips that bar. Both probes agree: **the
+  surface is not laggard catch-up.** D-015's [PLAUSIBLE] attribution is
+  withdrawn as the surface's explanation (L-014's thin-leg discipline binds
+  unchanged).
+- **Nothing advances, exactly as pre-registered.** Hypothesis-generating
+  ONLY: it buys a banked target for the session/resolution thread. Honest
+  counter-notes on the record (D-023): rho(15) sits BELOW the AR(1)
+  prediction (0.77-0.85), and the criterion-(b) base-sampling evaporation
+  is now an OPEN PUZZLE (unconditional VR vs conditional event study), not
+  an explained artifact.
+- Verdict machinery: `src/spread_research/delayed_entry_summary.py`, pinned
+  by `tests/unit/test_delayed_entry_summary.py` (210 tests green). Data:
+  `nb14_MES_M2K_{delay_grids,crosscorr,scalars}.csv`, two nb14 figures.
+
 ## 2. THE FOUR NEAR-MISS FAKE EDGES (the real deliverable)
 
 Each would have been published as an edge by a less careful battery. Carry
@@ -85,8 +128,12 @@ these forward into any new work:
 1. **Bid-ask bounce** (MYM/MNQ): residual VR ~0.75 with p<0.001 that is flat
    past q=30 and returns to ~0.99 at 5-minute base sampling.
 2. **Lead-lag from a thin leg** (M2K, L-014): a monotone, cost-clearing,
-   t=5.7 surface produced entirely by the laggard catching up. M2K's own VR at
-   q=2 is **1.012 (above 1)** — the tell.
+   t=5.7 surface initially attributed to the laggard catching up. M2K's own
+   VR at q=2 is **1.012 (above 1)** — the tell. *(Amended by D-023: the
+   catch-up is real but ONE bar deep and ~0.03 of correlation — it does not
+   carry the surface, which survives 15-minute delayed entry. The thin-leg
+   WARNING and the base-sampling check stand unchanged; the mechanism of
+   the M2K surface is now an open question.)*
 3. **Sliding reference window** (A2): differencing a residual built around a
    trailing mean credits the window moving. On two INDEPENDENT random walks it
    reports +5.4 bps at t=20.3. Fixing it dropped a headline from +2.14 bps
@@ -137,7 +184,7 @@ P&L, not the residual's change; (ii) compare against BOTH legs' own VR;
 - **`calendars.py`** — rule-derived CME holidays 2018–2027.
 - **Pipeline is pair-parameterised end to end**: one `PAIR` constant in the
   driver + `MARKETS` map; `ingest_qc_pair_minute.py` and `nb02_figures.py` take
-  `--pair` and namespace every output. **128 tests green.**
+  `--pair` and namespace every output. **210 tests green.**
 
 ## 5. OPEN THREADS — Derrick's call
 
@@ -152,18 +199,20 @@ window's results as evidence** — the window is spent for this hypothesis.
    can no longer drift from its own evidence.
 2. ~~**Notebook 06 / L-013 fix.**~~ **DONE 2026-08-03 (D-020 → D-021)** — see
    §1b and `reports/validation/06_signal_definition_and_session_anchoring.md`.
-3. **MES–M2K delayed entry (D-015).** Entry at t+2/t+5/t+15 instead of t+1,
-   plus leg-return cross-correlation at lags ±1..5. If lead-lag, the effect
-   decays sharply with delay; if genuine reversion, it survives. Settles the
-   one non-negative index result. **Note D-021 raised its stakes**: under the
-   open-excluded signal M2K's best honest cell is +6.77 bps at t = 5.14, still
-   the largest in the program.
+3. ~~**MES–M2K delayed entry (D-015).**~~ **DONE 2026-08-04 (D-022 ->
+   D-023)** — see §1c and `reports/validation/14_delayed_entry_mes_m2k.md`.
+   DELAY-ROBUST; closed on this window by D-022's Review clause (no re-run
+   under any variation).
 4. **Different resolution or venue.** Every negative here is MINUTE resolution,
    TRADE bars, equity RTH (09:30–16:00 ET). Quote data, a treasury-native
    session (08:20 ET cash open), or second/tick resolution are DIFFERENT
    EXPERIMENTS, not re-runs. `research_config.data.later_resolutions` anticipates it.
-   **D-021 promoted this**: a signal artifact this large at the session boundary
-   is an argument for testing a different SESSION, not a different threshold.
+   **D-021 promoted this, and D-023 handed it a BANKED TARGET**: the M2K
+   surface survives delayed entry (+6.68 bps decaying to +2.24 across a
+   15-minute delay) while the unconditional VR still evaporates at coarse
+   bars — a second/tick or different-session test is precisely what
+   discriminates the reconciling mechanisms. Needs its own pre-registration
+   and a fresh window.
 5. **(New, optional) Open-window continuation as its own hypothesis.** L-018
    documents a consistent, correctly-signed continuation effect in the first 30
    minutes across four pairs including the Treasury control. It is a DIFFERENT
@@ -171,17 +220,44 @@ window's results as evidence** — the window is spent for this hypothesis.
    statistic, and D-020 deliberately issued no verdict on it. Needs its own
    pre-registration and its own verdict rule.
 
-Suggested order now: **3 then 4** — settle the one non-negative index result,
-then decide whether to spend a new window on a different session or resolution.
+Suggested order now: **4** (optionally 5) — thread 3 is DONE and the
+session/resolution thread now carries the banked D-023 target.
 
 ## 6. OPERATIONAL FACTS
 
-- **12 commits are LOCAL and UNPUSHED.** `git push` is blocked by the harness
-  permission classifier; Derrick must run it. Commits are authored as
+- **`git push` WORKS from the harness** — everything through D-023 is
+  committed and pushed. Commits are authored as
   `Claude <noreply@anthropic.com>` via `git -c user.name=... -c user.email=...`
   because the repo has no committer identity configured.
 - Local env: `.venv` Python 3.14.5 — always `.venv/Scripts/python.exe`.
-  `pytest tests/` → 182 green.
+  `pytest tests/` → **210 green**.
+- **L-019 (BINDING): never design a single-backtest emission above ~57 keys.**
+  All four nb06 runs emitted 67-68 keys and the retrieved statistics silently
+  lost exactly the 12-key S_RL block every time. Split batteries into PARTS
+  (a frozen PART constant filtering only the emission; both parts compute
+  everything; cross-part identity of shared diagnostics is a free determinism
+  gate) and have the ingest compare the retrieved key SET against a frozen
+  manifest plus S_KEYS.
+- **L-020: QC files/update rejects files > 32,000 chars** (explicit error).
+  `crosscorr.py` exists as a separate upload because of this. Watch
+  `build_qc_upload.py` byte counts before run day.
+- **The OS-clipboard bridge beats both chunk-paste and slice-reads.** Upload:
+  `Set-Clipboard` each chunk -> focus a scratch textarea on the QC page ->
+  real Ctrl+V -> read `.value` from JS (byte-perfect, no transcription).
+  Download: stash JSON in a textarea, select, real Ctrl+C ->
+  `Get-Clipboard -Raw` to file. ALWAYS verify SHA-256 both ways (in-page
+  `crypto.subtle` vs local) — the hash caught a hand-transcription error
+  again this session before the clipboard route was adopted.
+- **Launch timing:** cancelling the import-rewrite modal while the free-tier
+  deployment still says "Requesting Backtest" ABORTS the launch (lost one
+  attempt this way; the relaunch got a fresh run name). Dismiss the modal
+  only after "Waiting for Results" appears (~20-25s). An aborted attempt
+  keeps its tab name; the real backtest may appear under a DIFFERENT name —
+  match on `backtests/read` + S_PAIR, not the tab title.
+- **Ingest flow for split runs:** `ingest_qc_delayed_entry.py --check
+  raw_partN.json --part N` validates one part (gates 1/2/4[/3]) BEFORE the
+  second backtest is spent; the full two-part call with `--compare-banked`
+  writes nothing unless all eight gates pass.
 - **Uploading only what changed:** `python scripts/build_qc_upload.py --driver
   {pair|signal} --only a.py,b.py` skips unchanged modules and prints a
   line-ending-normalised sha for every file, so the copies already in the
@@ -225,6 +301,12 @@ then decide whether to spend a new window on a different session or resolution.
 - **L-012** (MYM 2019-12-12 boundary print) is a watch item, not resolved.
 - **L-018** (open-window continuation; session-anchoring is not a strict
   improvement) is new as of D-021 and binds any future signal work.
+- **L-019/L-020** (emission-channel key loss; 32k file cap) are operational
+  limits from the notebook-14 session — see §6.
+- **The D-023 open puzzle:** the M2K conditional effect survives a
+  15-minute delayed entry while the residual's unconditional VR evaporates
+  at 5-minute base sampling. Both banked. Reconciling mechanism unknown —
+  the sharpest question the program now owns.
 - Two of the four near-miss fake edges in §2 now have a fifth sibling worth
   naming: **a minority of events can own the pooled sign of an entire grid.**
   22.7–24.7% of events flipped three index pairs from negative to positive.

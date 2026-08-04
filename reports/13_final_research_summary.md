@@ -159,6 +159,20 @@ settle it (delayed entry at t+2/t+5/t+15, plus leg-return cross-correlation at
 lags ±1..5) has not been run. Until it does, **no MES–M2K result may be quoted
 as an edge**, and A-006 is neither confirmed nor falsified for that pair.
 
+> **AMENDED 2026-08-04 by validation report 14 (D-022 → D-023).** The test
+> ran, under a pre-registration that fixed the ceiling first. Outcome:
+> **DELAY-ROBUST** — the surface survives delayed entry (retention 0.932 /
+> 0.849 / 0.536 at d = 2 / 5 / 15 on matched event sets, all 37 read-set
+> cells included), while the leg-level lead-lag, though real and one-sided,
+> is one bar deep and worth ~0.03 of correlation — too small to carry the
+> surface, and already excluded by the t+1 entry convention. The lead-lag
+> attribution above is therefore withdrawn as the surface's explanation;
+> the base-sampling evaporation becomes an open puzzle (unconditional VR vs
+> conditional event study). **Nothing else changes:** (b) still fails, the
+> pair does not advance, no MES–M2K result may be quoted as an edge, and
+> this report's conclusion stands. The finding is hypothesis-generating for
+> open thread 3 (different session/resolution) only.
+
 Stating the multiple-testing position plainly: this was the third pair × 60
 cells = 180 cells examined under one protocol at the time. A coherent monotone
 surface with t up to 5.7 across two specifications is not what 180 independent
@@ -210,8 +224,14 @@ planted AR(1) and >0.85 for a planted bounce), and it returns to ~0.99 at
 5-minute base sampling.
 
 **2. Lead-lag from a thin leg (MES–M2K, L-014).** A monotone, cost-clearing,
-t = 5.31 surface produced entirely by the laggard catching up. The tell is the
-leg's own variance ratio: M2K at q = 2 is 1.012, *above* 1.
+t = 5.31 surface initially attributed to the laggard catching up. The tell is
+the leg's own variance ratio: M2K at q = 2 is 1.012, *above* 1. *(Amended
+2026-08-04, report 14: the delayed-entry probe showed the catch-up is real
+but one bar deep and tiny — it does NOT carry this surface, which survives
+delay. The thin-leg WARNING stands — a leg VR above 1 still demands the
+delayed-entry/base-sampling checks before any reversion claim — but for
+MES–M2K the surface's mechanism is now an open question, not an explained
+artifact.)*
 
 **3. Sliding reference window (D-010 amendment A2).** Differencing a residual
 built around a trailing mean credits the reference window moving toward the
@@ -336,7 +356,10 @@ Two structural findings came out of the same work and outlive the hypothesis:
   780-bar maximum hold the Version 1 design allows. **The structure is real and
   lives at the wrong horizon for an intraday book.**
 - **Not concluded: that MES–M2K has no effect.** It is UNRESOLVED. The
-  delayed-entry test would settle it.
+  delayed-entry test would settle it. *(Amended 2026-08-04: the test ran —
+  report 14, DELAY-ROBUST. It attributed the mechanism — NOT laggard
+  catch-up — but by pre-registered design issued no verdict on A-006, which
+  stays UNRESOLVED; settling it now requires a fresh window/resolution.)*
 - **Not concluded: anything about quote data, tick/second resolution, a
   Treasury-native session, overnight hours, or DV01-hedged Treasury spreads.**
   Every negative here is minute resolution, trade bars, equity RTH.
@@ -396,6 +419,11 @@ pre-registration, and **none may reuse this window's results as evidence**.
    it decays sharply with delay; if it is genuine reversion it survives. Settles
    the one non-negative index result either way — and a confirmed lead-lag effect
    in the thinnest micro is itself a documented finding.
+   *(DONE 2026-08-04 — validation report 14, D-022 → D-023: **DELAY-ROBUST**.
+   The surface survives delay; the real lead-lag is one bar and ~0.03 of
+   correlation — not the carrier. Hypothesis-generating only; feeds thread 3
+   with a banked target: +6.68 bps decaying to +2.24 across a 15-minute
+   entry delay.)*
 3. **Different resolution or venue.** Quote data (which would replace the
    A-008 placeholder with a measurement), a Treasury-native session anchored at
    the 08:20 ET cash open, or second/tick resolution. These are **different

@@ -214,6 +214,10 @@ removal of open events, present in three index pairs, absent in the control.
 - **A-006 remains UNRESOLVED for MES–M2K.** Its verdict is the one that changes
   branch under Z1, which is what makes L-013 material; the delayed-entry test
   (D-015) is still the test that would settle the pair.
+  *(Amended 2026-08-04: it ran — D-022 → D-023, report 14, DELAY-ROBUST.
+  Mechanism attributed — NOT laggard catch-up — but by pre-registered design
+  it issued no verdict on A-006, which stays UNRESOLVED; the thread is closed
+  on this window.)*
 - **A-009 unchanged for ZF–ZN**: AMBIGUOUS / IMMATERIAL under every signal
   definition tested.
 - **D-019's no-go stands.** No pair advanced; nothing here reaches REVERSION
