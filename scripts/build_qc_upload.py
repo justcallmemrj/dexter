@@ -36,6 +36,7 @@ MODULES = [
     ("src/spread_research/signals.py", "signals.py"),
     ("src/spread_research/roll_adjustment.py", "roll_adjustment.py"),
     ("src/spread_research/intraday_reversion.py", "intraday_reversion.py"),
+    ("src/spread_research/crosscorr.py", "crosscorr.py"),
     ("src/spread_research/pair_minute_report.py", "pair_minute_report.py"),
 ]
 

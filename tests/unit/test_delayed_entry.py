@@ -23,9 +23,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from spread_research.intraday_reversion import (
-    conditional_reversion, leg_crosscorr_profile,
-)
+from spread_research.crosscorr import leg_crosscorr_profile
+from spread_research.intraday_reversion import conditional_reversion
 from spread_research.pair_minute_report import (
     DELAYS, FEASIBLE_MAX_DELAY, delayed_entry_analysis_keys,
     pair_delayed_entry_report,

@@ -17,9 +17,10 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from .crosscorr import leg_crosscorr_profile
 from .intraday_reversion import (
     conditional_reversion, event_clock_profile, first_minutes_mask,
-    half_life_within_session, held_position_roll_shock, leg_crosscorr_profile,
+    half_life_within_session, held_position_roll_shock,
     roll_window_diagnostics, rth_frame, session_anchored_zscore, session_ids,
     subsample_within_session, variance_ratio,
 )
