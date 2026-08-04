@@ -207,6 +207,15 @@
   10:31–17:00 ET, not the "09:30–16:00 ET" that every document states.**
 
   Evidence chain, all four links independent:
+  0. **In-repo and decisive on its own:** `config/research_config.yaml`
+     specifies the session as `rth_start_ct: "08:30"` / `rth_end_ct: "15:00"`
+     — i.e. in CENTRAL time — while `intraday_reversion.py` hardcodes
+     `RTH_OPEN = time(9,30)` / `RTH_CLOSE = time(16,0)` under the comment
+     "09:30-16:00 ET (config research_config.yaml session_filter, 08:30-15:00
+     CT)". The code applies the ET numbers to whatever clock the data carries,
+     so on CT-stamped bars it misses the config's own stated CT window by
+     exactly one hour. (The config keys are themselves dead — nothing reads
+     `session_filter` — so the divergence was never enforced.)
   1. CME (primary source, browser): E-mini S&P Globex opens Sunday **6:00 p.m.
      ET**; ZN Globex opens Sunday **5:00 p.m. CT** — the same instant.
   2. Banked `qc_data_inventory.json`: the index micros' first bar is
@@ -221,10 +230,14 @@
      its own LEAN *regular session* expressed in its own exchange timezone
      (ZN 08:30–16:00 CT; M2K 09:30–17:00 ET).
 
-  `rth_frame` keeps `(time(9,30), time(16,0)]` of `df.index.time`, with no
-  timezone awareness anywhere in the repo (a grep for `America/`, `tz=`,
-  `timezone` across `src/`, `lean/`, `config/` returns nothing on this
-  question). Applied to Chicago-stamped Treasury bars it therefore selects
+  `rth_frame` keeps `(time(9,30), time(16,0)]` of `df.index.time` with no
+  timezone awareness. A grep for `America/`, `tz=`, `timezone` across `src/`,
+  `lean/` and `config/` returns no timezone HANDLING — the only hits are
+  pass-throughs (`roll_adjustment.py` `tz=tz`, the four drivers' `tz=None`),
+  a UTC localize in the preview path, and `datetime.timezone` in `reporting.py`.
+  Nothing anywhere converts, asserts or even records the clock of an analysed
+  index. Applied to Chicago-stamped Treasury bars `rth_frame` therefore
+  selects
   **09:31–16:00 CT = 10:31–17:00 ET**, which still yields exactly 390 bars —
   which is why `medbars=390` never revealed it. Bar count cannot detect this:
   any 390-minute window inside a ~23h session gives 390 bars.
@@ -239,7 +252,7 @@
   session boundaries never straddled midnight, and every statistic is valid
   *for the window actually used*. Nothing is arithmetically wrong. What is
   wrong is the LABEL, and three inferences that lean on it:
-  (i) report 03 §6.3 / D-020 / `session_anchored_zscore`'s docstring attribute
+  (i) report 03 §6 item 3 / D-020 / `session_anchored_zscore`'s docstring attribute
   the Treasuries' flat event clock to "09:30 ET is not an open for them" — the
   clock's leading bucket is actually 10:31–11:00 ET, so the conclusion may be
   right but the stated basis is not what was measured;

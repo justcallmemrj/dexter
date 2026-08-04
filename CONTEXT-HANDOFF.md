@@ -172,10 +172,21 @@ UNVERIFIED) and simultaneously corrects L-021.
   factors and run `splice_audit` on the REGULAR-SESSION SUBSET of the extended
   fetch, then apply them to the denser series — gated on reproducing the banked
   factor table character-for-character, else the arm is VOID and unreported.
-- **Pairs:** all four Treasury pairs (D-016 precedent, registered together,
-  order ZF–ZN → ZT–ZF → ZN–ZB → ZT–ZN) **plus MES–MYM as a shift control** —
-  the L-021 defect applied deliberately to an index pair, to test whether a
-  one-hour shift moves numbers at all.
+- **Pairs:** all four Treasury pairs and nothing else (D-016 precedent,
+  registered together, order ZF–ZN → ZT–ZF → ZN–ZB → ZT–ZN). **No index
+  control** — an index pair would have to add or remove the 09:31–10:30 ET
+  hour, and L-018 proved that hour can own an index pair's pooled sign
+  (measured: MES–MYM's largest honest effect moves 1.703x when merely the
+  first 30 minutes of events are dropped), so such a control fires by
+  construction and would also re-express D-021's barred Z2 sign flip. The
+  control is instead **S-HALF**, a within-Treasury displacement placebo:
+  (09:00, 15:30] CT, 390 bars, anchored to nothing, giving a dose-response in
+  window displacement of 0 → 30 → 60 minutes across S-USED → S-HALF → S-RTH.
+- **Threshold 2.0x, not 1.5x:** a pure signal re-specification on identical
+  bars already moves the "largest honest effect" statistic 1.467x (ZF–ZN,
+  Z0 +0.286 → Z1 +0.195) and relocates its argmax, so 1.5x sat at the
+  statistic's own noise floor. The move factor is directionless and
+  sign-aware, and free-argmax and fixed-cell readings must agree.
 - **Ceiling:** costs are tick-derived and session-independent, so
   ECONOMICALLY IMMATERIAL is expected to stand under every branch; the
   pre-open cost bar is HIGHER (A-008's 1-tick spread is scoped to "liquid RTH"
