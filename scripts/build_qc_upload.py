@@ -38,6 +38,7 @@ MODULES = [
     ("src/spread_research/intraday_reversion.py", "intraday_reversion.py"),
     ("src/spread_research/crosscorr.py", "crosscorr.py"),
     ("src/spread_research/pair_minute_report.py", "pair_minute_report.py"),
+    ("src/spread_research/session_window_report.py", "session_window_report.py"),
 ]
 
 # Which driver becomes `main.py`. The shipped modules are identical in every
@@ -48,6 +49,7 @@ DRIVERS = {
     "pair": "lean/research/qc_pair_minute_analysis.py",        # notebooks 02/03
     "signal": "lean/research/qc_signal_definition_analysis.py",  # notebook 06
     "delay": "lean/research/qc_delayed_entry_analysis.py",     # notebook 14
+    "session": "lean/research/qc_session_window_analysis.py",  # notebook 15
 }
 
 RELATIVE_IMPORT = re.compile(r"^(\s*from\s+)\.(\w+)(\s+import\s+)", re.MULTILINE)

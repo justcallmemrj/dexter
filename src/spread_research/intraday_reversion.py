@@ -511,7 +511,8 @@ def conditional_reversion(residual: pd.Series, z: pd.Series, *,
 
 def event_clock_profile(z: pd.Series, entry_z: float,
                         bucket_minutes: int = 30,
-                        session_bounded: bool = False) -> pd.DataFrame:
+                        session_bounded: bool = False,
+                        open_t: time = RTH_OPEN) -> pd.DataFrame:
     """Where in the session |z| crossings happen.
 
     The z-score lookback (390 bars = one RTH day, per config) reaches back
@@ -524,8 +525,16 @@ def event_clock_profile(z: pd.Series, entry_z: float,
     `session_bounded` mirrors `conditional_reversion`'s option of the same name
     and must be set for any z-score carrying a per-session warm-up, so that the
     two diagnostics count the same events.
+
+    `open_t` anchors the buckets. It defaults to `RTH_OPEN` so every banked
+    result reproduces, and MUST be passed whenever the panel was framed on a
+    different session (D-024): with a session opening before `RTH_OPEN` the
+    leading bars otherwise land in negative buckets and the profile silently
+    mislabels the open.
     """
     zz = z.dropna()
+    if len(zz) < 2:                 # a window can legitimately score nothing
+        return pd.DataFrame(columns=["minutes_from_open", "n_events", "share"])
     az = zz.abs()
     cross = np.concatenate([[False], (az.values[1:] >= entry_z)
                             & (az.values[:-1] < entry_z)])
@@ -535,7 +544,7 @@ def event_clock_profile(z: pd.Series, entry_z: float,
     idx = zz.index[cross]
     if len(idx) == 0:
         return pd.DataFrame(columns=["minutes_from_open", "n_events", "share"])
-    mins = ((idx.hour * 60 + idx.minute) - (RTH_OPEN.hour * 60 + RTH_OPEN.minute))
+    mins = ((idx.hour * 60 + idx.minute) - (open_t.hour * 60 + open_t.minute))
     b = (np.asarray(mins) // bucket_minutes) * bucket_minutes
     counts = pd.Series(b).value_counts().sort_index()
     return pd.DataFrame({"minutes_from_open": counts.index.astype(int),
