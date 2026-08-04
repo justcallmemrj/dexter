@@ -1509,3 +1509,296 @@ CSVs and pinned by unit test (210 green).
 - **Review:** Per D-022: no re-run of any part of this protocol on this
   window. The follow-up is a fresh-window/venue/resolution
   pre-registration (the session/resolution thread), on Derrick's call.
+
+## D-024 — 2026-08-04 — PRE-REGISTRATION of notebook 15: the treasury-native session (A-013), and the session-clock defect it must correct first
+
+Written before any notebook-15 code existed and before any number under it
+existed. Open thread 4 of D-018/D-019 (the session/resolution thread), promoted
+by D-021 and handed a banked target by D-023. Authorised by Derrick
+2026-08-04. Nothing below may be revised in response to an outcome; a revision
+voids the test and forces a fresh pre-registration.
+
+**This is not a LEAN authorisation.** `lean/algorithm/` stays empty; the gate
+still requires the exact token `PROCEED TO LEAN BUILD`, which has not been
+given.
+
+### 0. The defect this experiment inherited, stated before anything else
+
+Pre-registration research established **L-021**: `rth_frame` filters on the
+clock the DATA carries, Treasury bars are Chicago-stamped and index bars are
+New-York-stamped, so **every Treasury result in this program was computed on
+10:31–17:00 ET, not the 09:30–16:00 ET that D-016, reports 03/06/13 and the
+handoff all state.** Four independent links, the decisive one banked
+(`own_splice_acceptance_*.json`: ZN spans 08:31→16:00, M2K spans 09:31→17:00 —
+each its own LEAN regular session in its own exchange timezone). Bar count
+cannot detect this; any 390-minute window inside a 23h session yields 390 bars.
+
+This changes what the experiment is. **The A-013 question can no longer be
+asked against a baseline that was never measured.** Notebook 15 must therefore
+do two things in one pass: measure the corrected baseline, and test the
+treasury-native session against it. Both are pre-registered here together, so
+neither can be reported selectively.
+
+**Every window below is stated in BOTH clocks.** That convention is now
+binding on all future session work.
+
+### 1. Why this is a genuinely different experiment — criterion (b) is LIVE
+
+D-020 (signal definition) and D-022 (entry timing) both carried a hard ceiling
+of AMBIGUOUS / MICROSTRUCTURE, for one structural reason: criterion (b) — the
+variance-ratio shape, the leg baselines and the base-sampling checks — is
+computed on the RESIDUAL, and no z-score and no entry bar enters it. Neither
+experiment could touch it.
+
+**A session change is not like that.** It changes which bars form the panel,
+hence the residual series, hence the variance ratios, the leg baselines, the
+block counts (`nblk = (len(seg)-1)//q`) and the bootstrap's session partition.
+Verified in code: `variance_ratio` → `_vr_session_sums` → `_session_slices` →
+`session_ids`, and `subsample_within_session` on the same path.
+
+**Criterion (b) must be RECOMPUTED, not inherited. All three D-010 criteria
+are live and REVERSION PRESENT is reachable in principle.** Notebook 15 is the
+first experiment since notebook 03 that can move a Treasury verdict on its own
+terms. That is the strongest scientific argument for spending the runs, and it
+is also why the ceiling in §6 is set on economics rather than on (b).
+
+### 2. The windows, fixed now
+
+Delivered data, established from banked archives: `self.history(contract, …)`
+returns the LEAN **regular session only** — for Treasuries 08:31–16:00 CT
+(≈450 bars/day), for index micros 09:31–17:00 ET. The Sunday-evening and
+early-morning Globex bars exist on QC (the streamed inventory path sees
+~1,190–1,390 bars/day) but the history call does not return them.
+
+**Treasury windows (Chicago-stamped data):**
+
+| tag | in data stamps (CT) | true ET | bars | role |
+|---|---|---|---|---|
+| **S-USED** | (09:30, 16:00] | 10:31–17:00 | 390 | what the banked runs did — REPRODUCTION GATE |
+| **S-RTH** | (08:30, 15:00] | 09:31–16:00 | 390 | the equity RTH every document *claims* was used — the corrected baseline |
+| **S-SETTLE** | (08:30, 14:00] | 09:31–15:00 | 330 | regular open → **CME Treasury settlement** |
+| **S-CASH** | (07:20, 14:00] | 08:21–15:00 | 400 | the true cash-open session — **CONDITIONAL ARM, see §3** |
+
+**Index control window (New-York-stamped data), MES–MYM:**
+
+| tag | ET | bars | role |
+|---|---|---|---|
+| **S-USED(ix)** | (09:30, 16:00] | 390 | banked equity RTH — REPRODUCTION GATE |
+| **S-SHIFT(ix)** | (10:30, 17:00] | 390 | the L-021 defect applied DELIBERATELY to an index pair |
+
+S-SHIFT(ix) is the null the whole experiment needs: it asks whether a one-hour
+window shift moves a pair's numbers *at all*, on a pair where no treasury-native
+structure can be involved. If it moves an index pair as much as the treasury
+windows differ, the difference is "a shifted hour", not session structure.
+
+**Boundary provenance, with its asymmetry declared:**
+
+- The **close at 14:00 CT / 15:00 ET is PRIMARY-SOURCED and asset-class
+  specific**: CME settles ZT/ZF/ZN/ZB on the VWAP of Globex trades between
+  **13:59:30 and 14:00:00 CT**, and settles E-mini S&P on **14:59:30–15:00:00
+  CT**. The program's 16:00 close is exactly the *equity* settlement. This is
+  the economic core: each asset class's session should end at its own daily
+  reference price, and the Treasury one was inherited from the wrong class.
+- The **open at 07:20 CT / 08:20 ET is a CONVENTION, not a sourced boundary.**
+  It is the historic CBOT floor open and this repo's own recorded figure
+  (D-016 clause 4; handoff §7), restated by Derrick. It is NOT on CME's
+  current specs page, and LEAN labels those bars `premarket`. Its economic
+  motivation is that scheduled US macro releases land at **08:30 ET** and are
+  the largest scheduled information events for the Treasury market, falling
+  entirely outside any 09:30-anchored window.
+- **The open may not be tuned on this window.** No alternative open will be
+  tried. To let a FUTURE experiment define it empirically without licensing a
+  re-cut here, the run emits a descriptive per-bucket activity profile across
+  the delivered day (bar counts only), which is diagnostic and carries no
+  verdict.
+
+### 3. The S-CASH arm is CONDITIONAL, and the condition is fixed now
+
+S-CASH needs bars before 08:30 CT, which the current history call does not
+return. Obtaining them means passing `extended_market_hours=True` to
+`self.history(...)`, and that is **not a free change**: `build_continuous`
+measures each splice factor over `factor_window_bars=390` of overlap, so on a
+denser series 390 bars covers ~0.28 of a day instead of ~0.87, producing
+different factors, a different constructed series, and a broken comparison to
+every banked result.
+
+**The design that preserves D-009, fixed now:** fetch extended hours, but
+measure the splice factors and run `splice_audit` on the **regular-session
+subset** of that fetch — the identical bar set the banked runs used — then
+apply those factors to the full extended series. The construction is unchanged
+by definition; only the sampling of the adjusted series is denser.
+
+**Gate S-CASH-ENABLE (pass/fail on mechanics, before any S-CASH grid is
+read):** the splice factor table and the acceptance-gate outputs
+(`S_GATE`, `S_BUILD_*`, `S_FLAG_*`) computed on the regular-session subset of
+the extended fetch must reproduce the banked Treasury values **character for
+character**. If they do not, **the S-CASH arm is VOID and is not reported**;
+S-USED / S-RTH / S-SETTLE stand on their own, and the true cash-open session
+is deferred to its own pre-registration. This is declared now so that a failed
+S-CASH arm cannot become a reason to relax the D-009 construction.
+
+### 4. Pairs, and the order they run in
+
+All four Treasury pairs, registered together and in a fixed order so the
+protocol cannot be adjusted between them (the D-016 precedent, liquidity-first):
+**ZF–ZN → ZT–ZF → ZN–ZB → ZT–ZN**, plus **MES–MYM as the shift control**.
+
+The other two index pairs are NOT run: they are FALSIFIED on sign, not on
+window, and no session change makes a negative significant result positive
+without also moving MES–MYM, which is in the run as the control. Scope fixed
+now so it cannot widen after the results.
+
+### 5. Validity gates, applied BEFORE any grid is read
+
+1. **TIMEZONE-WITNESS gate.** Each leg emits the observed min/max time-of-day
+   and the median bars per calendar day of the constructed series *before* any
+   session filter. Treasury legs must read 08:31/16:00 with ~450 bars/day and
+   index legs 09:31/17:00 with ~450 — the L-021 signature. **Bar count alone
+   may never be used as a timezone witness.** A mismatch voids the run.
+2. **Reproduction gate.** The S-USED grid AND its variance-ratio blocks must
+   reproduce the banked `nb02_<PAIR>_conditional_reversion.csv` and
+   `nb02_<PAIR>_variance_ratio.csv` cell for cell, for all four Treasury pairs;
+   S-USED(ix) must do the same for MES–MYM. This is the only thing that proves
+   the session parameterisation did not disturb the pipeline.
+3. **Build-determinism gate.** `build_continuous` and `splice_audit` run on the
+   unfiltered series and are session-agnostic (verified: no `session_ids`, no
+   `rth_frame`, no time-of-day arithmetic in `roll_adjustment.py`). So
+   `S_GATE` / `S_BUILD_*` / `S_FLAG_*` must reproduce the banked Treasury
+   values exactly — a **6th determinism demonstration** of D-009.
+4. **Session-geometry gate.** Median bars/session must be 390 (S-USED, S-RTH,
+   S-USED(ix), S-SHIFT(ix)), 330 (S-SETTLE) and 400 (S-CASH); no session may
+   span a calendar date; the splice timestamp must fall inside every window
+   (verified in advance: 10:30 CT is inside all of them).
+5. **Emission-completeness gate (L-019).** Retrieved key SET == the frozen
+   per-part manifest and `S_KEYS` == its size. The battery ships in **two
+   parts** by design; the banked Treasury runs already sat at 55–57 keys, which
+   is the observed ceiling. The `S_RL` per-roll block is not emitted (D-022
+   precedent); the audit still runs and `S_GATE`/`S_FLAG_*` carry its result.
+   Shared diagnostics must be character-identical across parts (gate 2b).
+
+### 6. Verdict rule, declared now
+
+Per pair and per window the full D-010 rule is applied unchanged — (a) positive
+with session-clustered |t| ≥ 3 at ≥ 2 adjacent horizons in S1 AND S2;
+(b) variance-ratio curve still declining past q = 30, materially below BOTH
+legs' own curves, AND surviving coarser base sampling, **recomputed on that
+window's residual**; (c) the effect strengthens with entry threshold — with
+effect sizes in bps beside every t-statistic, plus the D-017/D-018 economic
+materiality clause against the tick-derived round-trip cost.
+
+The comparison statistic is the **largest honest effect**: the best cell either
+look-ahead-safe specification produces anywhere in its grid. That definition is
+already implemented and unit-pinned in `program_summary.py` and is reused
+unchanged — no new statistic is invented here.
+
+Two questions, both answered from the same run:
+
+- **Q1 — did the L-021 defect matter?** Compare **S-RTH vs S-USED**.
+- **Q2 — A-013 proper: does a treasury-native session change the answer?**
+  Compare **S-SETTLE (and S-CASH if enabled) vs S-RTH**.
+
+Readings fixed in advance, applied per question:
+
+- **A-013 IMMATERIAL** iff every pair's verdict branch is identical across the
+  windows compared AND every pair's largest honest effect moves by a factor
+  **< 1.5**. The window did not matter; A-013 closes for Treasuries at minute
+  resolution on this date range, and the L-021 mislabelling is confirmed
+  harmless to the conclusions.
+- **A-013 MATERIAL** if any verdict branch changes OR any pair's largest honest
+  effect moves by **≥ 1.5x**. The program's Treasury conclusions are
+  window-dependent; reports 03/13 and D-016/D-017/D-018 are annotated with the
+  corrected window and the measured sensitivity.
+- **A-013 MATERIAL AND FAVOURABLE** — the only branch that could revive a pair
+  — requires a branch reaching **REVERSION PRESENT** *and* the effect clearing
+  that pair's round-trip cost. Prior: implausible at a 7–11x gap.
+- **CONTROL-CONFOUNDED** if MES–MYM's S-SHIFT(ix) moves its largest honest
+  effect by ≥ 1.5x. Any treasury movement of similar size is then attributed to
+  "a shifted hour", not to treasury-native structure, and Q2 reads
+  INCONCLUSIVE regardless of the treasury numbers.
+
+**Why 1.5x, justified before the fact:** the banked Treasury t-statistics run
+4.07–9.44, so a 1.5x change in effect size is far outside sampling noise; and
+the cost shortfall is 7–11x, so 1.5x is far short of mattering economically. It
+separates "the window mattered statistically" from "the window changed nothing"
+and is not a threshold anyone would tune toward.
+
+### 7. What no outcome may conclude
+
+- **Costs do not move with the session.** The round trip is tick-derived from
+  VERIFIED specs (A-003) — ZF–ZN 3.10, ZT–ZF 1.42, ZN–ZB 5.85, ZT–ZN 1.50 bps,
+  spread-only, commission (A-007) excluded as an unverified placeholder. The
+  banked effects are 0.166–0.664 bps. **ECONOMICALLY IMMATERIAL is expected to
+  stand under every branch**, and no session change is a plausible 10x
+  mechanism. Report 06 already demonstrated the best available signal change
+  moved ZF–ZN only from 10.9x to 8.7x below cost.
+- **The cost bar is HIGHER, not lower, in the pre-open.** A-008 assumes a
+  1-tick top-of-book spread and `cost_assumptions.yaml` scopes that assumption
+  explicitly to "liquid RTH". No overnight or pre-open spread assumption exists
+  anywhere in the repo, and this run **cannot measure one** — it is trade bars,
+  no quotes. Any S-CASH effect must clear an unmeasured, probably worse bar.
+  That is the quote-data thread, not this one.
+- **S-RTH, S-SETTLE and S-CASH overlap the spent window heavily** (330 of 390,
+  330 of 330, and 330 of 400 bars respectively are bars the Treasury pairs have
+  already been measured on). A positive result on any of them is **not
+  independent confirmation**; only the 08:21–09:30 ET bars in S-CASH are
+  genuinely unexamined data.
+- **A-013 is answered for TREASURIES, at MINUTE resolution, on TRADE bars,
+  over this date range only.** Quote data and second/tick resolution remain
+  separate experiments with their own pre-registrations.
+- **No pair advances to a LEAN build under any outcome**, and the D-019 no-go
+  is not reopened by a window change alone.
+
+### 8. Prior, stated in advance and falsifiable
+
+On Q1 I expect the defect to be MATERIAL in the statistical sense and benign in
+the economic one: a window shifted an hour later, ending two hours past
+settlement rather than at it, should move effect sizes noticeably while leaving
+every cost ratio in the same order of magnitude.
+
+On Q2, the directional prediction comes from **L-018**. Scheduled information
+releases should behave the way the equity open did — a level change that
+PERSISTS, i.e. CONTINUATION, not reversion. L-018 found exactly that at the
+equity open across four pairs including the ZF–ZN Treasury control (the only
+negative row anywhere in that pair's grid, −0.15 bps at t = −3.87). So I
+predict the S-CASH pre-open subset shows CONTINUATION, and that adding it moves
+S-CASH's grid *toward* continuation relative to S-SETTLE. If instead it
+reverts, L-018's generalisation is wrong and that is the more interesting
+result.
+
+Most likely overall: A-013 MATERIAL statistically, all four Treasury verdicts
+unchanged in branch, immateriality untouched, the no-go standing, and the
+program's Treasury session label corrected. There is a real chance criterion
+(b) moves, and that is the genuinely new thing this run can produce.
+
+- **Alternatives considered:** (i) fix L-021 by re-running notebook 03 on the
+  corrected window and nothing else (rejected — it answers Q1 while leaving
+  A-013, the actual open thread, untested, and spends the same runs);
+  (ii) test only S-CASH against the banked numbers (rejected — that compares
+  two windows differing in BOTH endpoints AND on a mislabelled baseline, so no
+  change could be attributed); (iii) drop the index control (rejected — without
+  it a treasury movement cannot be distinguished from "any shifted hour moves
+  numbers"); (iv) run all seven pairs (rejected — scope fixed in §4 before
+  results); (v) introduce session-anchored z-scores here (rejected — L-018
+  showed session-anchoring is not a strict improvement and it would confound
+  the session change with a signal change; Z0 `rolling_zscore(residual, 390)`
+  is held fixed throughout); (vi) tune the 08:20 open, the 1.5x threshold, or
+  any window boundary after seeing results (rejected outright — the
+  specification search this method exists to prevent).
+- **Evidence to be produced:** validation report
+  `reports/validation/15_session_window_treasuries.md`; notebook 15;
+  `nb15_<PAIR>_{window_grids,variance_ratios,scalars}.csv`; figures
+  `nb15_effect_by_window.png`, `nb15_activity_profile.png`; EXP-020 – EXP-024
+  (five pairs); driver `lean/research/qc_session_window_analysis.py`; a new
+  module `src/spread_research/session_window_report.py` (L-020: both
+  `intraday_reversion.py` and `pair_minute_report.py` sit within ~2,600 chars
+  of QC's 32,000-char `files/update` cap, so the battery cannot live in
+  either); ingest `scripts/ingest_qc_session_window.py` with frozen per-part
+  manifests. Verdict to be logged as **D-025**.
+- **Expected effect:** A-013 answered for Treasuries at minute resolution, the
+  L-021 session label corrected across the corpus, and the session/resolution
+  thread either closed or narrowed to quote data and finer resolution.
+- **Review:** Once a verdict is read, no re-run of any part of this protocol on
+  this window (gate-triggered repairs BEFORE a verdict are part of the
+  protocol, not re-runs). If S-CASH is voided by its enabling gate, the true
+  cash-open session returns as its own pre-registration with a re-validated
+  D-009 construction — not as an amendment to this one.

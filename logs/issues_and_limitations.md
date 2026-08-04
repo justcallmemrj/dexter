@@ -200,6 +200,67 @@
   the run day, and `build_qc_upload.py`'s per-file byte counts are the early
   warning to watch.
 
+- **L-021 (2026-08-04, found while pre-registering the A-013 session experiment;
+  [ESTABLISHED] from banked pipeline data, not inference):** **`rth_frame`
+  filters on the clock the DATA carries, and that clock is not the same for
+  both asset classes — so every Treasury result in this program was computed on
+  10:31–17:00 ET, not the "09:30–16:00 ET" that every document states.**
+
+  Evidence chain, all four links independent:
+  1. CME (primary source, browser): E-mini S&P Globex opens Sunday **6:00 p.m.
+     ET**; ZN Globex opens Sunday **5:00 p.m. CT** — the same instant.
+  2. Banked `qc_data_inventory.json`: the index micros' first bar is
+     `2019-06-02 18:01`, the Treasuries' is `2019-06-02 17:01`. Same reopen,
+     stamps one hour apart.
+  3. LEAN `market-hours-database.json`: `Future-cbot-ZT/ZF/ZN/ZB` carry
+     `exchangeTimeZone America/Chicago`; `Future-cme-MES/MNQ/M2K` **and
+     `Future-cbot-MYM`** carry `America/New_York`. MYM is CBOT-listed yet
+     New-York-stamped, so the stamp follows the timezone field, not the venue.
+  4. **Decisive**, banked `own_splice_acceptance_*.json`: the constructed ZN
+     series spans `08:31 → 16:00`; M2K spans `09:31 → 17:00`. Each is exactly
+     its own LEAN *regular session* expressed in its own exchange timezone
+     (ZN 08:30–16:00 CT; M2K 09:30–17:00 ET).
+
+  `rth_frame` keeps `(time(9,30), time(16,0)]` of `df.index.time`, with no
+  timezone awareness anywhere in the repo (a grep for `America/`, `tz=`,
+  `timezone` across `src/`, `lean/`, `config/` returns nothing on this
+  question). Applied to Chicago-stamped Treasury bars it therefore selects
+  **09:31–16:00 CT = 10:31–17:00 ET**, which still yields exactly 390 bars —
+  which is why `medbars=390` never revealed it. Bar count cannot detect this:
+  any 390-minute window inside a ~23h session gives 390 bars.
+
+  **What the Treasury runs actually measured:** a window that EXCLUDES
+  09:30–10:30 ET entirely and INCLUDES 15:00–17:00 ET — i.e. two hours *after*
+  the CME Treasury settlement (VWAP of 13:59:30–14:00:00 CT = 15:00 ET),
+  running to the Globex daily close. The intended window was the equity RTH.
+
+  **Scope of the damage — and what is NOT damaged.** The analysis was
+  internally consistent: a genuine, contiguous 390-bar session was analysed,
+  session boundaries never straddled midnight, and every statistic is valid
+  *for the window actually used*. Nothing is arithmetically wrong. What is
+  wrong is the LABEL, and three inferences that lean on it:
+  (i) report 03 §6.3 / D-020 / `session_anchored_zscore`'s docstring attribute
+  the Treasuries' flat event clock to "09:30 ET is not an open for them" — the
+  clock's leading bucket is actually 10:31–11:00 ET, so the conclusion may be
+  right but the stated basis is not what was measured;
+  (ii) the D-016 clause "RTH stays 09:30–16:00 ET … the cash open around
+  08:20 ET is excluded" understates the exclusion by an hour;
+  (iii) the splice, documented throughout as "10:30 ET", is **10:30 CT =
+  11:30 ET** for Treasuries (`treasury_roll_schedule(splice_time=time(10,30),
+  tz=None)` compared against a Chicago-stamped index). Harmless to the
+  construction — it is a consistent choice and sits inside every candidate
+  window — but mis-documented.
+
+  **Binding consequences.** (a) Any future session work must state windows in
+  BOTH clocks and gate on an observed timezone witness, never on bar count.
+  (b) Reports 03/06/13 and D-016/D-017/D-018 carry a session label that is an
+  hour wrong and must be annotated once the corrected window is measured
+  (notebook 15 / D-024 owns this). (c) The four Treasury verdicts are NOT
+  withdrawn: cost ratios of 7–11x are not plausibly a one-hour-window artifact,
+  and criterion (b) failed on tick quantisation (L-016), which is
+  window-independent in mechanism. They are, however, now UNCONFIRMED on the
+  window they claim to describe.
+
 ## Closed
 
 - **L-002 (closed 2026-08-01):** Contract specifications were verified only

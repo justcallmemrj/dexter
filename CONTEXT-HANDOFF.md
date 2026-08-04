@@ -36,6 +36,26 @@ delayed entry and is NOT the laggard catching up. See §1c. The no-go still
 stands (criterion (b) untouched and failing; ceiling pre-committed). Reports
 02/13, L-014 and the A-006 register row carry fresh inline amendments.
 
+**⚠ READ NEXT — L-021, a session-clock defect found 2026-08-04 while
+pre-registering the session experiment.** `rth_frame` filters on the clock the
+DATA carries; LEAN stamps CBOT Treasury bars in **America/Chicago** and index
+bars (including CBOT-listed MYM) in **America/New_York**. So the four Treasury
+pairs were analysed on **10:31–17:00 ET, not the 09:30–16:00 ET that D-016,
+reports 03/06/13 and this handoff all state** — missing the whole morning and
+running two hours PAST the 15:00 ET Treasury settlement. Established, not
+inferred: banked `own_splice_acceptance_*.json` shows ZN spanning 08:31–16:00
+and M2K 09:31–17:00, each its own LEAN regular session in its own exchange
+timezone. Bar count cannot detect this (any 390-minute window inside a 23h
+session gives 390 bars), which is why `medbars=390` never flagged it. The four
+Treasury verdicts are NOT withdrawn (7–11x cost gaps are not a one-hour
+artifact, and L-016 tick quantisation is window-independent) but they are
+UNCONFIRMED on the window they claim to describe. **Notebook 15 / D-024 owns
+measuring the corrected window and annotating the corpus — do not annotate
+reports 03/13 before that measurement exists.**
+
+**D-024 is PRE-REGISTERED and UNRUN** (2026-08-04): the treasury-native session
+experiment (A-013), which must first correct L-021. See §1d.
+
 `lean/algorithm/` is still empty and stays empty: the LEAN build remains
 hard-gated on Derrick writing the exact token **`PROCEED TO LEAN BUILD`**.
 
@@ -120,6 +140,47 @@ half + cross-correlation); both compute everything, each emits <= 57 keys.
   by `tests/unit/test_delayed_entry_summary.py` (210 tests green). Data:
   `nb14_MES_M2K_{delay_grids,crosscorr,scalars}.csv`, two nb14 figures.
 
+## 1d. THE SESSION EXPERIMENT — D-024 PRE-REGISTERED, NOT YET RUN
+
+Notebook 15. Pre-registered 2026-08-04 before any code existed; verdict will be
+**D-025**. Reads A-013 ("RTH-only captures the bulk of exploitable signal",
+UNVERIFIED) and simultaneously corrects L-021.
+
+- **Why it is genuinely new, unlike notebooks 06 and 14:** both of those
+  carried a ceiling of AMBIGUOUS/MICROSTRUCTURE because criterion (b) is
+  computed on the RESIDUAL and no signal definition or entry bar can touch it.
+  **A session change alters which bars form the residual, so (b) is LIVE and
+  must be RECOMPUTED.** This is the first experiment since notebook 03 that can
+  move a Treasury verdict on its own terms.
+- **Windows (all stated in BOTH clocks — now a binding convention):**
+  S-USED (09:30,16:00] CT = 10:31–17:00 ET, what the banked runs did, the
+  reproduction gate · S-RTH (08:30,15:00] CT = 09:31–16:00 ET, the corrected
+  baseline every document claims · S-SETTLE (08:30,14:00] CT = 09:31–15:00 ET,
+  open→**CME Treasury settlement** · S-CASH (07:20,14:00] CT = 08:21–15:00 ET,
+  the true cash-open session, a CONDITIONAL arm.
+- **Boundary provenance, asymmetric and declared:** the 14:00 CT close is
+  PRIMARY-SOURCED (CME settles ZT/ZF/ZN/ZB on the VWAP of 13:59:30–14:00:00 CT;
+  E-mini S&P on 14:59:30–15:00:00 CT — so the program's 16:00 close is the
+  EQUITY settlement, inherited by the wrong asset class). The 08:20 ET open is
+  a CONVENTION (historic floor open, this repo's own figure), NOT on CME's
+  specs page, and LEAN calls those bars `premarket`. It may not be tuned.
+- **S-CASH is conditional** because `self.history(contract, …)` returns only the
+  LEAN regular session (~450 bars/day; Treasuries 08:31–16:00 CT), so
+  pre-08:30-CT bars are not delivered. Getting them needs
+  `extended_market_hours=True`, which would change `build_continuous`'s
+  390-bar factor window and break D-009 comparability. The frozen fix: measure
+  factors and run `splice_audit` on the REGULAR-SESSION SUBSET of the extended
+  fetch, then apply them to the denser series — gated on reproducing the banked
+  factor table character-for-character, else the arm is VOID and unreported.
+- **Pairs:** all four Treasury pairs (D-016 precedent, registered together,
+  order ZF–ZN → ZT–ZF → ZN–ZB → ZT–ZN) **plus MES–MYM as a shift control** —
+  the L-021 defect applied deliberately to an index pair, to test whether a
+  one-hour shift moves numbers at all.
+- **Ceiling:** costs are tick-derived and session-independent, so
+  ECONOMICALLY IMMATERIAL is expected to stand under every branch; the
+  pre-open cost bar is HIGHER (A-008's 1-tick spread is scoped to "liquid RTH"
+  and this run cannot measure quotes); no pair advances to LEAN.
+
 ## 2. THE FOUR NEAR-MISS FAKE EDGES (the real deliverable)
 
 Each would have been published as an edge by a less careful battery. Carry
@@ -203,16 +264,18 @@ window's results as evidence** — the window is spent for this hypothesis.
    D-023)** — see §1c and `reports/validation/14_delayed_entry_mes_m2k.md`.
    DELAY-ROBUST; closed on this window by D-022's Review clause (no re-run
    under any variation).
-4. **Different resolution or venue.** Every negative here is MINUTE resolution,
-   TRADE bars, equity RTH (09:30–16:00 ET). Quote data, a treasury-native
-   session (08:20 ET cash open), or second/tick resolution are DIFFERENT
-   EXPERIMENTS, not re-runs. `research_config.data.later_resolutions` anticipates it.
-   **D-021 promoted this, and D-023 handed it a BANKED TARGET**: the M2K
-   surface survives delayed entry (+6.68 bps decaying to +2.24 across a
-   15-minute delay) while the unconditional VR still evaporates at coarse
-   bars — a second/tick or different-session test is precisely what
-   discriminates the reconciling mechanisms. Needs its own pre-registration
-   and a fresh window.
+4. **Different resolution or venue.** **The SESSION half is now
+   PRE-REGISTERED as D-024 (notebook 15, unrun) — see §1d**, and it also
+   corrects the L-021 clock defect. Note the equity-RTH claim in this thread's
+   original text was itself wrong for Treasuries (they ran on 10:31–17:00 ET).
+   Still open and NOT covered by D-024: **quote data** (which would replace the
+   A-008 1-tick placeholder with a measurement — and A-008 is scoped in config
+   to "liquid RTH", so the pre-open cost bar is unmeasured) and
+   **second/tick resolution**. `research_config.data.later_resolutions`
+   anticipates both. D-023's banked target stands: the M2K surface survives a
+   15-minute delayed entry while its unconditional VR evaporates at coarse
+   bars — finer resolution is what discriminates the reconciling mechanisms.
+   Each needs its own pre-registration and a fresh window.
 5. **(New, optional) Open-window continuation as its own hypothesis.** L-018
    documents a consistent, correctly-signed continuation effect in the first 30
    minutes across four pairs including the Treasury control. It is a DIFFERENT
@@ -303,6 +366,15 @@ session/resolution thread now carries the banked D-023 target.
   improvement) is new as of D-021 and binds any future signal work.
 - **L-019/L-020** (emission-channel key loss; 32k file cap) are operational
   limits from the notebook-14 session — see §6.
+- **L-021 (session-clock defect, 2026-08-04)** — the Treasury pairs ran on
+  10:31–17:00 ET, not the documented 09:30–16:00 ET. See §0. Binding: state
+  every window in BOTH clocks and gate on an observed timezone witness, never
+  on bar count. Reports 03/06/13 and D-016/D-017/D-018 carry a session label
+  that is an hour wrong; D-024 owns correcting it after measurement.
+- **Headroom warning (L-020):** `intraday_reversion.py` (29,461 uploaded
+  chars) and `pair_minute_report.py` (29,332) are both within ~2,600 of QC's
+  32,000-char `files/update` cap. Notebook 15's battery must go in a NEW
+  module, as `crosscorr.py` did.
 - **The D-023 open puzzle:** the M2K conditional effect survives a
   15-minute delayed entry while the residual's unconditional VR evaporates
   at 5-minute base sampling. Both banked. Reconciling mechanism unknown —
