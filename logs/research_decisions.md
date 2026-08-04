@@ -1953,3 +1953,88 @@ criterion (b) moves, and that is the genuinely new thing this run can produce.
   voided by its enabling gate, the true cash-open session returns as its own
   pre-registration with a re-validated D-009 construction — not as an amendment
   to this one.
+
+## D-025 — 2026-08-04 — A-013 IMMATERIAL and L-021 IMMATERIAL: the treasury-native session does not change any verdict
+
+Twelve runs under D-024 (4 pairs x 3 parts), EXP-020 – EXP-023, validation
+report 15. Every branch below is the one D-024 fixed in advance; nothing was
+chosen after the numbers existed.
+
+- **Decision:** **Q2 reads A-013 IMMATERIAL** and **Q1 reads L-021
+  IMMATERIAL**. No pair's verdict branch changes on any window, no move factor
+  reaches the pre-registered 2.0x bar, and criterion (b) fails identically on
+  all 16 pair-window combinations. **No pair advances; the D-019 no-go stands.**
+- **All 60 validity gates passed**, and three of them are load-bearing:
+  (i) the S-USED grid reproduced the banked notebook-03 grid **60/60 cells** and
+  its variance ratios **48/48 cells** in all four pairs, so the session
+  parameterisation disturbed nothing; (ii) `S_GATE`/`S_BUILD_*`/`S_HOLIDAYS`
+  reproduced the banked values exactly — a **6th determinism demonstration** of
+  the D-009 constructor, with ZT230831 and both ZB flags reproducing their
+  `sr`/`gap`/`ratio`/`sign_mismatch` verdicts; (iii) **S-CASH-ENABLE passed in
+  all four pairs with the factor table identical character-for-character** under
+  the extended-hours fetch, so the two-fetch design preserved D-009 exactly as
+  D-024 §3 required.
+- **L-021 confirmed live, then measured and found harmless.** The timezone
+  witness reported `08:31-16:00` at ~450 bars/day on every regular-fetch leg —
+  Chicago stamps — against `00:00-23:59` at ~1,378 bars/day on the extended
+  fetch. So the four Treasury pairs really were analysed on 10:31–17:00 ET. The
+  corrected window (S-RTH) moves the largest honest effect by only 1.01–1.26x
+  and changes no branch. **The label was wrong; the conclusions were not.**
+- **The one criterion that could have moved did not, and this is the result.**
+  Unlike D-020 and D-022 — both structurally incapable of touching criterion
+  (b) — a session change alters the residual itself, so (b) was live for the
+  first time since notebook 03. It fails everywhere: the base-sampling walk
+  still evaporates to **0.82–0.93 at 15-minute bars** (from 0.13–0.34 at
+  1-minute), and the tail ratio VR(120)/VR(30) sits at **0.78–1.00**, a floor
+  rather than reversion's decay. That is L-016's tick-quantisation signature,
+  untouched by any window.
+- **The treasury-native session helps, consistently, and not nearly enough.**
+  Every treasury-native window improves the cost ratio in every pair, and the
+  cash-open session is the best window in three of four: ZN–ZB 8.81x → **5.61x**,
+  ZT–ZN 9.06x → **5.57x**, ZT–ZF 7.00x → 5.44x, ZF–ZN 10.85x → 8.08x. The
+  direction is exactly what the settlement argument predicted. But the largest
+  single move is **1.43x against a 2.0x bar**, and the best cost ratio in the
+  whole experiment is still **5.6x below the round trip**. Calling this
+  IMMATERIAL rather than promising is what fixing 2.0x in advance was for: a
+  pure signal re-specification on identical bars already moves this statistic
+  1.467x, so 1.2–1.4x is inside the statistic's own specification noise.
+- **The falsifiable prior FAILED, which D-024 said would be the more
+  interesting outcome.** D-024 predicted, from L-018, that the treasury
+  pre-open (containing the 08:30 ET macro releases) would show CONTINUATION.
+  It does not: across all four pairs the S-CASH open subset holds **zero**
+  significant negative cells. L-018's continuation still appears where it was
+  found — ZF–ZN's S-USED open subset, negative in 18/20 cells, reproducing the
+  banked cell at **t = −3.87 exactly**. Logged as **L-023**: [PLAUSIBLE]
+  L-018 is an equity-session-open (liquidity-discontinuity) effect, not a
+  general information-release effect. Not tested here, not claimed.
+- **One procedural artifact, reported as the rule dictates.** ZT–ZF trips
+  DISPLACEMENT-CONFOUNDED because its placebo move (1.015x) marginally exceeds
+  its S-RTH move (1.010x). Both are ~1% — nothing moved — and the frozen rule
+  compares them without requiring either to be material. Logged as **L-022**;
+  it is an artifact of the placebo rule's degenerate case and is evidence of
+  nothing. The remaining three pairs read L-021 IMMATERIAL cleanly.
+- **Alternatives:** (i) read the consistent sub-threshold improvement as
+  support for the treasury-native session (rejected — 2.0x was fixed in advance
+  precisely so a 1.2–1.4x movement could not be promoted after the fact, and
+  the banked nuisance movement is 1.467x); (ii) relax the move bar now that the
+  direction is known (rejected outright — the specification search the method
+  exists to prevent); (iii) treat ZT–ZF's DISPLACEMENT-CONFOUNDED as a real
+  finding (rejected — both inputs are ~1.01; it is reported and fenced);
+  (iv) read the S-CASH open subsets as evidence about the release window
+  (rejected — D-024 §7 fences them as descriptive only).
+- **Evidence:** validation report 15; `nb15_<PAIR>_{window_grids,
+  variance_ratios,open_subsets,scalars}.csv` and `nb15_<PAIR>_p{1,2,3}.json`
+  for four pairs; `qc_extended_fetch_smoke.json`; EXP-020 – EXP-023; verdict
+  arithmetic in `src/spread_research/session_window_summary.py`, pinned by
+  `tests/unit/test_session_window_summary.py` (247 tests green).
+- **Expected effect:** A-013 moves from UNVERIFIED to ANSWERED for Treasuries
+  at minute resolution on trade bars over this window; L-021's session label is
+  corrected across the corpus and its impact recorded as immaterial; the
+  session half of the session/resolution thread CLOSES. What remains open in
+  that thread is **quote data** — now the binding uncertainty, because the
+  pre-open cost bar is unmeasured and A-008's 1-tick assumption is scoped in
+  config to "liquid RTH" — and **second/tick resolution**.
+- **Review:** No re-run of any part of this protocol on this window. The
+  treasury-native session question is settled at minute resolution on trade
+  bars; revisiting it requires quote data or finer resolution, pre-registered
+  afresh.

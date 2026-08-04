@@ -264,6 +264,14 @@
   construction — it is a consistent choice and sits inside every candidate
   window — but mis-documented.
 
+  **MEASURED AND CLOSED 2026-08-04 (D-025, report 15):** the corrected window
+  (S-RTH) moves each pair's largest honest effect by only 1.01–1.26x and changes
+  no verdict branch, so the mislabelled hour was real but **immaterial to every
+  conclusion** — the label was wrong, the results were not. Reports 03/06/13 and
+  D-016/D-017/D-018 may now be annotated with the corrected window and this
+  measured impact. The timezone witness confirmed the mechanism live: every
+  regular-fetch Treasury leg delivered 08:31-16:00 at ~450 bars/day.
+
   **Binding consequences.** (a) Any future session work must state windows in
   BOTH clocks and gate on an observed timezone witness, never on bar count.
   (b) Reports 03/06/13 and D-016/D-017/D-018 carry a session label that is an
@@ -273,6 +281,30 @@
   and criterion (b) failed on tick quantisation (L-016), which is
   window-independent in mechanism. They are, however, now UNCONFIRMED on the
   window they claim to describe.
+
+- **L-022 (2026-08-04, D-025):** **A placebo comparison that pits one move
+  factor against another is DEGENERATE when neither moves.** D-024's rule reads
+  DISPLACEMENT-CONFOUNDED iff the placebo's move factor is >= the treatment's,
+  without requiring either to be material. On ZT-ZF both were ~1.01 — i.e.
+  nothing moved at all — and the rule fired on a third-decimal difference,
+  making Q1 read INCONCLUSIVE for that pair on no evidence. The verdict is
+  reported as the frozen rule dictates, but the lesson binds future work:
+  **any ratio-against-ratio control must be conditioned on the treatment
+  having moved first** (e.g. "confounded only if the treatment moved AND the
+  placebo moved at least as much"). The other three pairs read cleanly.
+- **L-023 (2026-08-04, D-025; [PLAUSIBLE], not tested):** **L-018's
+  open-window continuation did NOT generalise to the treasury cash open.**
+  D-024 predicted from L-018 that the pre-open block containing the 08:30 ET
+  macro releases would show CONTINUATION. Across all four Treasury pairs the
+  S-CASH open subset holds ZERO significant negative cells, while L-018's
+  effect still reproduces where it was found (ZF-ZN's S-USED open subset,
+  negative in 18/20 cells, banked cell at t = -3.87 reproduced exactly).
+  The candidate explanation is that the equity open is a LIQUIDITY
+  DISCONTINUITY — a closed market reopening — whereas an 08:30 ET release
+  lands in a market already trading continuously (the smoke test measured the
+  07:21-08:30 CT block printing every single minute). Consequence for future
+  work: **do not assume L-018 transfers to any "information event" window.**
+  It was measured at a session boundary and is only established there.
 
 ## Closed
 

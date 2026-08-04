@@ -53,8 +53,17 @@ UNCONFIRMED on the window they claim to describe. **Notebook 15 / D-024 owns
 measuring the corrected window and annotating the corpus — do not annotate
 reports 03/13 before that measurement exists.**
 
-**D-024 is PRE-REGISTERED and UNRUN** (2026-08-04): the treasury-native session
-experiment (A-013), which must first correct L-021. See §1d.
+**D-024 HAS RUN — D-025, validation report 15, 12 backtests, ALL 60 GATES
+PASS.** Verdict: **A-013 IMMATERIAL and L-021 IMMATERIAL.** The treasury-native
+session helps consistently and nowhere near enough — every treasury-native
+window improves the cost ratio in every pair (best: ZN–ZB 8.81x→**5.61x**,
+ZT–ZN 9.06x→**5.57x**) but the largest move is **1.43x against a
+pre-registered 2.0x bar**, and criterion (b) — live for the first time since
+notebook 03, because a session change alters the residual — **fails identically
+on all 16 pair-window combinations** (base sampling still evaporates to
+0.82–0.93 at 15-minute bars, L-016's tick-quantisation signature). Every window
+keeps the same D-010 branch. **L-021 was real but harmless**: the corrected
+window moves effects only 1.01–1.26x and changes no branch. See §1d.
 
 `lean/algorithm/` is still empty and stays empty: the LEAN build remains
 hard-gated on Derrick writing the exact token **`PROCEED TO LEAN BUILD`**.
@@ -140,11 +149,28 @@ half + cross-correlation); both compute everything, each emits <= 57 keys.
   by `tests/unit/test_delayed_entry_summary.py` (210 tests green). Data:
   `nb14_MES_M2K_{delay_grids,crosscorr,scalars}.csv`, two nb14 figures.
 
-## 1d. THE SESSION EXPERIMENT — D-024 PRE-REGISTERED, NOT YET RUN
+## 1d. THE SESSION EXPERIMENT — D-024 → D-025, COMPLETE
 
-Notebook 15. Pre-registered 2026-08-04 before any code existed; verdict will be
-**D-025**. Reads A-013 ("RTH-only captures the bulk of exploitable signal",
-UNVERIFIED) and simultaneously corrects L-021.
+Notebook 15. Pre-registered 2026-08-04 before any code existed; verdict
+**D-025**. Answered A-013 ("RTH-only captures the bulk of exploitable signal")
+and corrected L-021 in the same pass.
+
+**Headline results (report 15):** all 60 gates pass; the S-USED window
+reproduced the banked nb03 grid **60/60 cells** and its variance ratios
+**48/48** in all four pairs; `S_GATE`/`S_BUILD_*` reproduced banked values
+exactly (**6th D-009 determinism demonstration**); the S-CASH factor table was
+identical **character-for-character** under the extended fetch. **A-013 is now
+ANSWERED for Treasuries at minute resolution on trade bars.** The falsifiable
+prior FAILED: D-024 predicted from L-018 that the treasury pre-open would show
+CONTINUATION and it does not (zero significant negative cells in any pair's
+S-CASH open subset), while L-018's effect still reproduces where it was found
+(ZF–ZN S-USED, t = −3.87 exactly) — logged as **L-023**. **L-022** records that
+the placebo rule is degenerate when neither move is material (ZT–ZF tripped it
+on 1.015 vs 1.010).
+
+**What remains open in this thread: quote data** — now the binding uncertainty,
+because the pre-open COST bar is unmeasured and A-008's 1-tick spread is scoped
+in config to "liquid RTH" — **and second/tick resolution.**
 
 - **Why it is genuinely new, unlike notebooks 06 and 14:** both of those
   carried a ceiling of AMBIGUOUS/MICROSTRUCTURE because criterion (b) is
