@@ -69,7 +69,8 @@ def manifest(part: int, legs: tuple[str, str], flags: list[str]) -> set[str]:
     keys = set(session_window_analysis_keys(part)) | set(DRIVER_FIXED)
     for leg in legs:
         keys.add(f"S_BUILD_{leg}")
-        keys.add(f"S_FACSUM_{leg}")
+        keys.add(f"S_FACTAB_{leg}")     # the FULL factor table (D-024 SS3)
+        keys.add(f"S_FILLWIT_{leg}")    # which fetch produced which series
     return keys | set(flags)
 
 
@@ -206,15 +207,22 @@ def gate_timezone(stats: dict, legs, part: int) -> tuple[bool, str]:
         tod = span.rsplit(":", 1)[0]
         lo, hi = tod.split("-")
         if part == 3:
-            if lo > "07:21" or hi != "16:00":
-                bad.append(f"{leg} delivered {tod}; the extended fetch must "
-                           f"reach 07:21 or earlier and end 16:00")
+            # An extended Globex series runs 17:00 -> 16:00 ACROSS MIDNIGHT, so
+            # its min/max time-of-day is ~00:00-23:59 and pinning either end is
+            # unsatisfiable. What must be true is that it is NOT the regular
+            # span, which would mean extended_market_hours was ignored. The
+            # S-CASH block's presence is witnessed by S_CASHCOV instead.
+            if tod == "08:31-16:00":
+                bad.append(f"{leg} delivered the REGULAR span {tod}; the "
+                           f"extended fetch did not take effect")
         elif tod != "08:31-16:00":
             bad.append(f"{leg} delivered {tod}, expected 08:31-16:00 "
                        f"(Chicago-stamped regular session)")
     if bad:
         return False, "; ".join(bad)
-    shape = "extended fetch reaches the S-CASH block" if part == 3 else         "both legs 08:31-16:00 — Chicago stamps, L-021 signature"
+    shape = ("extended span delivered (not the regular 08:31-16:00)"
+             if part == 3 else
+             "both legs 08:31-16:00 — Chicago stamps, L-021 signature")
     return True, shape
 
 
@@ -242,6 +250,54 @@ def gate_reproduction(grids: pd.DataFrame, pair: str) -> tuple[bool, str]:
                        f"z={r['entry_z']}/h={int(r['horizon_bars'])}")
     return (False, "; ".join(bad)) if bad else (True,
                                                 f"{len(m)} cells reproduced exactly")
+
+
+def gate_reproduction_vr(vr: pd.DataFrame, pair: str) -> tuple[bool, str]:
+    """D-024 gate 2's other half — the criterion-(b) half, which D-024 SS1 calls
+    the entire reason for the run. Without it the reproduction gate proves only
+    that the conditional grid survived and says nothing about the statistic the
+    experiment exists to be able to move."""
+    used = vr[vr["window"] == "U"] if not vr.empty else vr
+    if used.empty:
+        return True, "S-USED VR not in this part - not applicable"
+    path = OUT / f"nb02_{pair}_variance_ratio.csv"
+    if not path.exists():
+        return False, f"no banked VR at {path.name}"
+    banked = pd.read_csv(path).rename(columns={"base_step_min": "base_step"})
+    keys = ["series", "base_step", "q"]
+    if not set(keys).issubset(banked.columns):
+        return False, f"banked VR lacks {keys}; has {list(banked.columns)}"
+    cols = [c for c in ("vr", "ci_lo", "ci_hi", "p_lt_1") if c in banked.columns]
+    m = banked.merge(used[keys + cols], on=keys, suffixes=("_b", "_n"))
+    if len(m) != len(banked) or len(banked) == 0:
+        return False, f"{len(banked)} banked VR rows vs {len(m)} matched"
+    bad = []
+    for c in cols:
+        d = (m[f"{c}_b"] - m[f"{c}_n"]).abs()
+        if (d > TOL).any():
+            r = m.loc[d.idxmax()]
+            bad.append(f"{c}: max|diff| {d.max():.4g} at "
+                       f"{r['series']}/s{r['base_step']}/q{r['q']}")
+    return (False, "; ".join(bad)) if bad else (True,
+                                                f"{len(m)} VR cells reproduced")
+
+
+def gate_banked_build(stats: dict, pair: str, legs) -> tuple[bool, str]:
+    """D-024 gate 3: the acceptance-gate outputs must reproduce the BANKED
+    Treasury values - the 6th determinism demonstration of D-009 - not merely
+    agree with each other across parts."""
+    path = OUT / f"nb02_{pair}_scalars.csv"
+    if not path.exists():
+        return False, f"no banked scalars at {path.name}"
+    df = pd.read_csv(path)
+    banked = dict(zip(df["key"], df["value"]))
+    bad = []
+    for k in ["S_GATE", "S_HOLIDAYS"] + [f"S_BUILD_{l}" for l in legs]:
+        if k in banked and k in stats and str(banked[k]) != str(stats[k]):
+            bad.append(f"{k}: banked {banked[k]!r} vs run {stats[k]!r}")
+    if bad:
+        return False, "; ".join(bad)
+    return True, "gate/build/holidays reproduce the banked Treasury values"
 
 
 def gate_geometry(stats: dict) -> tuple[bool, str]:
@@ -276,32 +332,45 @@ def gate_cash_coverage(stats: dict, legs) -> tuple[bool, str]:
 
 
 def gate_identity(parts: dict[int, dict], legs) -> tuple[bool, str]:
-    keys = list(IDENTITY) + [f"S_BUILD_{l}" for l in legs] \
-        + [f"S_FACSUM_{l}" for l in legs]
-    ref_part = min(parts)
+    """Cross-part identity, for the BANKED-PATH parts only.
+
+    Part 3 is deliberately excluded: its analysis series comes from a different
+    fetch, so S_ALIGN legitimately differs, and D-024 SS3 says a failing S-CASH
+    arm leaves "the other four windows standing on their own". Folding part 3
+    in here would let one S-CASH divergence void the entire run - which is
+    precisely what gate_cash_enable owns instead.
+    """
+    banked_parts = {p: st for p, st in parts.items() if p != 3}
+    keys = list(IDENTITY) + ["S_ALIGN"] + [f"S_BUILD_{l}" for l in legs]         + [f"S_FACTAB_{l}" for l in legs]
     bad = []
     for k in keys:
-        vals = {p: str(s.get(k)) for p, s in parts.items() if k in s}
+        vals = {p: str(st.get(k)) for p, st in banked_parts.items() if k in st}
         if len(set(vals.values())) > 1:
             bad.append(f"{k}: {vals}")
     if bad:
         return False, "; ".join(bad)
-    return True, f"{len(keys)} pre-filter diagnostics identical across parts"
+    return True, (f"{len(keys)} pre-filter diagnostics identical across parts "
+                  f"{sorted(banked_parts)}")
 
 
 def gate_cash_enable(parts: dict[int, dict], legs) -> tuple[bool, str]:
-    """The S-CASH-ENABLE gate: part 3's factor summary must equal parts 1-2's,
-    proving `build_continuous`'s D-009 factors survived the extended fetch."""
+    """The S-CASH-ENABLE gate: every witness of the D-009 construction must
+    survive the extended-hours fetch, including the FULL factor table
+    character-for-character (a digest can collide)."""
     if 3 not in parts:
-        return True, "no part 3 — S-CASH arm not attempted"
-    ref = min(p for p in parts if p != 3)
-    bad = [f"{leg}: p{ref}={parts[ref].get(f'S_FACSUM_{leg}')} "
-           f"p3={parts[3].get(f'S_FACSUM_{leg}')}"
-           for leg in legs
-           if parts[ref].get(f"S_FACSUM_{leg}") != parts[3].get(f"S_FACSUM_{leg}")]
+        return True, "no part 3 - S-CASH arm not attempted"
+    others = [p for p in parts if p != 3]
+    if not others:
+        return True, "no banked-path part to compare against"
+    ref = min(others)
+    keys = [f"S_FACTAB_{l}" for l in legs] + [f"S_BUILD_{l}" for l in legs]         + ["S_GATE"] + sorted(k for k in parts[ref] if k.startswith("S_FLAG_"))
+    bad = [f"{k}: p{ref}={parts[ref].get(k)!r} p3={parts[3].get(k)!r}"
+           for k in keys if str(parts[ref].get(k)) != str(parts[3].get(k))]
     if bad:
-        return False, "factor table moved under the extended fetch: " + "; ".join(bad)
-    return True, "D-009 factors identical under the extended fetch"
+        return False, ("D-009 construction moved under the extended fetch: "
+                       + "; ".join(bad))
+    return True, (f"{len(keys)} construction witnesses identical under the "
+                  f"extended fetch (factor tables character-for-character)")
 
 
 def _load(path: str) -> dict:
@@ -338,12 +407,20 @@ def main() -> int:
                   ("gate 1 timezone ", *gate_timezone(s, legs, args.part)),
                   ("gate 2 reproduce", *gate_reproduction(parse_grids(s), args.pair)),
                   ("gate 4 geometry ", *gate_geometry(s))]
+        cov = None
         if args.part == 3:
-            checks.append(("cash coverage   ", *gate_cash_coverage(s, legs)))
+            cov = gate_cash_coverage(s, legs)
         ok = True
         for name, passed, why in checks:
             print(f"  D-024 {name}: {'PASS' if passed else 'FAIL'} — {why}")
             ok &= passed
+        if cov is not None:
+            # D-024 gate 4: thin coverage is INCONCLUSIVE-COVERAGE — "a
+            # substantive answer to A-013 in its own right, not a defect to be
+            # worked around". It must not void the part, and must not burn one
+            # of the three permitted gate-triggered repairs.
+            print(f"  D-024 cash coverage   : "
+                  f"{'OK' if cov[0] else 'INCONCLUSIVE-COVERAGE'} — {cov[1]}")
         print(f"\npart {args.part} {'VALID' if ok else 'VOID'} "
               f"(check mode: nothing written)")
         return 0 if ok else 2
@@ -362,11 +439,19 @@ def main() -> int:
         gates.append((f"gate 5 emission p{p} ", *gate_emission(s, p, legs, flags)))
         gates.append((f"gate 1 timezone  p{p} ", *gate_timezone(s, legs, p)))
         gates.append((f"gate 4 geometry  p{p} ", *gate_geometry(s)))
+    # Merge part 3 FIRST so the banked-path parts win every shared key: part 3
+    # legitimately carries a different S_ALIGN/S_SPECS/S_TZWIT (extended fetch,
+    # S-CASH betas), and D-024 SS3 forbids an S-CASH number being read or quoted
+    # anywhere. Letting it land last would put win=C betas in the scalars.
     merged_stats = {}
-    for p in sorted(parts):
+    for p in sorted(parts, reverse=True):
         merged_stats.update(parts[p])
-    gates.append(("gate 2 reproduction  ", *gate_reproduction(
-        parse_grids(merged_stats), args.pair)))
+    grids_all = parse_grids(merged_stats)
+    gates.append(("gate 2 reproduction  ", *gate_reproduction(grids_all, args.pair)))
+    gates.append(("gate 2 VR reproduce  ", *gate_reproduction_vr(
+        parse_vr(merged_stats), args.pair)))
+    gates.append(("gate 3 banked build  ", *gate_banked_build(
+        parts[min(parts)], args.pair, legs)))
     gates.append(("gate 3 identity      ", *gate_identity(parts, legs)))
     ok_cash, why_cash = gate_cash_enable(parts, legs)
     gates.append(("S-CASH-ENABLE        ", ok_cash, why_cash))
@@ -384,13 +469,19 @@ def main() -> int:
               "void and no verdict may be read from it.")
         return 2
 
-    # Three states, not two: an arm that was never RUN has not been enabled.
+    # Four states. Only a MECHANICS failure (S-CASH-ENABLE) voids the arm and
+    # deletes its keys. Thin coverage is INCONCLUSIVE-COVERAGE — D-024 gate 4
+    # calls it "a substantive answer to A-013 in its own right, not a defect to
+    # be worked around" — so the keys are KEPT and labelled; deleting them would
+    # destroy the very finding the gate exists to produce.
     if 3 not in parts:
         cash_state = "NOT-ATTEMPTED"
-    elif ok_cash and ok_cov:
-        cash_state = "ENABLED"
-    else:
+    elif not ok_cash:
         cash_state = "VOID"
+    elif not ok_cov:
+        cash_state = "INCONCLUSIVE-COVERAGE"
+    else:
+        cash_state = "ENABLED"
     cash_void = cash_state == "VOID"
     if cash_void and 3 in parts:
         print("\nS-CASH arm VOID — dropping every S-CASH key; no S-CASH number "

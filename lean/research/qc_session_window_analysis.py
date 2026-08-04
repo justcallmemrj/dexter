@@ -25,7 +25,7 @@ window so no part exceeds the ~57-key ceiling.
     PART 2 -> S-RTH  + S-SETTLE (regular-session fetch, banked data path)
     PART 3 -> S-CASH            (EXTENDED-hours fetch — see below)
 Parts 1 and 2 leave the data path byte-identical to the banked runs, so
-`S_GATE` / `S_BUILD_*` / `S_FLAG_*` / `S_FACSUM` must come back exactly as
+`S_GATE` / `S_BUILD_*` / `S_FLAG_*` / `S_FACTAB` must come back exactly as
 banked — a 6th determinism demonstration of D-009.
 
 PART 3 and the S-CASH-ENABLE gate (D-024 §3). S-CASH needs bars before
@@ -33,11 +33,24 @@ PART 3 and the S-CASH-ENABLE gate (D-024 §3). S-CASH needs bars before
 LEAN regular session only, ~450 bars/day). Requesting extended hours would
 change `build_continuous`'s 390-bar factor window from ~0.87 of a day to
 ~0.28-0.35, producing different factors and breaking comparability with every
-banked result. The frozen fix: **measure the factors and run `splice_audit` on
-the REGULAR-SESSION SUBSET of the extended fetch — the identical bar set the
-banked runs used — then re-apply those factors to the full extended series**
-via `build_continuous(..., factors=...)`. `S_FACSUM` is the witness: if it does
-not reproduce parts 1-2 exactly, the S-CASH arm is VOID and unreported.
+banked result. The frozen requirement is therefore: **measure the factors and
+run `splice_audit` on the identical bar set the banked runs used, then
+re-apply those factors to the denser analysis series** via
+`build_continuous(..., factors=...)`. `S_FACTAB` — the full factor table, not
+a digest — is the witness: if it does not reproduce parts 1-2 exactly, the
+S-CASH arm is VOID and unreported.
+
+PART 3 satisfies that with TWO fetches rather than by subsetting one, and the
+reason is scientific. `history()` on a CONTRACT symbol does not inherit the
+canonical subscription's config — the banked runs prove it, since
+`add_future(..., fill_forward=False, extended_market_hours=True)` still yields
+a delivered span of 08:31-16:00 — so LEAN's defaults apply, including
+fill_forward=TRUE. A single extended fetch would hand S-CASH a 07:21-08:30
+block of forward-filled repeats: the coverage finding would be meaningless and
+the grid and variance ratios would be computed on stale prices. So the factors
+keep the byte-identical banked regular call, and only the ANALYSIS series is
+refetched extended with fill-forward OFF. `S_FILLWIT` records which regime
+produced which series so a reader never has to infer it.
 
 Output channel: `set_summary_statistic` in `on_end_of_algorithm` — the free
 tier caps logs at 10KB/backtest AND 10KB/day. See
@@ -70,8 +83,6 @@ CODES_TREASURY = ["U19", "Z19", "H20", "M20", "U20", "Z20", "H21", "M21",
                   "U23", "Z23", "H24", "M24", "U24", "Z24", "H25", "M25",
                   "U25", "Z25", "H26", "M26"]
 
-TREASURIES = ("ZT", "ZF", "ZN", "ZB")
-
 # D-024 §4 fixes the scope to the four Treasury pairs and their order
 # (liquidity-first, registered together so the protocol cannot be adjusted
 # between them): ZF-ZN -> ZT-ZF -> ZN-ZB -> ZT-ZN. No index pair is run.
@@ -90,12 +101,6 @@ LEGS = {sym: MARKETS[sym] for sym in PAIR}
 WINDOW_START = datetime(2019, 6, 1)
 WINDOW_END = datetime(2026, 4, 27)
 GATE_WINDOW_BARS = 390
-
-# LEAN's regular session for the CBOT Treasuries, in the data's own (Chicago)
-# stamps: 08:30-16:00 CT. This is exactly the bar set a non-extended
-# `history()` returns, so filtering an extended fetch to it reproduces the
-# banked segments — the basis of the S-CASH-ENABLE gate.
-REGULAR_OPEN, REGULAR_CLOSE = time(8, 30), time(16, 0)
 
 # A1 adjudication of a flagged splice: a flag is a real artifact only if the
 # calendar gap can EXPLAIN it — material, same-signed, and inside a band around
@@ -168,49 +173,66 @@ class PairMinuteAnalysis(QCAlgorithm):
         times = list(pd.to_datetime(sched["timestamp"]))
         starts, ends = [WINDOW_START] + times, times + [WINDOW_END]
 
-        segments = {}
+        segments, reg_seg = {}, {}
         for i, code in enumerate(codes):
             sym = self._resolve(fut.symbol, code)
             if sym is None:
                 self.results["S_RESOLVE_FAIL"] = f"{leg}|{code}"
                 return None, None, None, None
             lo, hi = starts[i] - timedelta(days=6), ends[i] + timedelta(days=1)
-            if PART == 3:
-                h = self.history(sym, lo, hi, Resolution.MINUTE,
-                                 extended_market_hours=True)
-            else:
-                h = self.history(sym, lo, hi, Resolution.MINUTE)
+            # PART 3 issues TWO fetches, and the reason is scientific rather
+            # than cosmetic. `history()` on a CONTRACT symbol does not inherit
+            # the canonical subscription's config (the banked runs prove it:
+            # `add_future(extended_market_hours=True)` yet the delivered span
+            # is the regular 08:31-16:00), so LEAN's defaults apply — including
+            # fill_forward=TRUE. A single extended fetch would therefore hand
+            # S-CASH a 07:21-08:30 block of synthetic repeats: the coverage
+            # finding would be meaningless and the grid would be computed on
+            # stale prices. So the factors keep the byte-identical banked
+            # regular call, and only the ANALYSIS series is refetched extended
+            # with fill-forward OFF. D-024 §3's requirement — factors measured
+            # on the identical bar set the banked runs used — is satisfied more
+            # strictly this way than by subsetting one filled fetch.
+            h = self.history(sym, lo, hi, Resolution.MINUTE)
             if h is None or h.empty or "close" not in h.columns:
                 self.results["S_DATA_FAIL"] = f"{leg}|{code}"
                 return None, None, None, None
-            h = h.reset_index()
-            tcol = "time" if "time" in h.columns else h.columns[1]
-            s = pd.Series(h["close"].astype(float).values,
-                          index=pd.DatetimeIndex(h[tcol])).sort_index()
-            segments[code] = pd.DataFrame({"close": s[~s.index.duplicated("first")]})
+            reg_seg[code] = self._frame(h)
+            if PART == 3:
+                he = self.history(sym, lo, hi, Resolution.MINUTE,
+                                  fill_forward=False,
+                                  extended_market_hours=True)
+                if he is None or he.empty or "close" not in he.columns:
+                    self.results["S_DATA_FAIL"] = f"{leg}|{code}|extended"
+                    return None, None, None, None
+                segments[code] = self._frame(he)
+            else:
+                segments[code] = reg_seg[code]
 
         # D-024 §3: factors and the acceptance gate are ALWAYS measured on the
-        # regular-session bar set — identical to the banked runs — and only
-        # then re-applied to the (possibly denser) analysis series. This is
-        # what keeps the D-009 construction unchanged under PART 3.
-        reg = {c: d[(d.index.time > REGULAR_OPEN) & (d.index.time <= REGULAR_CLOSE)]
-               for c, d in segments.items()} if PART == 3 else segments
-        cont_reg, table = build_continuous(reg, sched, price_cols=("close",))
+        # regular-session bar set — byte-identical to the banked runs — and only
+        # then re-applied to the (possibly denser) analysis series. This is what
+        # keeps the D-009 construction unchanged under PART 3.
+        cont_reg, table = build_continuous(reg_seg, sched, price_cols=("close",))
         audit = splice_audit(cont_reg["close"], sched, window_bars=GATE_WINDOW_BARS)
 
         facs = {(r["from_contract"], r["to_contract"]): float(r["factor"])
                 for _, r in table.iterrows()}
-        self.results["S_FACSUM_" + leg] = (
-            f"n={len(facs)}|first={fmt(min(facs.values()), 6)}|"
-            f"last={fmt(max(facs.values()), 6)}|"
-            f"prod={fmt(float(pd.Series(list(facs.values())).prod()), 6)}")
+        # The FULL factor table, not a digest: D-024 §3 requires the S-CASH
+        # arm to reproduce it "character for character", and n/min/max/product
+        # can collide. 27 factors at 6 dp is ~250 chars, well inside the cap.
+        self.results["S_FACTAB_" + leg] = ",".join(
+            fmt(facs[k], 6) for k in sorted(facs))
+        self.results["S_FILLWIT_" + leg] = (
+            f"analysis_fetch={'extended_ff_off' if PART == 3 else 'regular_default'}"
+            f"|factor_fetch=regular_default|n_fac={len(facs)}")
 
         if PART == 3:
             cont, _ = build_continuous(segments, sched, price_cols=("close",),
                                        factors=facs)
         else:
             cont = cont_reg
-        del segments, reg
+        del segments, reg_seg, cont_reg
         close = cont["close"]
         # Drop the first segment's pre-window fetch buffer (validation report
         # 01 §6).
@@ -249,6 +271,14 @@ class PairMinuteAnalysis(QCAlgorithm):
                 f"ratio={fmt(sr / gp if gp else float('nan'), 2)}|"
                 f"gapshaped={int(bad)}|why={why}")
         return not any(gapshaped)
+
+    @staticmethod
+    def _frame(h):
+        h = h.reset_index()
+        tcol = "time" if "time" in h.columns else h.columns[1]
+        s = pd.Series(h["close"].astype(float).values,
+                      index=pd.DatetimeIndex(h[tcol])).sort_index()
+        return pd.DataFrame({"close": s[~s.index.duplicated("first")]})
 
     def _resolve(self, canonical, code):
         root, month, year = parse_contract(code)

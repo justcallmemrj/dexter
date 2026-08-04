@@ -83,6 +83,14 @@ OPEN_WINDOW_MINUTES = 30      # L-018(i) subset width, matching the event clock
 CASH_PRE_LO = time(7, 20)     # the S-CASH block that regular-session fetches
 CASH_PRE_HI = time(8, 30)     # do not deliver — its fill density is a FINDING
 
+# LEAN's regular session for the CBOT Treasuries in the data's own (Chicago)
+# stamps. Used as the denominator reference for every per-day rate: an extended
+# Globex fetch spans 17:00 -> 16:00 and carries Sunday-evening dates with no
+# 07:21-08:30 block at all, so counting every calendar date that holds any bar
+# inflates the denominator ~1.2x and pushes every leg under the D-024 coverage
+# floor for purely arithmetic reasons.
+REGULAR_OPEN, REGULAR_CLOSE = time(8, 30), time(16, 0)
+
 
 def session_window_analysis_keys(part: int | None = None) -> list[str]:
     """The frozen ANALYSIS-side key manifest (D-024 §5 gate 5).
@@ -99,7 +107,11 @@ def session_window_analysis_keys(part: int | None = None) -> list[str]:
     # extended hours, so its delivered span is a different (and load-bearing)
     # observation from parts 1-2's. S_ACT is descriptive and needs one copy.
     keys = ["S_ALIGN", "S_SPECS", "S_SESSCFG", "S_TZWIT"]
-    if part in (None, 1):
+    # S_ACT belongs to PART 3: it exists so a future experiment can define the
+    # session open empirically, and only the extended fetch delivers the
+    # pre-open bars it would look at. On a regular fetch the profile simply
+    # starts at 08:30 CT and says nothing about 07:20.
+    if part in (None, 3):
         keys += ["S_ACT"]
     for w in tags:
         keys += [f"S_CR{w}_{s}_{ez}" for s in ("S1", "S2", "S3") for ez in ezs]
@@ -187,19 +199,41 @@ def _timezone_witness(close_a: pd.Series, close_b: pd.Series,
     return "|".join(parts) + "|note=stamps_are_exchange_tz_not_ET"
 
 
-def _activity_profile(close_a: pd.Series, bucket: int = 30) -> str:
+def _trading_days(s: pd.Series) -> int:
+    """Dates carrying at least one REGULAR-session bar.
+
+    The correct denominator for any per-day rate on an extended series: Sunday
+    evenings and the post-close hour add calendar dates that never contain a
+    regular session, and counting them silently deflates every density.
+    """
+    t = s.index.time
+    reg = s.index[(t > REGULAR_OPEN) & (t <= REGULAR_CLOSE)]
+    return max(1, pd.DatetimeIndex(reg).normalize().nunique())
+
+
+def _activity_profile(close_a: pd.Series, close_b: pd.Series,
+                      bucket: int = 30) -> str:
     """DESCRIPTIVE bar-count profile across the delivered day (D-024 §2).
 
-    Emitted so a FUTURE experiment can define the session open empirically.
-    Fenced by D-024 §7: it carries no branch label, no evidence-tag change and
-    no open-thread consequence. In particular an activity peak near 07:20 CT
-    may NOT promote the 08:20 ET open from a convention to a sourced boundary.
+    Emitted so a FUTURE experiment can define the session open empirically —
+    which is why PART 3 owns it: only the extended fetch delivers the pre-open
+    bars such a definition would have to look at. Fenced by D-024 §7: no branch
+    label, no evidence-tag change, no open-thread consequence. In particular an
+    activity peak near 07:20 CT may NOT promote the 08:20 ET open from a
+    convention to a sourced boundary.
+
+    Both legs are reported, because a window is tradable only if BOTH print.
     """
-    mins = close_a.index.hour * 60 + close_a.index.minute
-    b = (np.asarray(mins) // bucket) * bucket
-    counts = pd.Series(b).value_counts().sort_index()
-    n_days = max(1, close_a.index.normalize().nunique())
-    return "|".join(f"{int(m)}:{c / n_days:.1f}" for m, c in counts.items())
+    out = []
+    for s in (close_a, close_b):
+        mins = np.asarray(s.index.hour * 60 + s.index.minute)
+        b = (mins // bucket) * bucket
+        counts = pd.Series(b).value_counts().sort_index()
+        d = _trading_days(s)
+        out.append({int(m): c / d for m, c in counts.items()})
+    buckets = sorted(set(out[0]) | set(out[1]))
+    return "|".join(f"{m}:{out[0].get(m, 0):.1f}/{out[1].get(m, 0):.1f}"
+                    for m in buckets)
 
 
 def _cash_coverage(close_a: pd.Series, close_b: pd.Series,
@@ -219,8 +253,7 @@ def _cash_coverage(close_a: pd.Series, close_b: pd.Series,
     for name, s in zip(legs, (close_a, close_b)):
         t = s.index.time
         blk = s[(t > CASH_PRE_LO) & (t <= CASH_PRE_HI)]
-        n_days = max(1, s.index.normalize().nunique())
-        parts.append(f"{name}={len(blk) / n_days / span:.3f}")
+        parts.append(f"{name}={len(blk) / _trading_days(s) / span:.3f}")
     return "|".join(parts) + f"|span_min={span}|floor=0.80"
 
 
@@ -261,7 +294,7 @@ def session_window_report(close_a: pd.Series, close_b: pd.Series, *,
         + f"|part={part if part is not None else 'all'}|z=rolling{ZS_LOOKBACK}"
           f"|beta_lb={BETA_LOOKBACK}|anchor={anchor}|stamps=data_native")
     out["S_TZWIT"] = _timezone_witness(close_a, close_b, legs_names)
-    out["S_ACT"] = _activity_profile(close_a)
+    out["S_ACT"] = _activity_profile(close_a, close_b)
     out["S_CASHCOV"] = _cash_coverage(close_a, close_b, legs_names)
 
     spec_line = None
@@ -315,9 +348,12 @@ def session_window_report(close_a: pd.Series, close_b: pd.Series, *,
         out[f"S_OPEN{w}"] = "|".join(subs)
 
         prof = event_clock_profile(z1, 2.0, open_t=open_t)
+        # Never emit an EMPTY value: the summary-statistic channel may drop one
+        # silently, which would fail the set-equality gate for a reason that has
+        # nothing to do with the science.
         out[f"S_CLK{w}"] = "|".join(
             f"{int(r['minutes_from_open'])}:{fmt(r['share'], 3)}"
-            for _, r in prof.iterrows())
+            for _, r in prof.iterrows()) or "none|no_crossings"
 
         if w in VR_WINDOWS:
             out[f"S_VRA{w}"] = _vr_pack([

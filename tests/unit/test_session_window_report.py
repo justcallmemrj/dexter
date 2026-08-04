@@ -277,14 +277,36 @@ def _driver_keys(n_analysis, legs=("ZF", "ZN")):
          "S_PAIR": "ZF_ZN|markets=cbot/cbot|anchor=vol_ratio|rolls=treasury|nb=15"}
     for leg in legs:
         d[f"S_BUILD_{leg}"] = "rolls=27|flags=0|med_ovl=390|nonmedian=0"
-        d[f"S_FACSUM_{leg}"] = "n=27|first=0.981|last=1.014|prod=0.994"
+        d[f"S_FACTAB_{leg}"] = ",".join(f"{0.98 + i / 1000:.6f}"
+                                        for i in range(27))
+        d[f"S_FILLWIT_{leg}"] = ("analysis_fetch=regular_default|"
+                                 "factor_fetch=regular_default|n_fac=27")
     d["S_KEYS"] = str(n_analysis + len(d) + 1)
     return d
 
 
-def _part_stats(part, first_min=8 * 60 + 30, bars=450):
+def _extended_pair(n_sessions=30, seed=SEED):
+    """A REALISTIC extended-hours panel: weekday sessions 07:01-16:00 PLUS
+    Sunday-evening dates carrying 17:01-23:59 and no regular session at all.
+
+    The first version of this fixture was a widened contiguous weekday, which
+    is why two part-3 defects were invisible to it — a real Globex fetch spans
+    midnight and adds calendar dates that hold no 08:30-16:00 bar.
+    """
+    a, b = _pair(n_sessions=n_sessions, first_min=7 * 60, bars=540, seed=seed)
+    sundays = pd.bdate_range("2020-01-02", periods=n_sessions)[::5] - pd.Timedelta(days=2)
+    eve = pd.DatetimeIndex(np.concatenate([
+        (d + pd.Timedelta(minutes=17 * 60 + 1)
+         + pd.to_timedelta(np.arange(419), "m")).values for d in sundays]))
+    pad = pd.Series(a.iloc[0], index=eve)
+    return (pd.concat([a, pad]).sort_index(),
+            pd.concat([b, pd.Series(b.iloc[0], index=eve)]).sort_index())
+
+
+def _part_stats(part, first_min=8 * 60 + 30, bars=450, extended=False):
     """A conforming part emission: the real battery plus driver keys."""
-    a, b = _pair(n_sessions=30, first_min=first_min, bars=bars)
+    a, b = (_extended_pair() if extended
+            else _pair(n_sessions=30, first_min=first_min, bars=bars))
     out = session_window_report(a, b, part=part, q_grid=(2, 15), n_boot=20,
                                 legs_names=("ZF", "ZN"))
     out.update(_driver_keys(len(out)))
@@ -308,10 +330,14 @@ def test_ingest_timezone_gate_is_part_aware():
     reg = _part_stats(1)
     ok, why = ing.gate_timezone(reg, ("ZF", "ZN"), 1)
     assert ok and "08:31-16:00" in why
-    # the regular span is NOT acceptable for part 3 — it never delivered S-CASH
+    # The regular span is NOT acceptable for part 3 — it proves the extended
+    # fetch never took effect.
     ok, why = ing.gate_timezone(reg, ("ZF", "ZN"), 3)
-    assert not ok and "07:21" in why
-    ext = _part_stats(3, first_min=7 * 60, bars=540)
+    assert not ok and "did not take effect" in why
+    # A REAL extended Globex series spans midnight, so its min/max time-of-day
+    # is ~00:00-23:59. Pinning either end (as the first version did) is
+    # unsatisfiable and would have voided every part-3 run.
+    ext = _part_stats(3, extended=True)
     ok, why = ing.gate_timezone(ext, ("ZF", "ZN"), 3)
     assert ok, why
 
@@ -329,13 +355,13 @@ def test_ingest_geometry_gate_catches_a_wrong_window():
 
 def test_ingest_cash_enable_gate_detects_a_moved_factor_table():
     ing = _ingest()
-    p1, p3 = _part_stats(1), _part_stats(3, first_min=7 * 60, bars=540)
+    p1, p3 = _part_stats(1), _part_stats(3, extended=True)
     ok, why = ing.gate_cash_enable({1: p1, 3: p3}, ("ZF", "ZN"))
     assert ok, why
     p3_bad = dict(p3)
-    p3_bad["S_FACSUM_ZN"] = "n=27|first=0.980|last=1.014|prod=0.994"
+    p3_bad["S_FACTAB_ZN"] = p3_bad["S_FACTAB_ZN"].replace("0.980000", "0.980001")
     ok, why = ing.gate_cash_enable({1: p1, 3: p3_bad}, ("ZF", "ZN"))
-    assert not ok and "factor table moved" in why
+    assert not ok and "construction moved" in why
 
 
 def test_ingest_parsers_invert_the_emission():
@@ -372,11 +398,7 @@ def test_ingest_main_success_path_end_to_end(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(ing, "OUT", tmp_path)
     p1, p2 = _part_stats(1), _part_stats(2)
 
-    banked = ing.parse_grids(p1)
-    banked = banked[banked["window"] == "U"][
-        ["spec", "entry_z", "horizon_bars", "mean_bps", "mean_session_bps",
-         "t_clustered", "hit_rate", "n_events"]]
-    banked.to_csv(tmp_path / "nb02_ZF_ZN_conditional_reversion.csv", index=False)
+    _write_banked(ing, p1, tmp_path)
 
     f1, f2 = tmp_path / "p1.json", tmp_path / "p2.json"
     f1.write_text(json.dumps(p1)); f2.write_text(json.dumps(p2))
@@ -394,3 +416,123 @@ def test_ingest_main_success_path_end_to_end(tmp_path, monkeypatch, capsys):
     # "ENABLED" would overstate what ran.
     assert scal.loc[scal["key"] == "D024_SCASH_ARM",
                     "value"].iloc[0] == "NOT-ATTEMPTED"
+
+
+# --- helpers for the banked comparisons the new gates require ---------------
+
+
+def _write_banked(ing, stats, tmp_path):
+    """Lay down the three banked artefacts gates 2 and 3 compare against."""
+    g = ing.parse_grids(stats)
+    g[g["window"] == "U"][
+        ["spec", "entry_z", "horizon_bars", "mean_bps", "mean_session_bps",
+         "t_clustered", "hit_rate", "n_events"]].to_csv(
+        tmp_path / "nb02_ZF_ZN_conditional_reversion.csv", index=False)
+    v = ing.parse_vr(stats)
+    v[v["window"] == "U"][["series", "base_step", "q", "vr", "ci_lo",
+                           "ci_hi", "p_lt_1"]].to_csv(
+        tmp_path / "nb02_ZF_ZN_variance_ratio.csv", index=False)
+    pd.DataFrame([{"key": k, "value": stats[k]} for k in
+                  ("S_GATE", "S_HOLIDAYS", "S_BUILD_ZF", "S_BUILD_ZN")]
+                 ).to_csv(tmp_path / "nb02_ZF_ZN_scalars.csv", index=False)
+
+
+def _aligned_part3(p1, extended=True):
+    """Part 3 whose D-009 construction witnesses match the banked path."""
+    p3 = _part_stats(3, extended=extended)
+    for k in ("S_GATE", "S_HOLIDAYS", "S_BUILD_ZF", "S_BUILD_ZN",
+              "S_FACTAB_ZF", "S_FACTAB_ZN"):
+        p3[k] = p1[k]
+    return p3
+
+
+def _run_ingest(ing, tmp_path, monkeypatch, parts):
+    files = {}
+    for n, st in parts.items():
+        f = tmp_path / f"p{n}.json"
+        f.write_text(json.dumps(st))
+        files[n] = str(f)
+    argv = ["ingest", "--pair", "ZF_ZN"]
+    for n in sorted(files):
+        argv += [f"--part{n}", files[n]]
+    argv.append("--compare-banked")
+    monkeypatch.setattr("sys.argv", argv)
+    return ing.main()
+
+
+# --- the part-3 defects the first fixture could not see ---------------------
+
+
+def test_coverage_denominator_ignores_dates_with_no_regular_session():
+    """A real extended fetch adds Sunday-evening dates holding no 08:30-16:00
+    bar. Counting them inflates the denominator ~1.2x and pushes every leg
+    under the 0.80 floor for purely arithmetic reasons - which would have
+    destroyed the S-CASH arm before it measured anything."""
+    from spread_research.session_window_report import _trading_days
+    a, b = _extended_pair()
+    assert a.index.normalize().nunique() > _trading_days(a), \
+        "fixture must contain dates with no regular session"
+
+    cov = session_window_report(a, b, part=3, q_grid=(2,), n_boot=20,
+                                legs_names=("ZF", "ZN"))["S_CASHCOV"]
+    dens = float(cov.split("ZF=")[1].split("|")[0])
+    assert dens == pytest.approx(1.0, abs=0.02), \
+        f"a fully-populated pre-open must read ~1.0, got {dens}"
+    assert dens > 0.80, "must not fall under the D-024 floor by arithmetic"
+
+
+def test_thin_coverage_is_a_finding_and_keeps_its_keys(tmp_path, monkeypatch,
+                                                       capsys):
+    """D-024 gate 4 calls thin coverage a substantive answer to A-013 in its
+    own right, not a defect. Voiding it would delete the very finding."""
+    ing = _ingest()
+    monkeypatch.setattr(ing, "OUT", tmp_path)
+    p1, p2 = _part_stats(1), _part_stats(2)
+    p3 = _aligned_part3(p1)
+    p3["S_CASHCOV"] = "ZF=0.412|ZN=0.444|span_min=70|floor=0.80"
+
+    assert ing.gate_cash_enable({1: p1, 3: p3}, ("ZF", "ZN"))[0]
+    assert not ing.gate_cash_coverage(p3, ("ZF", "ZN"))[0]
+
+    _write_banked(ing, p1, tmp_path)
+    assert _run_ingest(ing, tmp_path, monkeypatch,
+                       {1: p1, 2: p2, 3: p3}) == 0, capsys.readouterr().out
+    scal = pd.read_csv(tmp_path / "nb15_ZF_ZN_scalars.csv")
+    assert scal.loc[scal["key"] == "D024_SCASH_ARM",
+                    "value"].iloc[0] == "INCONCLUSIVE-COVERAGE"
+    grids = pd.read_csv(tmp_path / "nb15_ZF_ZN_window_grids.csv")
+    assert "C" in set(grids["window"]), "the S-CASH finding must survive"
+
+
+def test_part3_never_overwrites_the_banked_path_shared_keys(tmp_path,
+                                                            monkeypatch,
+                                                            capsys):
+    """Part 3 carries S-CASH betas and an extended S_ALIGN. Merged last, its
+    win=C betas would land in the scalars - an S-CASH number quoted in the
+    record, which D-024 forbids."""
+    ing = _ingest()
+    monkeypatch.setattr(ing, "OUT", tmp_path)
+    p1, p2 = _part_stats(1), _part_stats(2)
+    p3 = _aligned_part3(p1)
+    assert p3["S_SPECS"].endswith("win=C")
+    assert p3["S_ALIGN"] != p1["S_ALIGN"]
+
+    _write_banked(ing, p1, tmp_path)
+    assert _run_ingest(ing, tmp_path, monkeypatch,
+                       {1: p1, 2: p2, 3: p3}) == 0, capsys.readouterr().out
+    scal = pd.read_csv(tmp_path / "nb15_ZF_ZN_scalars.csv").set_index("key")["value"]
+    assert scal["S_SPECS"].endswith("win=U"), "banked-path betas must win"
+    assert scal["S_ALIGN"] == p1["S_ALIGN"]
+
+
+def test_cash_enable_failure_voids_only_the_arm():
+    """D-024: a failing S-CASH arm leaves the other four windows standing on
+    their own. Folding part 3 into the identity gate voided everything."""
+    ing = _ingest()
+    p1 = _part_stats(1)
+    p3 = _aligned_part3(p1)
+    p3["S_FACTAB_ZN"] = p1["S_FACTAB_ZN"].replace("0.980000", "0.980001")
+    assert ing.gate_identity({1: p1, 3: p3}, ("ZF", "ZN"))[0], \
+        "identity must ignore part 3 - that is cash_enable's job"
+    ok, why = ing.gate_cash_enable({1: p1, 3: p3}, ("ZF", "ZN"))
+    assert not ok and "construction moved" in why

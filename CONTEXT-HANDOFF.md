@@ -331,7 +331,23 @@ session/resolution thread now carries the banked D-023 target.
 - **Ingest flow for split runs:** `ingest_qc_delayed_entry.py --check
   raw_partN.json --part N` validates one part (gates 1/2/4[/3]) BEFORE the
   second backtest is spent; the full two-part call with `--compare-banked`
-  writes nothing unless all eight gates pass.
+  writes nothing unless all eight gates pass. Notebook 15 uses the same
+  pattern: `ingest_qc_session_window.py --check raw.json --part N --pair ZF_ZN`.
+- **BEFORE spending a notebook-15 PART 3 run:** `self.history(...,
+  extended_market_hours=True, fill_forward=False)` is the repo's FIRST use of
+  either kwarg on a history call. Smoke-test it on ONE contract and confirm the
+  returned span is not the regular 08:31-16:00 before committing a full part-3
+  battery. Two independent facts make this necessary: `history()` on a CONTRACT
+  symbol does NOT inherit the canonical subscription's config (the banked runs
+  prove it), and LEAN's default is fill_forward=TRUE — so an unpinned extended
+  fetch would hand S-CASH a 07:21-08:30 block of forward-filled REPEATS,
+  making the coverage finding meaningless and computing the grid on stale
+  prices. The driver therefore issues TWO fetches in part 3 (regular for the
+  D-009 factors, extended+FF-off for the analysis series) and emits
+  `S_FILLWIT` so a reader never has to infer which regime ran.
+- **Notebook-15 run order:** 4 pairs x 3 parts = 12 backtests. Parts 1-2 use
+  the byte-identical banked data path; part 3 is the conditional S-CASH arm and
+  can be skipped entirely without touching the other four windows.
 - **Uploading only what changed:** `python scripts/build_qc_upload.py --driver
   {pair|signal} --only a.py,b.py` skips unchanged modules and prints a
   line-ending-normalised sha for every file, so the copies already in the
