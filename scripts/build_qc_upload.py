@@ -46,6 +46,7 @@ MODULES = [
 DRIVERS = {
     "pair": "lean/research/qc_pair_minute_analysis.py",        # notebooks 02/03
     "signal": "lean/research/qc_signal_definition_analysis.py",  # notebook 06
+    "delay": "lean/research/qc_delayed_entry_analysis.py",     # notebook 14
 }
 
 RELATIVE_IMPORT = re.compile(r"^(\s*from\s+)\.(\w+)(\s+import\s+)", re.MULTILINE)

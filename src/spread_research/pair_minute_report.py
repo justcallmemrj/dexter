@@ -19,9 +19,9 @@ import pandas as pd
 
 from .intraday_reversion import (
     conditional_reversion, event_clock_profile, first_minutes_mask,
-    half_life_within_session, held_position_roll_shock, roll_window_diagnostics,
-    rth_frame, session_anchored_zscore, session_ids, subsample_within_session,
-    variance_ratio,
+    half_life_within_session, held_position_roll_shock, leg_crosscorr_profile,
+    roll_window_diagnostics, rth_frame, session_anchored_zscore, session_ids,
+    subsample_within_session, variance_ratio,
 )
 from .signals import rolling_zscore
 
@@ -39,6 +39,14 @@ SEED = 20260801
 # events are "at the open".
 SESSION_WARMUP_BARS = 30
 OPEN_WINDOW_MINUTES = 30
+
+# D-022 (notebook 14). Frozen by the pre-registration: entry delays, the
+# matched-set feasibility bar (the largest delay, so one event set serves all
+# four), and the cross-correlation lags and bootstrap size.
+DELAYS = (1, 2, 5, 15)
+FEASIBLE_MAX_DELAY = 15
+XCORR_LAGS = (1, 2, 3, 4, 5)
+XCORR_NBOOT = 1000
 
 
 def fmt(x, nd: int = 4) -> str:
@@ -447,3 +455,156 @@ def _signal_diagnostics(res: pd.Series, z0: pd.Series, z1: pd.Series,
     out["S_HL1"] = (f"z1_b={fmt(hl['b'], 7)}|z1_hl={fmt(hl['half_life_bars'], 1)}|"
                     f"n={int(hl['n'])}")
     return out
+
+
+# ---------------------------------------------------------------------------
+# Notebook 14 — MES-M2K delayed entry (D-022)
+# ---------------------------------------------------------------------------
+
+
+def delayed_entry_analysis_keys(part: int | None = None,
+                                entry_grid=ENTRY_GRID,
+                                delays=DELAYS) -> list[str]:
+    """The ANALYSIS-side key manifest for `pair_delayed_entry_report`.
+
+    Single source of truth: the report function filters its emission through
+    this list, the ingest script composes its per-part retrieved-key manifest
+    from it (adding the driver-side keys), and the tests pin both — so the
+    D-022 gate-4 set comparison and the code cannot drift apart. Part 1 is
+    the Z0 half, part 2 the Z2 half plus the cross-correlation block; the
+    three shared keys appear in both.
+    """
+    if part not in (None, 1, 2):
+        raise ValueError(f"part must be None, 1 or 2, got {part!r}")
+    ezs = [str(ez).replace(".", "") for ez in entry_grid]
+    shared = ["S_ALIGN", "S_SPECS", "S_DELAYCFG"]
+
+    def repro(tag):
+        return [f"S_CR{tag}_{s}_{ez}" for s in ("S1", "S2", "S3") for ez in ezs]
+
+    def matched(tag):
+        return [f"S_DE{tag}_{s}_{ez}_d{d}" for s in ("S1", "S2")
+                for ez in ezs for d in delays]
+
+    xc = ["S_XC_AB", "S_XC_BA", "S_XC_AS"]
+    if part == 1:
+        return shared + repro("0") + matched("0")
+    if part == 2:
+        return shared + repro("2") + matched("2") + xc
+    return shared + repro("0") + repro("2") + matched("0") + matched("2") + xc
+
+
+def _cr_value(cr: pd.DataFrame) -> str:
+    """The grid-cell layout shared with notebooks 02/03/06:
+    horizon:mean_bps:mean_session_bps:t_clustered:hit_rate:n_events."""
+    return "|".join(
+        f"{int(r['horizon_bars'])}:{fmt(r['mean_bps'], 3)}:"
+        f"{fmt(r['mean_session_bps'], 3)}:{fmt(r['t_clustered'], 2)}:"
+        f"{fmt(r['hit_rate'], 3)}:{int(r['n_events'])}"
+        for _, r in cr.iterrows())
+
+
+def pair_delayed_entry_report(close_a: pd.Series, close_b: pd.Series, *,
+                              part: int | None = None,
+                              entry_grid=ENTRY_GRID, horizons=HORIZONS,
+                              anchor: str = "unit",
+                              open_minutes: int = OPEN_WINDOW_MINUTES,
+                              delays=DELAYS,
+                              feasible_delay: int = FEASIBLE_MAX_DELAY,
+                              xcorr_lags=XCORR_LAGS,
+                              n_boot: int = XCORR_NBOOT,
+                              seed: int = SEED) -> dict[str, str]:
+    """The D-022 battery: delayed entry on matched event sets, plus the
+    leg-level cross-correlation discriminator.
+
+    Everything about event DETECTION is byte-identical to the banked runs:
+    the two signal definitions are Z0 (`rolling_zscore(residual, 390)`) and
+    Z2 (Z0 with first-`open_minutes` events dropped), unchanged from
+    notebook 06; entries, horizons, min_events, session-clustered inference
+    and the position-P&L outcome with beta frozen at the signal bar (A2) are
+    unchanged from notebook 02. What moves is the ENTRY BAR: d in
+    {1, 2, 5, 15}, entered at t+d and exited at t+d+k, on event sets matched
+    at the largest delay so n_events is constant across d by construction.
+
+    Z1 is deliberately absent (L-018: it kills S2, so the two-spec read the
+    D-010 rule needs is impossible under it). Variance-ratio blocks are
+    deliberately absent, as in notebook 06 — no z-score or entry bar enters
+    them, so criterion (b) is inherited unchanged, which is why no outcome
+    of this battery can advance the pair (the D-022 ceiling).
+
+    `part` filters the EMISSION only (L-019: the summary-stat channel has
+    never returned more than 57 keys intact, so the ~103-key battery ships
+    as two backtests). Every part computes everything; the driver sets
+    PART = 1 or 2 and this function returns that half of the dict. The
+    shared keys S_ALIGN and S_SPECS must come back identical from both
+    parts (validity gate 2b).
+    """
+    out: dict[str, str] = {}
+    a, b = rth_frame(close_a), rth_frame(close_b)
+    df = pd.concat({"a": a, "b": b}, axis=1, join="inner").dropna()
+    if df.empty:
+        return {"S_ALIGN": "EMPTY|no overlapping RTH bars"}
+    log_a, log_b = np.log(df["a"]), np.log(df["b"])
+
+    per_session = pd.Series(1, index=df.index).groupby(df.index.normalize()).sum()
+    out["S_ALIGN"] = (
+        f"bars={len(df)}|sessions={len(per_session)}|"
+        f"medbars={int(per_session.median())}|first={df.index[0].date()}|"
+        f"last={df.index[-1].date()}|dropA={len(a) - len(df)}|"
+        f"dropB={len(b) - len(df)}")
+    out["S_DELAYCFG"] = (
+        f"delays={','.join(str(d) for d in delays)}|feasible={feasible_delay}"
+        f"|part={part if part is not None else 'all'}"
+        f"|xlags={','.join(str(k) for k in xcorr_lags)}|nboot={n_boot}"
+        f"|open_win={open_minutes}|z=Z0_rolling{ZS_LOOKBACK}+Z2_open_excluded")
+
+    specs, info = residual_specs(log_a, log_b, anchor=anchor)
+    betas, legs = info["betas"], (log_a, log_b)
+    b1 = betas["S1"]
+    out["S_SPECS"] = (
+        f"anchor={anchor}|S1_beta_med={fmt(b1.median())}|"
+        f"S1_beta_p5={fmt(b1.quantile(.05))}|S1_beta_p95={fmt(b1.quantile(.95))}")
+
+    for name, res in specs.items():
+        z0 = rolling_zscore(res, ZS_LOOKBACK)
+        not_open = ~first_minutes_mask(res.index, open_minutes)
+        for tag, filt in (("0", None), ("2", not_open)):
+            for ez in entry_grid:
+                key_ez = str(ez).replace(".", "")
+                cr = conditional_reversion(
+                    res, z0, entry_z=ez, horizons=horizons, legs=legs,
+                    beta=betas[name], event_filter=filt)
+                out[f"S_CR{tag}_{name}_{key_ez}"] = _cr_value(cr)
+                if name in ("S1", "S2"):
+                    for d in delays:
+                        crd = conditional_reversion(
+                            res, z0, entry_z=ez, horizons=horizons, legs=legs,
+                            beta=betas[name], event_filter=filt,
+                            entry_delay=d, feasible_delay=feasible_delay)
+                        out[f"S_DE{tag}_{name}_{key_ez}_d{d}"] = _cr_value(crd)
+
+    xc = leg_crosscorr_profile(log_a, log_b, xcorr_lags, n_boot=n_boot,
+                               seed=seed)
+    xr = {r["stat"]: r for _, r in xc.iterrows()}
+
+    def xc_val(prefix):
+        return "|".join(
+            f"{k}:{fmt(xr[f'{prefix}_{k}']['point'])}:"
+            f"{fmt(xr[f'{prefix}_{k}']['ci_lo'])}:"
+            f"{fmt(xr[f'{prefix}_{k}']['ci_hi'])}:"
+            f"{int(xr[f'{prefix}_{k}']['n_pairs'])}"
+            for k in xcorr_lags)
+
+    out["S_XC_AB"] = xc_val("ab")
+    out["S_XC_BA"] = xc_val("ba")
+    c0 = xr["c0"]
+    out["S_XC_AS"] = (
+        xc_val("asym")
+        + f"|c0:{fmt(c0['point'])}:{fmt(c0['ci_lo'])}:{fmt(c0['ci_hi'])}:"
+          f"{int(c0['n_pairs'])}|nboot:{n_boot}")
+
+    keep = delayed_entry_analysis_keys(part, entry_grid, delays)
+    missing = [k for k in keep if k not in out]
+    if missing:                      # a manifest/emission drift is a defect
+        raise RuntimeError(f"emission does not cover manifest: {missing}")
+    return {k: out[k] for k in keep}
