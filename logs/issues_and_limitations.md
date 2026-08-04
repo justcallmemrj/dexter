@@ -166,6 +166,22 @@
   adopted in report 02 section 6.3 applies to the index pairs and must NOT be
   assumed for Treasuries or for any new asset class without re-measuring.
 
+- **L-019 (2026-08-04, discovered during the D-022 pre-registration audit):**
+  **The QC summary-statistic channel silently lost keys in every notebook-06
+  run, and no gate noticed.** All four nb06 runs recorded S_KEYS = 67–68
+  (emitted) but the retrieved statistics dicts hold only 55–56 keys — exactly
+  the 12-key S_RL per-roll block is missing in every run, while all seven
+  nb02/nb03 runs (54–57 keys) came back complete with their S_RL blocks. The
+  loss was harmless there (no gate or CSV consumed S_RL from nb06), which is
+  precisely why it went unseen; where between `set_summary_statistic` and the
+  browser read the keys vanish is UNATTRIBUTED. Consequences, binding until
+  the mechanism is found: (i) no run may be designed to emit more than ~57
+  summary-statistic keys in one backtest — split the battery into parts
+  instead (D-022 is the first to do so); (ii) every future ingest must check
+  the RETRIEVED key set against a frozen expected manifest AS A SET and
+  against the emitted S_KEYS count — count-only or subset checks pass exactly
+  the failure that happened here.
+
 ## Closed
 
 - **L-002 (closed 2026-08-01):** Contract specifications were verified only

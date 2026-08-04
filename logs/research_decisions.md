@@ -1067,3 +1067,359 @@ Black Lion". EXP-015 - EXP-018, validation report 06.
 - **Review:** No further pass over this window under any signal definition.
   Confirming the Z2 sign flip requires a fresh window, venue or resolution,
   pre-registered afresh.
+  *AMENDED 2026-08-04 by D-022: this clause bars further SIGNAL-DEFINITION
+  passes on this window and any confirmation of the Z2 sign flip; it does not
+  bar the delayed-entry mechanism probe that D-015's Review clause reserved
+  before this decision existed ("the delayed-entry test is a NEW mechanism and
+  gets its own pre-registration") and that this decision's own EXP-017 notes
+  kept open ("Delayed entry (D-015) remains the test that would settle it").
+  That probe proceeds under D-022, issues no verdict on A-006, and cannot
+  advance the pair.*
+
+## D-022 — 2026-08-04 — PRE-REGISTRATION of notebook 14: MES–M2K delayed entry and leg-level cross-correlation (the D-015 open thread)
+
+Written before any delayed-entry code existed and before any number under it
+existed. This is D-019's open thread 2 (item 3 in CONTEXT-HANDOFF §5's
+renumbered list — the numbering schemes differ, and thread NAMES are used
+below to avoid the collision), pre-committed by D-015 ("the delayed-entry
+test is a NEW mechanism and gets its own pre-registration") and left standing
+by D-021 ("Delayed entry (D-015) remains the test that would settle it",
+EXP-017). The OTHER open thread — different session/resolution/venue — is
+D-019's thread 3, handoff §5 item 4, and is what D-021's text calls "open
+thread 3"; it is referred to here as the **session/resolution thread**.
+Nothing below may be revised in response to an outcome; a revision voids the
+test and forces a fresh pre-registration.
+
+### Standing with respect to D-021's review clause, stated first
+
+D-021's Review clause, read literally ("no further pass over this window
+under any signal definition"), covers any event study on these bars — so this
+decision does not proceed by reinterpreting it: D-021 now carries an inline
+amendment, made together with this pre-registration, scoping the clause to
+what it was written to end (the signal-definition line and any confirmation
+of the Z2 sign flip) and recording the carve-out's basis — D-015's Review
+clause reserved the delayed-entry probe BEFORE D-021 existed, and D-021's own
+EXP-017 notes kept it open. This test is not a signal re-definition and
+issues **no verdict on A-006**: the z-scores are the two already-banked
+definitions (Z0 and Z2), unchanged; what varies is the ENTRY BAR of the event
+study, plus one new leg-level diagnostic. It is a **mechanism-attribution
+probe** of results that already exist: does the positive conditional surface
+in MES–M2K reflect the laggard leg catching up (lead-lag, L-014), or
+convergence that is still there to harvest after the catch-up window has
+passed? The window remains spent for hypothesis testing — which is why, under
+every branch below, **the pair cannot advance and the D-019 no-go cannot
+change.** What this run can change is only how D-015's [PLAUSIBLE] mechanism
+sentence is labelled, and whether the session/resolution thread keeps its
+M2K-specific motivation.
+
+### Why this is worth running, stated honestly
+
+Under the open-excluded signal, M2K's best honest cell is **+6.767 bps at
+t = 5.14** (S1, entry 3.0, h = 120, n = 2,061 — nb06, EXP-017), the largest
+effect in the program, sitting ~2.3–3.4x above the ~2–3 bps A-007/A-008
+placeholder cost band. It is the only result in seven pairs sitting a clear
+multiple above that band (MYM's +2.40 and MNQ's +3.12 sit at ~1.0–1.6x, inside
+a placeholder's error). Leaving its mechanism unattributed leaves the
+program's conclusion resting on criterion (b) alone for the one pair where
+criteria (a) and (c) pass. A confirmed lead-lag mechanism in the thinnest
+micro is also a documented finding in its own right (L-014's "any future work
+on a thin leg" clause becomes [ESTABLISHED] rather than [PLAUSIBLE]).
+
+### Decision — the delayed-entry battery, fixed now
+
+The conditional event study is re-run with the entry bar moved. Everything
+about event DETECTION is byte-identical to the banked runs: signal read at
+bar t (first crossing of the entry threshold by |z|), same crossing
+definition, same min_events = 20, same session-clustered inference, same
+seed 20260801, same anchor "unit", same 4x5 entry/horizon grid, same
+own-splice data path, gate and window (2019-06-01 → 2026-04-27 request
+window; observed panel 2019-06-03 → 2026-04-24, 684,300 bars, 1,780
+sessions).
+
+- **Delays, fixed now: d ∈ {1, 2, 5, 15}.** Entry at the close of bar t+d,
+  exit at the close of bar t+d+k for horizon k — the holding period is
+  UNCHANGED at k bars for every delay; only the start moves. P&L is the
+  position's P&L with beta frozen at the SIGNAL bar (A2, unchanged):
+  pnl_bps = −sign(z_t) · [(a_{t+d+k} − a_{t+d}) − β_t (b_{t+d+k} − b_{t+d})] · 1e4.
+  d = 1 is the banked convention and serves as the in-run baseline.
+- **Signal definitions, fixed now: Z0 and Z2 only.** Z0 =
+  rolling_zscore(residual, 390); Z2 = Z0 with events whose signal bar is in
+  the first 30 minutes dropped — the identical objects banked in nb02/nb06.
+  Z1 is NOT run: L-018 established that session-anchoring kills S2
+  (zero cells at |t| >= 3 anywhere), so a two-spec read under Z1 is
+  impossible and running it would spend budget to re-learn L-018.
+- **Specifications, fixed now: S1 and S2** for the delayed grids — the two
+  specs the D-010 verdict rule reads. S3 is look-ahead-contaminated, never
+  evidence, and is emitted only inside the reproduction grids below.
+- **Matched event sets — the design choice that makes delays comparable.**
+  For the delayed grids, an event enters the grid at horizon k only if bar
+  t + 15 + k (the LARGEST delay plus that horizon) still lies inside the
+  signal bar's session and the sample. The same event set therefore serves
+  all four delays at fixed (signal, spec, entry, horizon): **n_events is
+  constant across d by construction**, and a decay profile cannot be
+  manufactured by late-session events entering at d = 1 and dropping out at
+  d = 15 (a composition shift of up to ~14/390 ≈ 3.6% of events, not random
+  in session time). Feasibility depends only on the signal bar's position in
+  the session — known at signal time, no look-ahead.
+- **Reproduction grids.** The UNMATCHED d = 1 grids for Z0 and Z2, specs
+  S1/S2/S3, are emitted alongside — solely to prove the pipeline unchanged
+  against the banked CSVs (validity gate 1). They are re-emissions of banked
+  numbers, not new tests.
+- **Roll treatment unchanged.** As in nb02/nb06, no roll-window exclusion is
+  applied to the event study (the banked grids the reproduction gate must
+  match contain roll-adjacent events). The M2K >= 1,170-bar warm-up finding
+  (L-015/L-017, report 02 §12.5) remains a limitation of any FUTURE M2K
+  strategy, not of this comparison: the delay contrast reads the SAME events
+  at different entry bars, so roll effects are common-mode across d.
+
+### Decision — emission in TWO backtest parts, designed now (L-019)
+
+Auditing the banked archives for this pre-registration exposed an
+operational fact that was silent until now, logged as **L-019**: all four
+nb06 runs EMITTED 67–68 summary-statistic keys (S_KEYS) but the retrieved
+statistics contain only 55–56 — the 12-key S_RL per-roll block is missing in
+every one, and no gate needed those keys, so nothing caught it. The channel
+has never returned more than 57 keys intact in this project. This battery
+(~100 keys in one run) is therefore NOT designed as a single emission with a
+truncation contingency; it is designed as **two backtest parts from the
+start**, each inside the known-good envelope:
+
+- The driver carries a frozen constant **PART ∈ {1, 2}** that filters ONLY
+  the emission dict. **Both parts compute the ENTIRE battery identically**
+  (same code, same numbers); each reports its half. There is no
+  analysis-code difference between parts, and the shared diagnostics both
+  parts emit (S_ALIGN, S_GATE, S_BUILD_*, S_FLAG_*, S_SPECS) must be
+  IDENTICAL across parts — a fifth determinism check, enforced as validity
+  gate 2b below.
+- **Part 1 (~54 keys):** matched delay grids under Z0 (4 delays x 2 specs x
+  4 entries = 32) + unmatched d = 1 reproduction grids under Z0 (S1/S2/S3 x
+  4 = 12) + diagnostics.
+- **Part 2 (~57 keys):** matched delay grids under Z2 (32) + unmatched
+  d = 1 reproduction grids under Z2 (12) + the cross-correlation block
+  (3 keys) + diagnostics.
+- The S_RL per-roll block is NOT emitted by this driver (the audit gate
+  itself still runs; S_GATE and S_FLAG_* carry its result). One EXP row
+  (EXP-019) covers both parts, recording both QC run names.
+- **Retry policy, fixed now:** if a part fails the emission-completeness
+  gate, exactly ONE re-run of that part is permitted, changing the emission
+  layer only — the analysis-code hash must be unchanged and is recorded in
+  the ingest output. Values retrieved from a gate-failing part are not read
+  into any report. A second failure is IMPLEMENTATION DEFECT for the run as
+  a whole.
+
+### Decision — the cross-correlation block, fixed now
+
+Lead-lag must be visible in the LEG RETURNS if it is the mechanism; the
+event study alone cannot distinguish "the effect decayed" from "the effect
+was fast reversion" (a genuinely fast-reverting spread and a catching-up
+laggard both decay with delay — stated here so the identification limit is
+on the record before the numbers are). The discriminator is asymmetry:
+catch-up is directional (MES moves first, M2K follows); symmetric spread
+reversion is not.
+
+- Within-session 1-minute log returns of each leg on the aligned panel
+  (first bar of each session dropped; pairs (t−k, t) kept only inside one
+  session).
+- **c_ab(k) = corr(r_MES(t−k), r_M2K(t))** for k = 1..5 ("MES leads M2K"),
+  **c_ba(k) = corr(r_M2K(t−k), r_MES(t))** (the mirror), the contemporaneous
+  c(0), and the asymmetry **asym(k) = c_ab(k) − c_ba(k)**.
+- Inference: session bootstrap — sessions resampled with replacement from
+  per-session sufficient statistics, 1,000 replicates, seed 20260801,
+  percentile 95% CIs on c_ab(k), c_ba(k) and asym(k), all k = 1..5 (15 CIs;
+  16 point estimates including c(0)). **One session-index draw is made per
+  replicate and SHARED across every statistic**, so each asym(k) replicate is
+  the paired difference c_ab(k) − c_ba(k) on the same resampled sessions —
+  independent draws would lose the covariance term, widen the asym CI, and
+  bias X toward FALSE. (Implementation note: the per-session sufficient
+  statistics for all 11 correlations stack into one array and one index
+  matrix gathers them, the `_vr_session_sums` chunking pattern.)
+- Prediction under lead-lag: c_ab(1) materially positive, decaying by k = 5,
+  and asym(1) > 0; under symmetric reversion of the spread, no asymmetry.
+
+### Decision — validity gates, applied BEFORE anything is read
+
+All are pass/fail on mechanics; any failure voids the run (no verdict is
+read) and the run is repeated after the defect is fixed.
+
+1. **Reproduction gate.** The unmatched d = 1 Z0 grid must reproduce
+   `nb02_MES_M2K_conditional_reversion.csv` and the unmatched d = 1 Z2 grid
+   must reproduce the signal-2 rows of `nb06_MES_M2K_signal_grids.csv`,
+   cell for cell at the ingest tolerance already in force (0.0005; 0.5 on
+   n_events), across all three specs — 60 + 60 cells. Enforced by the ingest
+   script, which writes nothing on failure (the D-020 gate-1 pattern).
+2. **Matched-set gate.** For every (signal, spec, entry, horizon), n_events
+   must be IDENTICAL across d ∈ {1, 2, 5, 15}, and no larger than the
+   unmatched d = 1 count. This is the matched design's own audit; a mismatch
+   means the feasibility mask is wrong. (min_events = 20 applies to the
+   matched set, so a cell is NaN for all four delays or none.)
+   **2b. Cross-part identity.** The shared diagnostics emitted by both parts
+   (S_ALIGN, S_GATE, S_BUILD_*, S_FLAG_*, S_SPECS) must be identical across
+   part 1 and part 2, character for character.
+3. **Cross-correlation gate.** (i) c(0) > 0.5 — two US equity-index futures
+   at minute resolution (large-cap MES against small-cap M2K); anything less
+   is an alignment defect, not a finding — with the number of within-session
+   pairs reported per lag and positive for every lag; (ii) the bootstrap
+   machinery itself: exactly 1,000 replicates, and all 15 CIs finite with
+   strictly positive width. **X never takes a value from degenerate
+   machinery**: any failure here is IMPLEMENTATION DEFECT, never X = FALSE
+   (and never X = TRUE).
+4. **Emission-completeness gate.** Per part, the RETRIEVED key set must
+   equal the frozen per-part manifest as a SET (not a count — a missing grid
+   key offset by a stray extra key must fail), and the retrieved S_KEYS
+   value must equal the manifest's size. L-019 is the reason this gate reads
+   sets: the nb06 truncation passed unnoticed precisely because nothing
+   compared retrieved keys against emitted keys. On failure, the retry
+   policy fixed above applies (one emission-layer-only retry per part).
+
+### Decision — the read set, frozen from the banked grids
+
+The decay statistics are computed over the cells that were significant
+BEFORE this run existed — fixed here so no cell can be selected after the
+results are visible. **R = the 37 banked cells with session-clustered
+t >= +3 in S1/S2** (machine-readable sources of record:
+`nb02_MES_M2K_conditional_reversion.csv`, `nb06_MES_M2K_signal_grids.csv`
+signal 2):
+
+- **R_Z0 (12):** S1 — 2.0/120, 2.5/30, 2.5/60, 2.5/120, 3.0/15, 3.0/30,
+  3.0/60, 3.0/120; S2 — 2.5/120, 3.0/15, 3.0/30, 3.0/120.
+- **R_Z2 (25):** S1 — 1.5/60, 1.5/120, 2.0/{5,15,30,60,120},
+  2.5/{5,15,30,60,120}, 3.0/{5,15,30,60,120}; S2 — 2.0/30, 2.0/60, 2.0/120,
+  2.5/15, 2.5/30, 3.0/5, 3.0/15, 3.0/30.
+
+Per cell, the decay ratio at delay d is
+**ratio_d = mean_session_bps(matched, d) / mean_session_bps(matched, 1)** —
+session-mean over session-mean, the A2 primary statistic in both places. A
+cell enters the ratio aggregation only if its matched d = 1 value has
+t_clustered >= 2 AND mean_session_bps >= +0.5 (a denominator floor; ratios
+on near-zero bases are noise). Excluded cells are counted and reported. If
+fewer than 12 of the 37 qualify, the matched baseline no longer represents
+the banked surface and the read is **INCONCLUSIVE — MATCHING DEGENERATE**
+(a documented outcome, not a licence to relax the floor).
+
+Summary numbers, defined now: **ρ(d)** = median ratio_d over included cells
+(pooled; the R_Z0 and R_Z2 subset medians are reported beside it);
+**S(d)** = share of included cells with t_clustered >= 3 at delay d;
+**X** = TRUE iff the c_ab(1) 95% CI lower bound > 0 AND the asym(1) 95% CI
+lower bound > 0. Effect sizes in bps accompany every t-statistic wherever
+any of these appear. **The subset medians are descriptive only: no branch
+label, no evidence-tag change and no open-thread consequence may be derived
+from any subset. The verdict and every consequence attached to it read the
+pooled statistics alone.**
+
+### Decision — verdict rule, declared now
+
+- **LEAD-LAG CONFIRMED** iff ρ(5) <= 1/3 AND S(5) <= 0.20 AND ρ(15) <= 1/3
+  AND S(15) <= 0.20 AND X. The d = 15 terms are deliberately symmetric with
+  DELAY-ROBUST's ρ(15) gate: a decay that does not PERSIST to d = 15 is not
+  the catch-up story, and the branch this pre-registration expects must not
+  be the easiest one to reach. The decay must also be corroborated by the
+  leg-level signature: decay WITHOUT X reads MIXED, because if catch-up is
+  the mechanism it must be visible in the returns themselves.
+- **DELAY-ROBUST** iff ρ(5) >= 2/3 AND S(5) >= 0.50 AND ρ(15) >= 1/3.
+  X is reported but does not gate this branch (a lead-lag component in the
+  returns can coexist with convergence that survives it).
+- **MIXED / UNRESOLVED** otherwise — including probes that disagree and the
+  matching-degenerate case. A partial decay landing between the branches is
+  recorded as exactly that.
+- **IMPLEMENTATION DEFECT** if any validity gate fails: no verdict, fix,
+  re-run.
+
+Calibration of the thresholds, stated in advance rather than fitted after:
+a pure catch-up mechanism completing within ~1–4 bars (M2K's own VR(2) =
+1.012 places the positive autocorrelation at the shortest lag) leaves ~0 of
+the effect at d = 5 — far below the 1/3 bar; genuine AR(1)-like convergence
+at the measured within-session z half-life of 37–58 bars (nb02 z_hl 58.3,
+nb06 z1_hl 37.1 — [PLAUSIBLE] as a timescale proxy) retains ~0.93–0.95 at
+d = 5 and ~0.77–0.85 at d = 15 — comfortably above the 2/3 and 1/3 bars.
+The generous indifference zone between the branches is deliberate: it makes
+LEAD-LAG CONFIRMED hard to reach by noise and DELAY-ROBUST hard to reach by
+wishful reading, at the price of a wider MIXED region.
+
+### What each outcome may and may not conclude, fixed in advance
+
+Under EVERY branch: criterion (b) is a property of the residual that no
+entry timing can touch — it failed in nb02 and is inherited unchanged — so
+**MES–M2K cannot advance, nothing can reach REVERSION PRESENT, the D-015
+verdict branch (AMBIGUOUS / MICROSTRUCTURE) is the ceiling, and D-019
+stands.** No result of this run is quotable as an edge (A-007/A-008 remain
+placeholders; the window is spent).
+
+- **LEAD-LAG CONFIRMED:** D-015's mechanism paragraph and L-014 upgrade
+  from [PLAUSIBLE] to [ESTABLISHED — this window]. A-006 for MES–M2K stays
+  formally UNRESOLVED (attributing the observed surface is not proof that
+  no reversion exists), but the program's last non-negative index result is
+  attributed to microstructure and the index book is closed WITHOUT an
+  asterisk. The session/resolution thread loses its M2K-specific motivation
+  and stands on its own merits only.
+- **DELAY-ROBUST:** hypothesis-generating ONLY. It buys exactly one thing:
+  a concrete, sharpened target for the session/resolution thread (the same
+  statistic on a fresh window, venue or resolution, pre-registered afresh,
+  per its own Review clause). It does not
+  reopen this window, does not soften report 13, and is not evidence of
+  tradability.
+- **MIXED / UNRESOLVED:** the mechanism question is recorded as unresolved
+  on this window and CLOSED here — the follow-up, if any, is the
+  session/resolution thread on fresh data, not another pass over these bars.
+
+### Multiple testing, stated rather than reconstructed
+
+The matched grids add 4 delays x 2 signals x 2 specs x 4 entries x 5
+horizons = **320 cells** (of which the 80 at d = 1 are baseline
+re-measurements on matched sets), plus 16 cross-correlation point estimates
+carrying 15 bootstrap CIs, on top of the 900 protocol cells and 80
+exploratory open-subset cells already examined (report 06 §6's running
+total). That is why the verdict reads pre-registered MEDIANS over a frozen
+37-cell read set and two aggregate shares — no single cell, and no cell
+chosen after the fact, can decide anything.
+
+### Prior, stated in advance
+
+The expected outcome is LEAD-LAG CONFIRMED: M2K's own VR(2) = 1.012 with
+p_lt_1 = 0.935 — above 1 where MES sits at 0.988; MNQ's 1.017 is also above
+1 but declines with q where M2K's does not, which is why L-014 ties M2K, the
+thinnest book in the universe, to lagged price adjustment — the base-sampling
+evaporation (0.813 → 0.897 → 0.956), and the monotone-in-entry surface are
+all the fingerprint L-014 describes, and the effect should be mostly gone
+by d = 2 and dead by d = 5, with c_ab(1) > 0, asym(1) > 0. The honest
+alternative is real: nb06's Z2 surface strengthens monotonically to
+h = 120, which a 1–2-bar catch-up alone does not obviously produce, and the
+measured z half-lives (37–58 bars) would, if they describe the residual,
+put the outcome deep in DELAY-ROBUST territory. Either answer is a
+legitimate finding; if the effect survives delay, it is recorded as
+DELAY-ROBUST and nothing more is claimed for it.
+
+- **Alternatives considered:** (i) include Z1 (rejected — L-018: S2 is dead
+  under Z1, a two-spec read is impossible); (ii) unmatched event sets only
+  (rejected — the composition confound above); (iii) exit fixed at t+1+k
+  with entry at t+d (rejected — conflates delay with a shortened holding
+  period; the question is WHEN you can enter, not how long you hold);
+  (iv) a control pair (rejected — the design is within-pair, d = 1 is its
+  own baseline, and building a second pair's series spends free-tier budget
+  to decorate a contrast the delays already carry); (v) second/tick resolution to see the
+  catch-up directly (rejected here — that is the session/resolution
+  thread, a different experiment on different data, and gluing it on would
+  widen this scope after the fact); (vi) tuning delays, the denominator floor, or any
+  threshold after seeing results (rejected outright — that is the
+  specification search the method exists to prevent).
+- **Evidence to be produced:** validation report
+  `reports/validation/14_delayed_entry_mes_m2k.md`; notebook 14;
+  machine-readable `nb14_MES_M2K_{delay_grids,crosscorr,scalars}.csv`;
+  figures `nb14_MES_M2K_delay_decay.png`, `nb14_MES_M2K_crosscorr.png`;
+  EXP-019 (one row covering both parts, both QC run names); two QC backtest
+  parts (driver `lean/research/qc_delayed_entry_analysis.py` uploaded as
+  main.py with PART = 1 then PART = 2, `build_qc_upload.py --driver delay`);
+  ingest `scripts/ingest_qc_delayed_entry.py --part {1,2}` holding the frozen
+  per-part key manifests and enforcing gates 1, 2, 2b and 4, writing nothing
+  on any failure (gate 3 is applied at the same stage from the retrieved
+  cross-correlation keys). L-019 logged in logs/issues_and_limitations.md.
+  Verdict to be logged as D-023.
+- **Expected effect:** the last unattributed index result gains a
+  mechanism label in one direction or the other, and the session/resolution
+  thread's priority is set by evidence instead of by an open question.
+- **Review:** Once a verdict is read, no re-run of any part of this
+  protocol on this window (gate-triggered repairs BEFORE a verdict — the
+  IMPLEMENTATION DEFECT branch and the gate-4 retry policy — are part of the
+  protocol, not re-runs). If the verdict is DELAY-ROBUST, the follow-up is a
+  fresh-window/venue/resolution pre-registration (the session/resolution
+  thread); if LEAD-LAG CONFIRMED or MIXED, the MES–M2K thread is closed on
+  this window entirely.
