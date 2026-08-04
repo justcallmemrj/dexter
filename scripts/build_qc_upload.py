@@ -50,6 +50,7 @@ DRIVERS = {
     "signal": "lean/research/qc_signal_definition_analysis.py",  # notebook 06
     "delay": "lean/research/qc_delayed_entry_analysis.py",     # notebook 14
     "session": "lean/research/qc_session_window_analysis.py",  # notebook 15
+    "smoke": "lean/research/qc_extended_fetch_smoke.py",       # nb15 precondition
 }
 
 RELATIVE_IMPORT = re.compile(r"^(\s*from\s+)\.(\w+)(\s+import\s+)", re.MULTILINE)

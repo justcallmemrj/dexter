@@ -1,0 +1,21 @@
+{
+ "purpose": "D-024 part-3 precondition: does history(extended_market_hours=True, fill_forward=False) deliver REAL pre-open bars?",
+ "run": "Virtual Sky Blue Bull",
+ "project": 34720894,
+ "contract": "ZNZ24",
+ "probe_window": "2024-11-01 -> 2024-11-15",
+ "statistics": {
+  "S_RESOLVE": "OK|ZN122024",
+  "S_REG": "08:31-16:00|bars=4500|days=10|per_day=450.0|pre=0|pre_per_day=0.0|pre_density=0.000|pre_stale=nan",
+  "S_EXT": "00:00-23:59|bars=13798|days=10|per_day=1379.8|pre=700|pre_per_day=70.0|pre_density=1.000|pre_stale=0.300",
+  "S_VERDICT": "spans_differ=1|proceed=YES"
+ },
+ "findings": [
+  "REGULAR fetch delivers 08:31-16:00 in CHICAGO stamps with ZERO bars in the 07:21-08:30 CT block - a live confirmation of L-021 and of why S-CASH cannot be built from the banked data path.",
+  "EXTENDED + fill_forward=False is ACCEPTED (no TypeError) and delivers 1379.8 bars/day spanning 00:00-23:59.",
+  "The 07:21-08:30 CT block prints EVERY minute (density 1.000, 70.0 bars/day against a 70-minute span).",
+  "pre_stale = 0.300: 30% of that block's closes equal the previous close. Forward-filling would leave ~100%; 30% is consistent with genuine trading on ZN's coarse 1/2-of-1/32 tick. The bars are REAL, not synthetic repeats.",
+  "The delivered span really is 00:00-23:59 (an extended Globex series crosses midnight), confirming the review's B1: the original part-3 timezone gate required the span to END at 16:00 and would have voided every part-3 run."
+ ],
+ "consequence": "D-024 S-CASH arm is VIABLE. Proceed with the two-fetch part 3 (regular for D-009 factors, extended+FF-off for the analysis series). Coverage 1.000 clears the 0.80 floor."
+}
