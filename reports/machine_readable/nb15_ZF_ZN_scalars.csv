@@ -1,0 +1,44 @@
+key,value
+S_FACTAB_ZF,"1.003861,0.996545,0.996951,1.003662,1.003815,1.001674,1.000568,0.998384,0.995476,0.996496,1.005927,1.003487,1.001013,1.003599,1.000993,0.996288,1.000212,1.004849,1.005087,1.001715,1.002898,1.002611,0.995572,1.003263,1.004907,1.002113,1.000784"
+S_GEOC,bars=695199|sessions=1745|medbars=400|want=400|blocks_q120=3.0|dropA=21|dropB=40
+S_CLKC,0:0.115|30:0.111|60:0.12|90:0.108|120:0.084|150:0.074|180:0.06|210:0.054|240:0.049|270:0.047|300:0.044|330:0.046|360:0.055|390:0.032
+S_SPECS,anchor=vol_ratio|S1_beta_med=0.583|S1_beta_p5=0.4946|S1_beta_p95=0.6932|win=U
+S_ACT,0:29.9/29.9|30:29.9/29.9|60:30.0/30.0|90:30.0/30.0|120:30.0/30.0|150:30.0/30.0|180:30.0/30.0|210:30.0/30.0|240:30.0/30.0|270:30.0/30.0|300:30.0/30.0|330:30.0/30.0|360:30.0/30.0|390:30.0/30.0|420:30.0/30.0|450:30.0/30.0|480:30.0/30.0|510:30.0/30.0|540:30.0/30.0|570:30.0/30.0|600:30.0/30.0|630:30.0/30.0|660:30.0/30.0|690:30.0/30.0|720:29.7/29.7|750:29.6/29.6|780:29.6/29.6|810:29.6/29.6|840:29.6/29.6|870:29.6/29.6|900:29.6/29.6|930:29.6/29.6|960:1.0/1.0|1020:28.6/28.8|1050:29.6/29.8|1080:29.6/29.7|1110:29.8/29.9|1140:29.9/29.9|1170:29.9/29.9|1200:29.9/29.9|1230:29.8/29.9|1260:29.8/29.8|1290:29.8/29.8|1320:29.7/29.8|1350:29.7/29.8|1380:29.7/29.8|1410:29.7/29.8
+S_BUILD_ZF,rolls=27|flags=0|med_ovl=390|nonmedian=0
+S_FILLWIT_ZN,analysis_fetch=regular_default|factor_fetch=regular_default|n_fac=27
+S_PAIR,ZF_ZN|markets=cbot/cbot|anchor=vol_ratio|rolls=treasury|nb=15|part=1|fetch=regular
+S_TZWIT,ZF=08:31-16:00:450|ZN=08:31-16:00:450|note=stamps_are_exchange_tz_not_ET
+S_FILLWIT_ZF,analysis_fetch=regular_default|factor_fetch=regular_default|n_fac=27
+S_FACTAB_ZN,"0.999188,0.991923,0.999382,1.00423,1.004836,1.000283,0.999449,0.997755,0.99306,0.997149,1.007576,1.002876,1.000283,1.005126,0.998989,0.995575,1.000534,1.004385,1.004824,1.000417,1.000725,0.997293,0.994157,1.002358,1.003268,1.001552,0.99945"
+S_CASHCOV,ZF=1.000|ZN=1.000|span_min=70|floor=0.80
+S_SESSCFG,U=S-USED@0930-1600:390|H=S-HALF@0900-1530:390|R=S-RTH@0830-1500:390|S=S-SETTLE@0830-1400:330|C=S-CASH@0720-1400:400|part=1|z=rolling390|beta_lb=1950|anchor=vol_ratio|stamps=data_native
+S_BUILD_ZN,rolls=27|flags=0|med_ovl=390|nonmedian=0
+S_GATE,PASS|both legs adjudicated non-gap-shaped
+S_KEYS,46
+S_HOLIDAYS,n=96|memorial21=1|span=2018-2027
+S_ALIGN,rawbars=780600|rawdays=1746|first=2019-06-03|last=2026-04-24
+S_GEOS,bars=573600|sessions=1746|medbars=330|want=330|blocks_q120=2.0|dropA=0|dropB=0
+S_GEOR,bars=677100|sessions=1746|medbars=390|want=390|blocks_q120=3.0|dropA=0|dropB=0
+S_CLKR,0:0.128|30:0.13|60:0.136|90:0.107|120:0.079|150:0.06|180:0.055|210:0.05|240:0.046|270:0.047|300:0.047|330:0.051|360:0.062|390:0.004
+S_CLKS,0:0.122|30:0.143|60:0.154|90:0.128|120:0.092|150:0.069|180:0.063|210:0.059|240:0.056|270:0.055|300:0.055|330:0.004
+S_GEOH,bars=676470|sessions=1746|medbars=390|want=390|blocks_q120=3.0|dropA=0|dropB=0
+S_GEOU,bars=675840|sessions=1746|medbars=390|want=390|blocks_q120=3.0|dropA=0|dropB=0
+S_CLKU,0:0.127|30:0.134|60:0.14|90:0.1|120:0.073|150:0.06|180:0.053|210:0.049|240:0.048|270:0.048|300:0.045|330:0.051|360:0.067|390:0.004
+S_CLKH,0:0.13|30:0.135|60:0.139|90:0.1|120:0.071|150:0.06|180:0.054|210:0.048|240:0.049|270:0.046|300:0.048|330:0.05|360:0.067|390:0.004
+D024_GATE_00_gate_5_emission_p1,"PASS|46 keys, set-identical to the part-1 manifest"
+D024_GATE_01_gate_1_timezone__p1,"PASS|both legs 08:31-16:00 — Chicago stamps, L-021 signature"
+D024_GATE_02_gate_4_geometry__p1,PASS|S-USED 390b/3.0blk; S-HALF 390b/3.0blk
+D024_GATE_03_gate_5_emission_p2,"PASS|48 keys, set-identical to the part-2 manifest"
+D024_GATE_04_gate_1_timezone__p2,"PASS|both legs 08:31-16:00 — Chicago stamps, L-021 signature"
+D024_GATE_05_gate_4_geometry__p2,PASS|S-RTH 390b/3.0blk; S-SETTLE 330b/2.0blk
+D024_GATE_06_gate_5_emission_p3,"PASS|33 keys, set-identical to the part-3 manifest"
+D024_GATE_07_gate_1_timezone__p3,PASS|extended span delivered (not the regular 08:31-16:00)
+D024_GATE_08_gate_4_geometry__p3,"PASS|S-CASH medbars=400 (density-gated, not bar-gated)"
+D024_GATE_09_gate_2_reproduction,PASS|60 cells reproduced exactly
+D024_GATE_10_gate_2_VR_reproduce,PASS|48 VR cells reproduced
+D024_GATE_11_gate_3_banked_build,PASS|gate/build/holidays reproduce the banked Treasury values
+D024_GATE_12_gate_3_identity,"PASS|7 pre-filter diagnostics identical across parts [1, 2]"
+D024_GATE_13_S-CASH-ENABLE,PASS|5 construction witnesses identical under the extended fetch (factor tables character-for-character)
+D024_GATE_14_S-CASH_coverage,"PASS|ZF=1.000, ZN=1.000"
+D024_SCASH_ARM,ENABLED
+RUNS,"Emotional Blue Cobra,Upgraded Magenta kitten,Dancing Red Orange Rat"
