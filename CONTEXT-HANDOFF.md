@@ -301,14 +301,19 @@ window's results as evidence** — the window is spent for this hypothesis.
    D-023)** — see §1c and `reports/validation/14_delayed_entry_mes_m2k.md`.
    DELAY-ROBUST; closed on this window by D-022's Review clause (no re-run
    under any variation).
-4. **Different resolution or venue.** **The SESSION half is now
-   PRE-REGISTERED as D-024 (notebook 15, unrun) — see §1d**, and it also
-   corrects the L-021 clock defect. Note the equity-RTH claim in this thread's
-   original text was itself wrong for Treasuries (they ran on 10:31–17:00 ET).
-   Still open and NOT covered by D-024: **quote data** (which would replace the
-   A-008 1-tick placeholder with a measurement — and A-008 is scoped in config
-   to "liquid RTH", so the pre-open cost bar is unmeasured) and
-   **second/tick resolution**. `research_config.data.later_resolutions`
+4. **Different resolution or venue.** ~~**The SESSION half.**~~ **DONE
+   2026-08-04 (D-024 → D-025)** — see §1d and
+   `reports/validation/15_session_window_treasuries.md`. A-013 ANSWERED for
+   Treasuries at minute resolution; the treasury-native session is IMMATERIAL
+   (helps 1.2–1.4x against a pre-registered 2.0x bar) and criterion (b) — LIVE
+   for the first time since notebook 03 — fails on all 16 pair-windows. L-021
+   measured and closed as harmless. Closed on this window by D-025's Review
+   clause.
+   **STILL OPEN, and this is the whole remaining thread: (a) quote data** —
+   now the BINDING uncertainty, because the pre-open cost bar is unmeasured and
+   A-008's 1-tick spread is scoped in config to "liquid RTH", so every
+   S-CASH cost ratio rests on an assumption known not to apply there; and
+   **(b) second/tick resolution.** `research_config.data.later_resolutions`
    anticipates both. D-023's banked target stands: the M2K surface survives a
    15-minute delayed entry while its unconditional VR evaporates at coarse
    bars — finer resolution is what discriminates the reconciling mechanisms.
@@ -319,18 +324,49 @@ window's results as evidence** — the window is spent for this hypothesis.
    hypothesis from A-006, the residual variance ratio is not its supporting
    statistic, and D-020 deliberately issued no verdict on it. Needs its own
    pre-registration and its own verdict rule.
+   **NARROWED by L-023 (D-025):** the effect did NOT reproduce at the treasury
+   cash open (zero significant negative cells in any pair's S-CASH open
+   subset) while it still reproduces at the equity open (ZF–ZN S-USED,
+   t = −3.87 exactly). So it is an equity-session-open effect and any
+   pre-registration must scope it there, not to "information windows" generally.
 
-Suggested order now: **4** (optionally 5) — thread 3 is DONE and the
-session/resolution thread now carries the banked D-023 target.
+Suggested order now: **4a (quote data)** — it is the only remaining thread that
+can change a cost conclusion, and D-025 made it the binding uncertainty.
+Optionally 5, now narrowed by L-023.
 
 ## 6. OPERATIONAL FACTS
 
-- **`git push` WORKS from the harness** — everything through D-023 is
-  committed and pushed. Commits are authored as
+- **`git push` WORKS from the harness** — everything through **D-025 is
+  committed and pushed (HEAD `e86347c`)**.
+
+- **QC transfer, solved (use these, they replace all the chunk/slice pain):**
+  - **Uploading:** the repo is PUBLIC, so the QC page can `fetch()` sources
+    straight from `raw.githubusercontent.com/justcallmemrj/dexter/<branch>/...`,
+    flatten relative imports in JS (`/^(\s*from\s+)\.(\w+)(\s+import\s+)/gm`),
+    verify sha256 against `build_qc_upload.py`'s manifest, then POST to
+    `/api/v2/files/update`. **No chunk pasting.** Use `files/create` (not
+    update) for a file that does not exist yet. Only `main.py` changes between
+    runs — substitute the `PAIR`/`PART` lines in JS and verify them before
+    writing.
+  - **Retrieving:** run a tiny localhost receiver (`scratchpad/recv.py`
+    pattern) and have the page POST `{name, json}` to it; it writes the file and
+    returns its sha256 to compare against the browser's. **Port 8765 is BLOCKED
+    on this machine — 51735 works.** This replaces slicing AND transcription.
+    Chrome blocks repeat automatic downloads and its Ctrl+C/execCommand copy is
+    flaky; the receiver is strictly better.
+  - **Fallback slicing** still works, but replace `=` with `~EQ~` first or the
+    cookie/query-string filter blocks the slices.
+- **NEVER blind-click a "Cancel" button.** The import-rewrite modal only
+  appears after a page RELOAD; a generic Cancel-finder otherwise hits the
+  BACKTEST-CANCEL control and silently kills the run (this cost one run).
+  Match on the modal text "adding import statements" first.
+- **Backtests appear in `backtests/read` only ~60–90s AFTER launch** — the UI
+  shows progress before the API lists them, so a poll that returns the previous
+  run is normal. Keep `browser_batch` under ~10 actions or it times out. Commits are authored as
   `Claude <noreply@anthropic.com>` via `git -c user.name=... -c user.email=...`
   because the repo has no committer identity configured.
 - Local env: `.venv` Python 3.14.5 — always `.venv/Scripts/python.exe`.
-  `pytest tests/` → **210 green**.
+  `pytest tests/` → **247 green**.
 - **L-019 (BINDING): never design a single-backtest emission above ~57 keys.**
   All four nb06 runs emitted 67-68 keys and the retrieved statistics silently
   lost exactly the 12-key S_RL block every time. Split batteries into PARTS
