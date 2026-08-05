@@ -349,10 +349,26 @@ window's results as evidence** — the window is spent for this hypothesis.
    for the micros** — it requested the Sep-2019 contract over a June-2019
    window when Sep was still the DEFERRED month for equity micros, so their
    median 20–23 ticks measures back-month illiquidity, not quote quality; ZN's
-   clean 2019 read stands (Treasuries roll before first notice). Re-probe on
-   M19 before any claim about 2019 quote depth. **A pre-registration is still
-   owed** — this was a precondition, is hypothesis-generating only, and
-   advances nothing.
+   clean 2019 read stands (Treasuries roll before first notice).
+
+   **⚑ THE DEPTH RE-PROBE HAS RUN 2026-08-05 — defect closed, EXP-025, run
+   "Hyper Active Red Giraffe", banked at `qc_quote_depth_probe.json`, driver
+   `lean/research/qc_quote_depth_probe.py`.** Verdict on the pre-stated rule
+   (tight ≤ 3 ticks, wide ≥ 10, dead band between, computed in-driver):
+   **BACK_MONTH_ARTIFACT_CONFIRMED_2019_USABLE.** Three arms per micro leg
+   settled it: the FRONT Jun-2019 contract is tight (MES med **1.000**, eq1
+   0.960; M2K med **2.000**, eq1 0.218), the DEFERRED one over the identical
+   window is wide and **reproduced EXP-024 exactly** (3/3 gates identical), and
+   the SAME deferred contract goes **20 → 1 ticks** (MES) and **23 → 2 ticks**
+   (M2K) once it becomes front in August — with M2K's delivery going 617
+   bars/day while deferred to 1,369.9 once front. Two consequences:
+   **(1) 2019 quote data is USABLE, so a battery may span research_start**;
+   **(2) A-008's M2K falsification is STABLE ACROSS 5.5 YEARS** — the Jun-2019
+   front-month figures are within noise of Nov-2024, so M2K's 2-tick book is a
+   structural property of the contract, not a window artifact.
+
+   **A pre-registration is still owed** — both runs are preconditions,
+   hypothesis-generating only, and advance nothing.
 
    **STILL OPEN, and this is the whole remaining thread: (a) quote data** —
    now the BINDING uncertainty, because the pre-open cost bar is unmeasured and

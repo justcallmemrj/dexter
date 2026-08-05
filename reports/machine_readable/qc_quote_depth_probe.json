@@ -1,0 +1,11 @@
+{
+ "S_M2K_U19_JUN": "00:00-23:59|bars=5554|days=9|per_day=617.1|rth_n=2177|rth_med=23.000|rth_mean=22.200|rth_p90=35.000|rth_eq1=0.000|rth_sub1=0.0000|pre_n=249|pre_med=8.000|pre_mean=29.410|pre_p90=30.200|pre_eq1=0.000|pre_sub1=0.0000|nonpos=0.0000",
+ "S_M2K_U19_AUG": "00:00-23:59|bars=9589|days=7|per_day=1369.9|rth_n=2730|rth_med=2.000|rth_mean=1.597|rth_p90=2.000|rth_eq1=0.411|rth_sub1=0.0000|pre_n=490|pre_med=2.000|pre_mean=1.733|pre_p90=2.000|pre_eq1=0.384|pre_sub1=0.0000|nonpos=0.0000",
+ "S_MES_U19_AUG": "00:00-23:59|bars=9646|days=7|per_day=1378.0|rth_n=2730|rth_med=1.000|rth_mean=1.053|rth_p90=1.000|rth_eq1=0.947|rth_sub1=0.0000|pre_n=490|pre_med=1.000|pre_mean=1.122|pre_p90=2.000|pre_eq1=0.890|pre_sub1=0.0000|nonpos=0.0000",
+ "S_VERDICT": "BACK_MONTH_ARTIFACT_CONFIRMED_2019_USABLE|MES:front=TIGHT/deferred=WIDE/aug=TIGHT|M2K:front=TIGHT/deferred=WIDE/aug=TIGHT",
+ "S_MES_M19_JUN": "00:00-23:58|bars=12372|days=9|per_day=1374.7|rth_n=3510|rth_med=1.000|rth_mean=1.041|rth_p90=1.000|rth_eq1=0.960|rth_sub1=0.0000|pre_n=630|pre_med=1.000|pre_mean=1.092|pre_p90=1.000|pre_eq1=0.916|pre_sub1=0.0000|nonpos=0.0000",
+ "S_KEYS": "9",
+ "S_ZN_U19_JUN": "00:00-23:59|bars=12401|days=9|per_day=1377.9|rth_n=3510|rth_med=1.000|rth_mean=1.000|rth_p90=1.000|rth_eq1=1.000|rth_sub1=0.0000|pre_n=630|pre_med=1.000|pre_mean=1.003|pre_p90=1.000|pre_eq1=0.998|pre_sub1=0.0000|nonpos=0.0000",
+ "S_MES_U19_JUN": "00:00-23:58|bars=11939|days=9|per_day=1326.6|rth_n=3386|rth_med=20.000|rth_mean=18.719|rth_p90=38.000|rth_eq1=0.001|rth_sub1=0.0000|pre_n=596|pre_med=21.000|pre_mean=17.852|pre_p90=36.000|pre_eq1=0.002|pre_sub1=0.0000|nonpos=0.0000",
+ "S_M2K_M19_JUN": "00:00-23:58|bars=12291|days=9|per_day=1365.7|rth_n=3510|rth_med=2.000|rth_mean=1.805|rth_p90=2.000|rth_eq1=0.218|rth_sub1=0.0000|pre_n=630|pre_med=2.000|pre_mean=1.944|pre_p90=2.000|pre_eq1=0.189|pre_sub1=0.0000|nonpos=0.0000"
+}
