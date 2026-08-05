@@ -329,6 +329,31 @@ window's results as evidence** — the window is spent for this hypothesis.
    for the first time since notebook 03 — fails on all 16 pair-windows. L-021
    measured and closed as harmless. Closed on this window by D-025's Review
    clause.
+   **⚑ 4a SMOKE TEST HAS RUN 2026-08-05 — quotes ARE served, and A-008 is
+   already falsified for one leg.** Run "Hipster Brown Bear", EXP-024, banked
+   at `reports/machine_readable/qc_quote_data_smoke.json`; driver
+   `lean/research/qc_quote_data_smoke.py`. `history(QuoteBar, ...)` works on
+   this tier, bid/ask populated in every fetch, zero crossed or zero-width
+   books and zero sub-tick spreads. Measured RTH median spread in ticks
+   (2024-11-01→15, front month): **ZN 1.000** (99.9% of minutes at exactly one
+   tick), **MES 1.000** (96.0%), **M2K 2.000 — only 28.8% at one tick.**
+   Pre-open (07:20–08:30 CT) is **not worse for ZN** (mean 1.007 vs 1.001) but
+   is for M2K (2.779, p90 4.0). So D-025's "the pre-open cost bar is probably
+   worse" is FALSE for ZN and TRUE for M2K. Pair impact of the M2K error is
+   real but small — MES–M2K round trip $7.73 → $8.23, **1.065x** base — because
+   M2K's tick is $0.50 and commission plus slippage dominate; it does not
+   overturn D-015/D-023, which fell on criterion (b), not cost. **L-021
+   reproduced for free** (ZN delivers 08:31–16:00 Chicago stamps, MES/M2K
+   09:31–17:00 New York stamps, RTH bar counts differing by exactly the
+   offset). **Known defect in that run: the 2019 depth probe is INCONCLUSIVE
+   for the micros** — it requested the Sep-2019 contract over a June-2019
+   window when Sep was still the DEFERRED month for equity micros, so their
+   median 20–23 ticks measures back-month illiquidity, not quote quality; ZN's
+   clean 2019 read stands (Treasuries roll before first notice). Re-probe on
+   M19 before any claim about 2019 quote depth. **A pre-registration is still
+   owed** — this was a precondition, is hypothesis-generating only, and
+   advances nothing.
+
    **STILL OPEN, and this is the whole remaining thread: (a) quote data** —
    now the BINDING uncertainty, because the pre-open cost bar is unmeasured and
    A-008's 1-tick spread is scoped in config to "liquid RTH", so every
@@ -380,10 +405,21 @@ Optionally 5, now narrowed by L-023.
     update) for a file that does not exist yet. Only `main.py` changes between
     runs — substitute the `PAIR`/`PART` lines in JS and verify them before
     writing.
-  - **Retrieving:** run a tiny localhost receiver (`scratchpad/recv.py`
-    pattern) and have the page POST `{name, json}` to it; it writes the file and
-    returns its sha256 to compare against the browser's. **Port 8765 is BLOCKED
-    on this machine — 51735 works.** This replaces slicing AND transcription.
+  - **Retrieving:** the receiver now EXISTS as `scripts/recv_qc_json.py` —
+    `python scripts/recv_qc_json.py --out <path>`, then have the page POST
+    `{name, json}` to `http://127.0.0.1:51735/`; it writes the file and returns
+    its sha256 to compare against the browser's. Used end-to-end on 2026-08-05
+    (2,496 bytes, both hashes `1949cb633e9e3d6c`). **Port 8765 is BLOCKED
+    on this machine — 51735 works.**
+  - **The import-rewrite modal's Cancel ABORTS THE LAUNCH** (learned
+    2026-08-05, cost one click but no run). Correct sequence: reload → click
+    Backtest → modal appears → click ITS Cancel (scoped to the modal container,
+    never a global Cancel finder) → **click Backtest AGAIN**. The second click
+    launches cleanly because the modal only re-arms on a page RELOAD. Symptom
+    of not knowing this: `backtests/read` keeps showing yesterday's run and
+    `today=0` while the UI looks idle — take a SCREENSHOT, which shows the real
+    state ("Free Tier Delay → Requesting → Launching → Waiting for Results",
+    20–400s) long before the API lists anything. This replaces slicing AND transcription.
     Chrome blocks repeat automatic downloads and its Ctrl+C/execCommand copy is
     flaky; the receiver is strictly better.
   - **Fallback slicing** still works, but replace `=` with `~EQ~` first or the
