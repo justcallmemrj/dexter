@@ -282,7 +282,7 @@ P&L, not the residual's change; (ii) compare against BOTH legs' own VR;
 - **`calendars.py`** — rule-derived CME holidays 2018–2027.
 - **Pipeline is pair-parameterised end to end**: one `PAIR` constant in the
   driver + `MARKETS` map; `ingest_qc_pair_minute.py` and `nb02_figures.py` take
-  `--pair` and namespace every output. **210 tests green.**
+  `--pair` and namespace every output. **247 tests green.**
 
 ## 5. OPEN THREADS — Derrick's call
 
@@ -337,7 +337,7 @@ Optionally 5, now narrowed by L-023.
 ## 6. OPERATIONAL FACTS
 
 - **`git push` WORKS from the harness** — everything through **D-025 is
-  committed and pushed (HEAD `e86347c`)**.
+  committed and pushed (HEAD `5e2dcb0`)**.
 
 - **QC transfer, solved (use these, they replace all the chunk/slice pain):**
   - **Uploading:** the repo is PUBLIC, so the QC page can `fetch()` sources
@@ -362,9 +362,10 @@ Optionally 5, now narrowed by L-023.
   Match on the modal text "adding import statements" first.
 - **Backtests appear in `backtests/read` only ~60–90s AFTER launch** — the UI
   shows progress before the API lists them, so a poll that returns the previous
-  run is normal. Keep `browser_batch` under ~10 actions or it times out. Commits are authored as
-  `Claude <noreply@anthropic.com>` via `git -c user.name=... -c user.email=...`
-  because the repo has no committer identity configured.
+  run is normal. Keep `browser_batch` under ~10 actions or it times out.
+- Commits are authored as `Claude <noreply@anthropic.com>` via
+  `git -c user.name=... -c user.email=...` because the repo has no committer
+  identity configured.
 - Local env: `.venv` Python 3.14.5 — always `.venv/Scripts/python.exe`.
   `pytest tests/` → **247 green**.
 - **L-019 (BINDING): never design a single-backtest emission above ~57 keys.**
@@ -377,25 +378,31 @@ Optionally 5, now narrowed by L-023.
 - **L-020: QC files/update rejects files > 32,000 chars** (explicit error).
   `crosscorr.py` exists as a separate upload because of this. Watch
   `build_qc_upload.py` byte counts before run day.
-- **The OS-clipboard bridge beats both chunk-paste and slice-reads.** Upload:
-  `Set-Clipboard` each chunk -> focus a scratch textarea on the QC page ->
-  real Ctrl+V -> read `.value` from JS (byte-perfect, no transcription).
-  Download: stash JSON in a textarea, select, real Ctrl+C ->
-  `Get-Clipboard -Raw` to file. ALWAYS verify SHA-256 both ways (in-page
-  `crypto.subtle` vs local) — the hash caught a hand-transcription error
-  again this session before the clipboard route was adopted.
-- **Launch timing:** cancelling the import-rewrite modal while the free-tier
-  deployment still says "Requesting Backtest" ABORTS the launch (lost one
-  attempt this way; the relaunch got a fresh run name). Dismiss the modal
-  only after "Waiting for Results" appears (~20-25s). An aborted attempt
-  keeps its tab name; the real backtest may appear under a DIFFERENT name —
-  match on `backtests/read` + S_PAIR, not the tab title.
+- **~~OS-clipboard bridge~~ SUPERSEDED 2026-08-04 by the GitHub-raw + localhost
+  receiver pair above.** The clipboard round-trip works but is FLAKY in
+  practice: `execCommand('copy')` needs a trusted gesture, the extension's
+  Ctrl+C does not reliably reach the page, and a missed copy silently leaves
+  the PREVIOUS run's JSON on the clipboard (caught twice by the SHA-256 check —
+  which is why that check is non-negotiable whichever route you use). Keep it
+  only as a last resort.
+- **Launch timing:** the free-tier deploy shows "Requesting Backtest" →
+  "Launching" → "Waiting for Results" over ~20-400s. The import-rewrite modal
+  appears only after a page RELOAD; if it is not present, do nothing (see the
+  NEVER-blind-click rule above). An aborted attempt keeps its tab name and the
+  real backtest may appear under a DIFFERENT name — match on `backtests/read` +
+  S_PAIR, not the tab title.
 - **Ingest flow for split runs:** `ingest_qc_delayed_entry.py --check
   raw_partN.json --part N` validates one part (gates 1/2/4[/3]) BEFORE the
   second backtest is spent; the full two-part call with `--compare-banked`
   writes nothing unless all eight gates pass. Notebook 15 uses the same
   pattern: `ingest_qc_session_window.py --check raw.json --part N --pair ZF_ZN`.
-- **BEFORE spending a notebook-15 PART 3 run:** `self.history(...,
+- **~~BEFORE spending a notebook-15 PART 3 run~~ — DONE, and it PASSED**
+  (run "Virtual Sky Blue Bull", banked as `qc_extended_fetch_smoke.json`):
+  regular `history()` gives 08:31-16:00 CT @450 bars/day with **ZERO** pre-open
+  bars; extended+FF-off gives 00:00-23:59 @1379.8 bars/day with the
+  07:21-08:30 CT block at **density 1.000, stale 0.300** (real prints, not
+  forward-filled repeats). Keep the reasoning for any FUTURE extended fetch:
+  `self.history(...,
   extended_market_hours=True, fill_forward=False)` is the repo's FIRST use of
   either kwarg on a history call. Smoke-test it on ONE contract and confirm the
   returned span is not the regular 08:31-16:00 before committing a full part-3
@@ -434,8 +441,10 @@ Optionally 5, now narrowed by L-023.
   - `compile/create` + `compile/read` are free — always compile before spending
     a backtest. `backtests/create` is paid-gated: launch by DOM-clicking
     `a[aria-label="Backtest Project (Ctrl+F5)"]` inside the same-origin iframes.
-  - After clicking Backtest a modal offers to rewrite your imports → **click
-    Cancel** (~(1024,400)); Yes overwrites the uploaded source.
+  - After clicking Backtest a modal MAY offer to rewrite your imports; "Yes"
+    overwrites the uploaded source. **Do not click blind coordinates** — find
+    the modal by its text "adding import statements" and click ITS Cancel, or
+    do nothing if it is absent (see the NEVER-blind-click rule above).
   - Push protocol: files/update → **RELOAD the page** → compile → click.
   - The backtest appears in `backtests/read` only ~60s after the click.
   - Long JS poll loops hit a 45s CDP timeout — poll in <=35s slices.
@@ -447,23 +456,25 @@ Optionally 5, now narrowed by L-023.
   3x error, but a real broker schedule is still owed.
 - **A-012** (CTD / delivery-cycle contamination in ZB/ZN) remains UNVERIFIED —
   ZN–ZB was disqualified on cost and microstructure before A-012 could bind.
-- **A-013** (RTH-only captures the signal) is untested and is a live limitation
-  for treasuries specifically, whose liquid session starts ~08:20 ET. **D-021
-  strengthened the case for testing it.**
+- ~~**A-013**~~ **ANSWERED 2026-08-04 for Treasuries at minute resolution on
+  trade bars (D-025, report 15): IMMATERIAL.** Still UNVERIFIED for the index
+  pairs, for quote data and for second/tick resolution.
 - **L-012** (MYM 2019-12-12 boundary print) is a watch item, not resolved.
 - **L-018** (open-window continuation; session-anchoring is not a strict
   improvement) is new as of D-021 and binds any future signal work.
 - **L-019/L-020** (emission-channel key loss; 32k file cap) are operational
   limits from the notebook-14 session — see §6.
-- **L-021 (session-clock defect, 2026-08-04)** — the Treasury pairs ran on
-  10:31–17:00 ET, not the documented 09:30–16:00 ET. See §0. Binding: state
-  every window in BOTH clocks and gate on an observed timezone witness, never
-  on bar count. Reports 03/06/13 and D-016/D-017/D-018 carry a session label
-  that is an hour wrong; D-024 owns correcting it after measurement.
-- **Headroom warning (L-020):** `intraday_reversion.py` (29,461 uploaded
-  chars) and `pair_minute_report.py` (29,332) are both within ~2,600 of QC's
-  32,000-char `files/update` cap. Notebook 15's battery must go in a NEW
-  module, as `crosscorr.py` did.
+- **L-021 (session-clock defect)** — MEASURED AND CLOSED by D-025: the
+  corrected window moves effects only 1.01–1.26x and changes no branch, so the
+  label was wrong and the conclusions were not. **Still binding as method:**
+  state every window in BOTH clocks and gate on an observed timezone witness,
+  never on bar count. Reports 03/06/13 and D-016/D-017/D-018 may now be
+  annotated with the corrected window and this measured impact.
+- **Headroom warning (L-020):** `intraday_reversion.py` (~30,000 uploaded
+  chars) and `pair_minute_report.py` (~29,300) are both within ~2,000-2,700 of
+  QC's 32,000-char `files/update` cap. Notebook 15's battery went in a NEW
+  module (`session_window_report.py`) for exactly this reason, as `crosscorr.py`
+  did before it. **Any further battery needs its own module too.**
 - **The D-023 open puzzle:** the M2K conditional effect survives a
   15-minute delayed entry while the residual's unconditional VR evaporates
   at 5-minute base sampling. Both banked. Reconciling mechanism unknown —
