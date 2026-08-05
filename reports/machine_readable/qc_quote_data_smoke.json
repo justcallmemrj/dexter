@@ -1,0 +1,14 @@
+{
+ "S_M2K_EARLY": "00:00-23:59|bars=5554|days=9|per_day=617.1|rth_n=2177|rth_med=23.000|rth_mean=22.200|rth_p90=35.000|rth_eq1=0.000|rth_sub1=0.0000|pre_n=249|pre_per_day=27.7|pre_med=8.000|pre_mean=29.410|pre_p90=30.200|pre_eq1=0.000|pre_sub1=0.0000|pre_stale=0.217|nonpos=0.0000",
+ "S_MES_EXT": "00:00-23:59|bars=13800|days=10|per_day=1380.0|rth_n=3900|rth_med=1.000|rth_mean=1.044|rth_p90=1.000|rth_eq1=0.958|rth_sub1=0.0000|pre_n=700|pre_per_day=70.0|pre_med=1.000|pre_mean=1.120|pre_p90=1.000|pre_eq1=0.917|pre_sub1=0.0000|pre_stale=0.153|nonpos=0.0000",
+ "S_ZN_REG": "08:31-16:00|bars=4500|days=10|per_day=450.0|rth_n=3900|rth_med=1.000|rth_mean=1.001|rth_p90=1.000|rth_eq1=0.999|rth_sub1=0.0000|pre_n=0|pre_per_day=0.0|pre_med=NA|pre_p90=NA|pre_eq1=NA|pre_sub1=NA|pre_stale=nan|nonpos=0.0000",
+ "S_VERDICT": "quotes_served=1|proceed=YES",
+ "S_API": "history(QuoteBar,...)",
+ "S_M2K_EXT": "00:00-23:59|bars=13800|days=10|per_day=1380.0|rth_n=3900|rth_med=2.000|rth_mean=1.862|rth_p90=2.000|rth_eq1=0.252|rth_sub1=0.0000|pre_n=700|pre_per_day=70.0|pre_med=2.000|pre_mean=2.779|pre_p90=4.000|pre_eq1=0.024|pre_sub1=0.0000|pre_stale=0.073|nonpos=0.0000",
+ "S_MES_REG": "09:31-17:00|bars=4500|days=10|per_day=450.0|rth_n=3300|rth_med=1.000|rth_mean=1.043|rth_p90=1.000|rth_eq1=0.960|rth_sub1=0.0000|pre_n=0|pre_per_day=0.0|pre_med=NA|pre_p90=NA|pre_eq1=NA|pre_sub1=NA|pre_stale=nan|nonpos=0.0000",
+ "S_M2K_REG": "09:31-17:00|bars=4500|days=10|per_day=450.0|rth_n=3300|rth_med=2.000|rth_mean=1.740|rth_p90=2.000|rth_eq1=0.288|rth_sub1=0.0000|pre_n=0|pre_per_day=0.0|pre_med=NA|pre_p90=NA|pre_eq1=NA|pre_sub1=NA|pre_stale=nan|nonpos=0.0000",
+ "S_ZN_EARLY": "00:00-23:59|bars=12401|days=9|per_day=1377.9|rth_n=3510|rth_med=1.000|rth_mean=1.000|rth_p90=1.000|rth_eq1=1.000|rth_sub1=0.0000|pre_n=630|pre_per_day=70.0|pre_med=1.000|pre_mean=1.003|pre_p90=1.000|pre_eq1=0.998|pre_sub1=0.0000|pre_stale=0.435|nonpos=0.0000",
+ "S_KEYS": "12",
+ "S_ZN_EXT": "00:00-23:59|bars=13798|days=10|per_day=1379.8|rth_n=3900|rth_med=1.000|rth_mean=1.001|rth_p90=1.000|rth_eq1=0.999|rth_sub1=0.0000|pre_n=700|pre_per_day=70.0|pre_med=1.000|pre_mean=1.007|pre_p90=1.000|pre_eq1=0.994|pre_sub1=0.0000|pre_stale=0.394|nonpos=0.0000",
+ "S_MES_EARLY": "00:00-23:58|bars=11939|days=9|per_day=1326.6|rth_n=3386|rth_med=20.000|rth_mean=18.719|rth_p90=38.000|rth_eq1=0.001|rth_sub1=0.0000|pre_n=596|pre_per_day=66.2|pre_med=21.000|pre_mean=17.852|pre_p90=36.000|pre_eq1=0.002|pre_sub1=0.0000|pre_stale=0.554|nonpos=0.0000"
+}
