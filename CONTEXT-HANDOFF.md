@@ -337,7 +337,9 @@ Optionally 5, now narrowed by L-023.
 ## 6. OPERATIONAL FACTS
 
 - **`git push` WORKS from the harness** — everything through **D-025 is
-  committed and pushed (HEAD `5e2dcb0`)**.
+  committed and pushed**. Confirm the tip with `git log --oneline -5`; the last
+  substantive commit is the notebook-15 completion
+  ("Notebook 15 COMPLETE: A-013 and L-021 both IMMATERIAL (D-025)").
 
 - **QC transfer, solved (use these, they replace all the chunk/slice pain):**
   - **Uploading:** the repo is PUBLIC, so the QC page can `fetch()` sources
