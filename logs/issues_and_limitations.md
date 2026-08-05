@@ -306,6 +306,57 @@
   work: **do not assume L-018 transfers to any "information event" window.**
   It was measured at a session boundary and is only established there.
 
+  > **AMENDED 2026-08-05 by L-024 — the "equity open" half of this entry is
+  > WITHDRAWN.** The cited ZF-ZN evidence is not at the equity open. It is at
+  > 10:31-11:00 ET. D-025's own banked S-RTH subset measures the actual equity
+  > open and shows no continuation there. The first sentence (L-018 did NOT
+  > generalise to the treasury cash open) is UNAFFECTED and stands, as does the
+  > consequence for future work. What is withdrawn is the liquidity-discontinuity
+  > explanation and the claim that ZF-ZN corroborates it. See L-024.
+- **L-024 (2026-08-05, from D-025's banked data; no new runs):** **L-023's
+  "equity-session-open" attribution rested on the WRONG contrast, and the run's
+  own data contains the right one.** Report 15 §7 argued the effect is an
+  equity-open phenomenon by contrasting the S-USED open subset (continuation,
+  t = -3.87) against the S-CASH open subset (nothing). But under L-021, S-USED
+  is (09:30, 16:00] **CT**, so its "first 30 minutes" is **10:31-11:00 ET — an
+  hour AFTER the equity open**. The window whose open IS the equity open is
+  **S-RTH** (08:30, 15:00] CT = 09:31-10:00 ET, which this same run measured
+  and §7 did not use.
+  On ZF-ZN — the pair L-018 was found in and the pair §7 names — the two
+  subsets disagree in SIGN at comparable power (n_events 3,232 vs 3,351 at
+  z=2.0, k=30):
+
+  | ZF-ZN open subset | window (ET) | neg cells | mean t | min t |
+  |---|---|---|---|---|
+  | S-USED | 10:31-11:00 | 18/20 | **-1.76** | -3.87 |
+  | S-RTH (the equity open) | 09:31-10:00 | 7/20 | **+0.58** | -1.71 |
+
+  So in the pair that carries the claim, the continuation is absent at the
+  equity open and the subset leans positive there. **[ESTABLISHED] on banked
+  data: ZF-ZN's continuation is specific to the 10:31-11:00 ET block, not to
+  the equity open.** A weak, non-significant continuation lean does appear at
+  the true equity open in the two short-end pairs (ZT-ZF and ZT-ZN both 15/20
+  negative, mean t -0.95 and -1.13, one cell at t = -3.21) — so the direction
+  is not refuted across the board, but it is not carried by the pair L-023
+  cites. Note also that these are 20 heavily overlapping cells (4 thresholds x
+  5 horizons), so a cell count is directional evidence about ONE effect, not 20
+  independent successes; and across all 400 open-subset cells (4 pairs x 5
+  windows x 20) roughly 1 cell at |t| >= 3 is expected by chance against 4
+  observed.
+  **No verdict moves.** D-024 §7 fenced the open subsets as descriptive
+  (`label = EXPLORATORY_open_subset` in the banked CSVs), and A-013 IMMATERIAL,
+  L-021 IMMATERIAL and the four Treasury verdicts do not depend on them.
+  Consequences: (i) L-023's liquidity-discontinuity explanation is withdrawn
+  as stated; (ii) the Treasury control does NOT corroborate an equity-open
+  mechanism, so L-018 stands on its three INDEX pairs alone — and those are
+  index-stamped (America/New_York), so their open subsets ARE the equity open
+  and are unaffected by L-021; (iii) open thread 5 must be re-scoped — see the
+  handoff. **Method lesson, and the reason this was missable: L-021 was closed
+  as "harmless" on the strength of the VERDICT branches, and it was harmless
+  for those, but a mislabelled window keeps biting anywhere a SUBSET is defined
+  relative to the window's edge.** Correcting a clock is not finished when the
+  headline numbers survive it.
+
 ## Closed
 
 - **L-002 (closed 2026-08-01):** Contract specifications were verified only

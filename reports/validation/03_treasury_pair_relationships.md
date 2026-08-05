@@ -123,6 +123,16 @@ hedges to a control for this asset class.
    not an open for them. Three index pairs and four Treasury pairs now agree
    that L-013 is an equity-session-open artifact of the z-score configuration.
 
+   > **AMENDED 2026-08-05 (L-021 + L-024).** "The first 30 minutes" here is
+   > **10:31–11:00 ET**, not 09:31–10:00 ET — see the session-window correction
+   > in §8. The *conclusion* survives and is arguably strengthened: the point
+   > is that Treasury crossings do NOT cluster at the window edge, and that is
+   > true at 10:31 ET and equally true at the corrected 09:31 ET edge (report
+   > 15 measured both). But the sentence "09:30 ET is not an open for them"
+   > was, on this report's own data, never a statement about 09:30 ET.
+   > **The index comparison is unaffected** — index bars are stamped
+   > America/New_York, so their first 30 minutes really is the equity open.
+
 ## 7. A-012 (CTD / delivery-cycle) — checked as D-016 required
 
 D-016 pre-committed that a positive ZN–ZB result would trigger a CTD-switch
@@ -140,6 +150,30 @@ binding question.
   notebook 02 (A-013), which excludes the 08:20 ET cash-Treasury open — a
   genuinely liquid window for these contracts. Stated in D-016 in advance;
   a Treasury-native session is a separate study.
+
+  > **CORRECTED 2026-08-04 by L-021, measured 2026-08-04 by validation report
+  > 15 (D-024 → D-025).** The window stated above is **not the window this
+  > report ran on.** `rth_frame` filters on the clock the DATA carries, and
+  > LEAN stamps CBOT Treasury bars in **America/Chicago**. So these four pairs
+  > were analysed on **(09:30, 16:00] CT = 10:31–17:00 ET** — missing the
+  > 09:31–10:30 ET morning entirely and running two hours past the 15:00 ET
+  > CME Treasury settlement. Bar count could not detect it: any 390-minute
+  > window inside a 23-hour session yields 390 bars, which is why the
+  > `medbars = 390` check never flagged it.
+  >
+  > **The verdicts are unaffected, and this was measured rather than assumed.**
+  > Report 15 re-ran all four pairs on the corrected window: the largest honest
+  > effect moves **1.01x (ZT–ZF), 1.10x (ZF–ZN), 1.14x (ZT–ZN), 1.26x (ZN–ZB)**
+  > against a pre-registered 2.0x materiality bar, and **no pair's verdict
+  > branch changes**. The 7–11x cost shortfalls below are not a one-hour
+  > artifact and L-016's tick quantisation is window-independent. What was
+  > wrong was the label, not the conclusion.
+  >
+  > **Binding convention since D-024:** state every window in BOTH clocks and
+  > gate on an observed timezone witness, never on bar count. **And see L-024:**
+  > any statistic defined relative to the window's EDGE — an "open subset", a
+  > first-30-minutes cut — is still mislocated by this defect even though the
+  > headline numbers survived it.
 - **`raw_hl` is not comparable to notebook 02.** S1 here is a centered residual
   around a trailing fit, so its half-life (152–369 bars across the four pairs)
   is partly mechanical. The conditional statistic is unaffected (A2).

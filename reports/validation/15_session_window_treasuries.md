@@ -158,6 +158,37 @@ market already trading continuously (the smoke test measured the 07:21–08:30 C
 block printing every single minute). That distinction is a hypothesis this run
 did not test and cannot settle; it is recorded, not claimed.
 
+> **AMENDED 2026-08-05 (L-024), from this run's own banked data — the second
+> paragraph and the conclusion above are WITHDRAWN as written.** The first
+> paragraph is unaffected: the prior failed, and that finding stands.
+>
+> **The contrast used here is the wrong one.** Under L-021, S-USED is
+> (09:30, 16:00] **CT**, so its "open window" subset is **10:31–11:00 ET — an
+> hour after the equity open**. The window whose open IS the equity open is
+> **S-RTH** ((08:30, 15:00] CT = 09:31–10:00 ET). This run measured that
+> subset; §7 did not use it. On ZF–ZN — the pair the claim names — the two
+> disagree in sign at comparable power (n = 3,232 vs 3,351 at z = 2.0, k = 30):
+>
+> | ZF–ZN open subset | window (ET) | neg cells | mean t | min t |
+> |---|---|---|---|---|
+> | S-USED | 10:31–11:00 | 18/20 | **−1.76** | −3.87 |
+> | S-RTH (the equity open) | 09:31–10:00 | 7/20 | **+0.58** | −1.71 |
+>
+> So the continuation is **absent at the equity open in the very pair cited**,
+> where the subset in fact leans positive. A weak, non-significant lean does
+> appear at the true equity open in the short-end pairs (ZT–ZF, ZT–ZN: both
+> 15/20 negative, mean t −0.95 / −1.13, one cell at t = −3.21), so the
+> direction is not refuted everywhere — but it is not carried by ZF–ZN, and
+> the liquidity-discontinuity explanation above has no support here.
+>
+> **Nothing in §4–§6 moves.** These subsets are fenced as descriptive by
+> D-024 §7 (`label = EXPLORATORY_open_subset`); A-013 IMMATERIAL, L-021
+> IMMATERIAL and the four Treasury verdicts do not depend on them. The
+> Treasury control simply stops corroborating L-018, which then rests on its
+> three index pairs — and those are index-stamped (America/New_York), so
+> their open subsets are the equity open and L-021 never touched them.
+> See L-024.
+
 ## 8. Limitations
 
 - **Costs did not move and were never going to.** Round-trip cost is

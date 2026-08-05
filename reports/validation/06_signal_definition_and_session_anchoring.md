@@ -106,6 +106,27 @@ mechanism rather than four coincidences: an overnight repricing scored against
 yesterday's mean is not a dislocation that reverts, it is a level change that
 persists.
 
+> **AMENDED 2026-08-05 (L-021 + L-024) — the phrase "including the Treasury
+> control" is WITHDRAWN; the three index pairs are UNAFFECTED.** `rth_frame`
+> filters on the clock the data carries, and LEAN stamps CBOT Treasury bars in
+> **America/Chicago**. ZF–ZN therefore ran on (09:30, 16:00] **CT**, so the
+> ZO subset cited here — the −0.15 bps cell at **t = −3.87, h = 30** — is the
+> first 30 minutes of **10:31–17:00 ET**, i.e. the **10:31–11:00 ET** block.
+> It is not "the first 30 minutes of the equity session", and this report's
+> data never described that window for this pair.
+>
+> Validation report 15 (D-025) measured the corrected window. On the subset
+> that **is** the equity open (S-RTH, 09:31–10:00 ET) ZF–ZN reverses sign at
+> comparable power: **7/20 cells negative, mean t = +0.58, min −1.71**, versus
+> 18/20 and mean t = −1.76 on the window used here.
+>
+> **What survives:** the finding in the three INDEX pairs, which are stamped
+> America/New_York and whose first 30 minutes really is the equity open; and
+> the §3 discrimination below (Treasury open events do not flip the pooled
+> sign), which is true on both windows. **What does not:** the claim that a
+> Treasury control corroborates an equity-open mechanism. The [ESTABLISHED]
+> tag above should be read as scoped to the index pairs. See L-024.
+
 **[ESTABLISHED] When those events are 22.7–24.7% of the sample they flip the
 pooled sign of the whole grid.** They are 12.7% of ZF–ZN's sample and there
 they do not — which is exactly the discrimination the negative control was

@@ -66,6 +66,20 @@ Figure: `reports/figures/nb13_effect_vs_cost.png`.
   instruments, 2019-06-03 → 2026-04-24 (QC free-tier end clip, disclosed with
   every result). RTH `(09:30, 16:00]` ET, 390 bars per session. Panels of
   675,840–684,300 aligned bars over 1,744–1,780 sessions per pair.
+
+  > **CORRECTED 2026-08-04 (L-021), measured by validation report 15
+  > (D-025).** That window statement is right for the three INDEX pairs and
+  > wrong for the four TREASURY pairs. `rth_frame` filters on the clock the
+  > data carries; LEAN stamps CBOT Treasury bars in **America/Chicago** and
+  > index bars in **America/New_York**. The Treasury pairs therefore ran on
+  > `(09:30, 16:00]` **CT** = **10:31–17:00 ET**. Report 15 re-ran all four on
+  > the corrected window: effects move **1.01–1.26x** against a pre-registered
+  > 2.0x bar and **no verdict branch changes**, so every Treasury conclusion in
+  > this summary stands on its own numbers. Two consequences bind anything
+  > built on this report: state windows in both clocks and gate on a timezone
+  > witness, never bar count; and **per L-024, any statistic defined relative
+  > to the window's edge (an "open subset") is still mislocated for Treasuries
+  > even though the headline numbers survived.**
 - **Primary statistic:** conditional forward reversion, measured as the
   **position's P&L** with the hedge ratio frozen at the signal bar, entered at
   the close of t+1 and exited at t+1+k, inference session-clustered.
@@ -373,10 +387,10 @@ Two structural findings came out of the same work and outlive the hypothesis:
 |---|---|---|
 | A-007 / A-008 (commission, spread) | UNVERIFIED placeholders | Treasury shortfall is 7–11×, robust to a 3× error; index verdicts do not rest on cost at all |
 | A-012 (CTD / delivery-cycle in ZB, ZN) | UNVERIFIED | ZN–ZB was disqualified on cost and microstructure before A-012 could bind; ZB carries the universe's largest roll shock (median 39.5 bps, max 118) |
-| A-013 (RTH-only captures the signal) | UNTESTED | Live limitation for Treasuries specifically, whose liquid session starts ~08:20 ET |
+| A-013 (RTH-only captures the signal) | **ANSWERED 2026-08-04 for Treasuries at minute resolution on trade bars (D-025): IMMATERIAL.** Still UNVERIFIED for the index pairs, for quote data and for second/tick resolution | Report 15 tested four Treasury-native windows down to the 08:21 ET cash open. Every one improves the cost ratio in every pair (best: ZT–ZN 9.06x → 5.57x) and the largest move is 1.43x against a pre-registered 2.0x bar; criterion (b) — LIVE for the first time since notebook 03, because a session change alters the residual — fails identically on all 16 pair-window combinations |
 | A-005, A-010, A-011 | UNVERIFIED | Never reached — they belong to notebooks 04/07 that no candidate qualified for |
 | L-012 (MYM 2019-12-12 boundary print) | Open watch item | One minute of ~1.36M, inside an exclusion window; not independently confirmed |
-| L-013 (390-bar z-window spans the overnight break) | Open, owned by notebook 06 | 22.7–24.7% of index signals fire in the first 30 minutes vs 12.7–13.6% in Treasuries — an equity-session-open artifact of the SIGNAL definition |
+| L-013 (390-bar z-window spans the overnight break) | **ADDRESSED by notebook 06 (D-021)**; see L-018 | 22.7–24.7% of index signals fire in the first 30 minutes vs 12.7–13.6% in Treasuries — an equity-session-open artifact of the SIGNAL definition. *(L-024: the Treasury figure is measured on a 10:31 ET window edge, not 09:31 ET; the index figures are unaffected)* |
 | L-005 (micro history ≈ 7 years) | Structural | One broad monetary era plus COVID; regime coverage is thin |
 | L-004 (minute bars cannot model queue position) | Structural | Would only matter if something had qualified |
 
@@ -429,6 +443,19 @@ pre-registration, and **none may reuse this window's results as evidence**.
    the 08:20 ET cash open, or second/tick resolution. These are **different
    experiments, not re-runs**; `research_config.data.later_resolutions`
    anticipates them.
+
+   > **AMENDED 2026-08-04 by validation report 15 (D-024 → D-025) — the
+   > session half of this thread is CLOSED.** All four Treasury-native windows
+   > ran, down to the 08:21 ET cash open. **A-013 is IMMATERIAL** at minute
+   > resolution on trade bars: the session helps consistently (every window
+   > improves every pair's cost ratio, best 9.06x → 5.57x) and nowhere near
+   > enough (largest move 1.43x against a pre-registered 2.0x bar), and
+   > criterion (b) fails on all 16 pair-window combinations. **Quote data is
+   > now the binding uncertainty** — the pre-open cost bar is unmeasured and
+   > A-008's 1-tick spread is scoped in config to "liquid RTH", so every
+   > cash-open cost ratio rests on an assumption known not to apply there.
+   > **Second/tick resolution** remains the other half. Each needs its own
+   > pre-registration and a fresh window.
 
 A fourth legitimate option is to stop. The program has produced a clean negative
 on a well-specified hypothesis, a validated data constructor, a tested battery,

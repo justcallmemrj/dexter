@@ -53,6 +53,11 @@ UNCONFIRMED on the window they claim to describe. **Notebook 15 / D-024 owns
 measuring the corrected window and annotating the corpus — do not annotate
 reports 03/13 before that measurement exists.**
 
+**BOTH ARE NOW DONE.** D-025 measured it (§1d) and the corpus annotation
+landed 2026-08-05 across reports 03/06/13/15. The measurement also produced a
+tail nobody predicted — **L-024**, which withdrew one of D-025's own
+conclusions. See §1d.
+
 **D-024 HAS RUN — D-025, validation report 15, 12 backtests, ALL 60 GATES
 PASS.** Verdict: **A-013 IMMATERIAL and L-021 IMMATERIAL.** The treasury-native
 session helps consistently and nowhere near enough — every treasury-native
@@ -167,6 +172,21 @@ S-CASH open subset), while L-018's effect still reproduces where it was found
 (ZF–ZN S-USED, t = −3.87 exactly) — logged as **L-023**. **L-022** records that
 the placebo rule is degenerate when neither move is material (ZT–ZF tripped it
 on 1.015 vs 1.010).
+
+**⚠ L-023's "equity-session-open" attribution was WITHDRAWN 2026-08-05 as
+L-024** — found in D-025's own banked data, no new runs. The contrast it used
+was the wrong one: under L-021, S-USED's "open subset" is **10:31–11:00 ET, an
+hour after the equity open**. The subset that IS the equity open is **S-RTH**
+(09:31–10:00 ET), which the run measured and report 15 §7 did not use — and on
+ZF–ZN it flips sign at comparable power (**7/20 negative, mean t +0.58** vs
+S-USED's 18/20, mean t −1.76). So the Treasury control does NOT corroborate an
+equity-open mechanism; L-018 now rests on its three INDEX pairs alone, which
+are stamped America/New_York and were never touched by L-021. **The failed
+prior itself stands, and no verdict moves** (D-024 §7 fenced these subsets as
+descriptive). Reports 03/06/13/15 and the D-025 entry carry inline amendments.
+**The method lesson is the durable part: L-021 was closed as "harmless" on the
+strength of the verdict branches — correctly — but a mislabelled window keeps
+biting anywhere a statistic is defined relative to the window's EDGE.**
 
 **What remains open in this thread: quote data** — now the binding uncertainty,
 because the pre-open COST bar is unmeasured and A-008's 1-tick spread is scoped
@@ -324,11 +344,21 @@ window's results as evidence** — the window is spent for this hypothesis.
    hypothesis from A-006, the residual variance ratio is not its supporting
    statistic, and D-020 deliberately issued no verdict on it. Needs its own
    pre-registration and its own verdict rule.
-   **NARROWED by L-023 (D-025):** the effect did NOT reproduce at the treasury
-   cash open (zero significant negative cells in any pair's S-CASH open
-   subset) while it still reproduces at the equity open (ZF–ZN S-USED,
-   t = −3.87 exactly). So it is an equity-session-open effect and any
-   pre-registration must scope it there, not to "information windows" generally.
+   **NARROWED by L-023 (D-025), then RE-SCOPED by L-024 (2026-08-05):** the
+   effect did NOT reproduce at the treasury cash open (zero significant
+   negative cells in any pair's S-CASH open subset) — that half stands. But
+   the claim that it reproduces "at the equity open" was wrong: the ZF–ZN
+   cell cited (S-USED, t = −3.87) sits at **10:31–11:00 ET**, and at the
+   actual equity open (S-RTH, 09:31–10:00 ET) that pair leans POSITIVE
+   (7/20 negative, mean t +0.58). **So the correct scope is the three INDEX
+   pairs, where the window was never mislabelled.** A pre-registration must
+   NOT cite the Treasury control as support, and should treat these as the
+   live options: (i) is it the equity open specifically, testable only on the
+   index pairs; (ii) is the ZF–ZN 10:31–11:00 ET block a real effect in its
+   own right, which nothing has yet asked; (iii) is any of it survivable at
+   all given ~1 cell at |t| ≥ 3 is expected by chance across the 400
+   open-subset cells against 4 observed. Note (ii) and (iii) pull opposite
+   ways and the honest prior is that this is thin.
 
 Suggested order now: **4a (quote data)** — it is the only remaining thread that
 can change a cost conclusion, and D-025 made it the binding uncertainty.
@@ -466,12 +496,20 @@ Optionally 5, now narrowed by L-023.
   improvement) is new as of D-021 and binds any future signal work.
 - **L-019/L-020** (emission-channel key loss; 32k file cap) are operational
   limits from the notebook-14 session — see §6.
-- **L-021 (session-clock defect)** — MEASURED AND CLOSED by D-025: the
-  corrected window moves effects only 1.01–1.26x and changes no branch, so the
-  label was wrong and the conclusions were not. **Still binding as method:**
-  state every window in BOTH clocks and gate on an observed timezone witness,
-  never on bar count. Reports 03/06/13 and D-016/D-017/D-018 may now be
-  annotated with the corrected window and this measured impact.
+- **L-021 (session-clock defect)** — MEASURED AND CLOSED by D-025 for the
+  VERDICTS: the corrected window moves effects only 1.01–1.26x and changes no
+  branch, so the label was wrong and the conclusions were not. **Still binding
+  as method:** state every window in BOTH clocks and gate on an observed
+  timezone witness, never on bar count. **Corpus annotation DONE 2026-08-05** —
+  reports 03 (§6 and §8), 06 (§3), 13 (§2 and the A-013/L-013 register rows)
+  and 15 (§7) now carry the corrected window and its measured impact.
+- **L-024 (2026-08-05) — the tail of L-021, and the reason "harmless" was only
+  half true.** L-021 was harmless for every headline verdict and NOT harmless
+  for statistics defined relative to the window's EDGE. It withdrew L-023's
+  equity-open attribution (see §1d). **Binding:** when a window label is
+  corrected, re-derive every edge-relative subset too — an "open subset", a
+  first-30-minutes cut, an end-of-session cut — because those move with the
+  edge even when the pooled numbers do not.
 - **Headroom warning (L-020):** `intraday_reversion.py` (~30,000 uploaded
   chars) and `pair_minute_report.py` (~29,300) are both within ~2,000-2,700 of
   QC's 32,000-char `files/update` cap. Notebook 15's battery went in a NEW

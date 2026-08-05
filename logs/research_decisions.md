@@ -658,6 +658,15 @@ index case.
 
 First Treasury pair under D-016. Run "Calculating Tan Cormorant".
 
+> **ANNOTATED 2026-08-05 (L-021, measured by D-025).** This decision was
+> reached on **(09:30, 16:00] CT = 10:31–17:00 ET**, not the 09:30–16:00 ET it
+> and D-016 state — LEAN stamps CBOT Treasury bars in America/Chicago. D-025
+> re-ran the corrected window: ZF–ZN's largest honest effect moves **1.10x**
+> against a pre-registered 2.0x materiality bar and the verdict branch is
+> unchanged. **The decision stands on its own numbers; only its window label
+> was wrong.** Per L-024, edge-relative subsets (this pair's open-window cut)
+> are a separate matter and were NOT unaffected — see L-024.
+
 - **Decision:** ZF–ZN returns **AMBIGUOUS / MICROSTRUCTURE**, and is
   additionally labelled **ECONOMICALLY IMMATERIAL** under the D-010 clause.
   The pair does not advance. A-009 is UNRESOLVED for ZF–ZN.
@@ -719,6 +728,17 @@ First Treasury pair under D-016. Run "Calculating Tan Cormorant".
   result, since D-016 fixed the order and skipping would be selection on outcome.
 
 ## D-018 — 2026-08-03 — A-009 closed on all four Treasury pairs; Version 1 has no surviving intraday candidate
+
+> **ANNOTATED 2026-08-05 (L-021, measured by D-025).** All four verdicts below
+> were reached on **(09:30, 16:00] CT = 10:31–17:00 ET**, not the 09:30–16:00
+> ET stated here and in D-016 — LEAN stamps CBOT Treasury bars in
+> America/Chicago. D-025 re-ran every pair on the corrected window: largest
+> honest effects move **1.01x (ZT–ZF), 1.10x (ZF–ZN), 1.14x (ZT–ZN), 1.26x
+> (ZN–ZB)** against a pre-registered 2.0x bar, and **no branch changes**. The
+> cost shortfalls are not a one-hour artifact and L-016's tick quantisation is
+> window-independent. **These decisions stand; the label was wrong, the
+> conclusions were not.** Per L-024 this does NOT extend to edge-relative
+> subsets.
 
 - **Decision:** All four Treasury pairs return **AMBIGUOUS / MICROSTRUCTURE and
   ECONOMICALLY IMMATERIAL** under the D-016 pre-registration. None advances.
@@ -2007,6 +2027,20 @@ chosen after the numbers existed.
   banked cell at **t = −3.87 exactly**. Logged as **L-023**: [PLAUSIBLE]
   L-018 is an equity-session-open (liquidity-discontinuity) effect, not a
   general information-release effect. Not tested here, not claimed.
+
+  > **AMENDED 2026-08-05 (L-024) — the equity-open attribution is WITHDRAWN;
+  > the failed prior is NOT.** The prior failed exactly as recorded (zero
+  > significant negative cells in any S-CASH open subset) and that half stands.
+  > But the corroborating clause is wrong: under L-021, S-USED is (09:30,
+  > 16:00] **CT**, so its open subset is **10:31–11:00 ET, an hour after the
+  > equity open**. The subset that IS the equity open is **S-RTH**
+  > (09:31–10:00 ET), which this run measured and this paragraph did not use —
+  > and on ZF–ZN it disagrees in sign at comparable power: **7/20 negative,
+  > mean t +0.58** against S-USED's 18/20 and mean t −1.76. So ZF–ZN does not
+  > corroborate an equity-open mechanism; its continuation is specific to the
+  > 10:31–11:00 ET block. **No verdict in this decision moves** — D-024 §7
+  > fenced these subsets as descriptive and neither Q1 nor Q2 depends on them.
+  > See L-024 and report 15 §7 as amended.
 - **One procedural artifact, reported as the rule dictates.** ZT–ZF trips
   DISPLACEMENT-CONFOUNDED because its placebo move (1.015x) marginally exceeds
   its S-RTH move (1.010x). Both are ~1% — nothing moved — and the frozen rule
