@@ -52,6 +52,7 @@ DRIVERS = {
     "session": "lean/research/qc_session_window_analysis.py",  # notebook 15
     "smoke": "lean/research/qc_extended_fetch_smoke.py",       # nb15 precondition
     "quotesmoke": "lean/research/qc_quote_data_smoke.py",      # thread 4a precondition
+    "quotedepth": "lean/research/qc_quote_depth_probe.py",     # EXP-024 defect re-probe
 }
 
 RELATIVE_IMPORT = re.compile(r"^(\s*from\s+)\.(\w+)(\s+import\s+)", re.MULTILINE)
