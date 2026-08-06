@@ -2072,3 +2072,241 @@ chosen after the numbers existed.
   treasury-native session question is settled at minute resolution on trade
   bars; revisiting it requires quote data or finer resolution, pre-registered
   afresh.
+
+## D-026 — 2026-08-05 — PRE-REGISTRATION of notebook 16: quote-based costs (A-008) and the midquote test of criterion (b)
+
+Written before any notebook-16 code exists. Two preconditions have already run
+(EXP-024 "Hipster Brown Bear", EXP-025 "Hyper Active Red Giraffe"); they are
+NOT part of this protocol and their results are banked and fixed. Nothing below
+may be revised in response to an outcome; a revision voids the test and forces
+a fresh pre-registration.
+
+### 0. Standing, and what this thread already knows before it starts
+
+D-019 concluded Version 1 a no-go with no surviving candidate. D-025 closed the
+session half of open thread 4 and named **quote data the binding uncertainty**,
+because A-008's 1-tick spread is scoped in config to "liquid RTH" and every
+S-CASH cost ratio in report 15 rested on an assumption known not to apply
+there.
+
+The two preconditions establish four things this pre-registration may assume:
+
+1. **Quotes are served on this tier.** `history(QuoteBar, ...)` returns
+   populated bid/ask, zero crossed or zero-width books, zero sub-tick spreads.
+2. **A-008 is already FALSIFIED for M2K** (RTH median 2.000 ticks, only 28.8%
+   of minutes at one tick) and upheld for ZN (1.000, 99.9%) and MES (1.000,
+   96.0%).
+3. **That falsification is stable across 5.5 years** — the front Jun-2019
+   contract reads within noise of Nov-2024 — so it is structural, not a window
+   artifact.
+4. **2019 quote data is usable**, so a battery may span `research_start`.
+
+### 1. The specification-search problem, stated first because it binds §5
+
+This would be the **fourth re-specification of A-006 on the same bars**:
+notebook 06 changed the SIGNAL definition, notebook 14 the ENTRY bar, notebook
+15 the SESSION window, and notebook 16 would change the PRICE BASIS. Each was
+individually legitimate and each was pre-registered. Collectively they are a
+search over specifications, and the probability that *some* specification lets
+criterion (b) pass rises with every one of them.
+
+Notebooks 06 and 14 could not move (b) at all — it is computed on the residual
+and no signal definition or entry bar touches it — so they carried a ceiling of
+AMBIGUOUS/MICROSTRUCTURE by construction. Notebook 15 could move it, and (b)
+failed identically on all 16 pair-window combinations. **Notebook 16 can also
+move it**, because a midquote series is a different residual. That makes Q3
+genuinely live and simultaneously the most dangerous question the program has
+asked, so its ceiling (§5) is fixed here and is deliberately harsh.
+
+### 2. Why no COST outcome can revive a pair — derived, not asserted
+
+Treasury round-trip costs at the config spread, and at a spread of ZERO on both
+legs, against report 15's S-RTH cost ratios:
+
+| pair | cost @1 tick | cost @0 | floor | ratio now | ratio @0 |
+|---|---|---|---|---|---|
+| ZF–ZN | $73.71 | $50.28 | 0.682x | 9.88x | **6.74x** |
+| ZT–ZF | $50.28 | $34.65 | 0.689x | 7.07x | **4.87x** |
+| ZN–ZB | $144.03 | $97.15 | 0.675x | 6.99x | **4.72x** |
+| ZT–ZN | $73.71 | $50.28 | 0.682x | 7.96x | **5.43x** |
+
+A zero spread is physically unattainable — the tick IS the minimum increment,
+and EXP-024 measured ZN at exactly 1.000 — so this is a strict lower bound that
+cannot be reached. **Even so, every Treasury pair stays 4.7–6.6x below its
+round trip.** No spread measurement can close that gap.
+
+MES–M2K is the only pair that ever cleared cost (+6.31 bps against a ~2–3 bps
+round trip, D-015). It was disqualified on criterion (b), not on cost, so a
+cost measurement cannot un-disqualify it — and the measurement already taken
+moves the wrong way (M2K's 2-tick book raises the pair round trip 1.065x, which
+still clears).
+
+**Consequence, fixed now:** Q1 and Q2 can only leave costs unchanged or make
+them worse. A result showing costs materially LOWER than assumed would be
+evidence that the measurement is broken, not a finding, and reads
+IMPLEMENTATION DEFECT.
+
+### 3. Q1 — A-008 measured for all eight instruments
+
+**Arms.** All 8 instruments (locked universe, hard gate 5), front month, one
+two-week window per quarter from 2019-06 through 2026-04 (the free-tier clip),
+fetched `extended_market_hours=True, fill_forward=False`. Quarterly sampling
+rather than the full panel because a full-window quote fetch for 8 instruments
+will not fit the B-Micro node, and stratified epochs cover regimes better than
+one long window would.
+
+**Statistic.** Spread in ticks = (askclose − bidclose) / tick_size, on the
+bar's own clock, split RTH `(08:30, 15:00]` vs pre-open `(07:20, 08:30]`, both
+stated in BOTH clocks per L-021. Reported per instrument: pooled median, mean,
+p90, fraction at exactly one tick, plus the same per calendar year.
+
+**Branches, per instrument.** **A-008 UPHELD** iff pooled RTH median ≤ 1.0
+ticks AND eq1 ≥ 0.90. **A-008 FALSIFIED-WIDER** iff pooled RTH median ≥ 1.5.
+Anything between reads **PARTIAL** and the config keeps the conservative
+(wider) of assumed and measured. The dead band is deliberate so a marginal
+instrument cannot be argued either way after the fact.
+
+**Config action, fixed now — and it uses the MEAN, not the median that decides
+the branch.** `CostModel.fill_cost` charges `(spread_ticks / 2) * tick_value`,
+i.e. it treats the config number as an EXPECTED spread. For a right-skewed book
+the median understates that expectation systematically — M2K's RTH median is
+2.000 against a mean of 1.862 in one fetch and 1.740 in another, and MES's
+median is 1.000 against a mean of 1.043 — so the median is the right statistic
+to CHARACTERISE the book ("is it a one-tick market?") and the wrong one to
+PRICE it. Every instrument's measured pooled RTH **mean** therefore replaces
+its `spread_assumptions_ticks` entry, rounded UP to the nearest 0.5 tick, and
+A-008 moves to MEASURED for that instrument. Rounding up because A-008 is a
+cost assumption and the conservative direction is wider. Median, p90 and eq1
+are all recorded beside it so the characterisation and the price stay
+distinguishable.
+
+### 4. Q2 — is the spread session-dependent?
+
+**Statistic — and why NOT the median.** A median spread cannot see this. Both
+blocks quantise to the same integer tick count for every instrument measured so
+far, so a median ratio would read M2K as SESSION-FLAT (2.000 ÷ 2.000 = 1.000)
+when its mean goes 1.862 → 2.779 and its p90 doubles 2 → 4. The primary
+statistic is therefore the **mean spread ratio** (pre-open ÷ RTH), with the
+**p90 ratio** as a confirming statistic; median is reported but decides nothing.
+
+**Branches, requiring the two statistics to AGREE** (the same
+two-readings-must-agree device D-024 used for its free-argmax/fixed-cell rule):
+**SESSION-DEPENDENT** iff mean ratio ≥ 1.25 AND p90 ratio ≥ 1.25;
+**SESSION-FLAT** iff BOTH ≤ 1.10; anything else reads INCONCLUSIVE.
+
+**Threshold disclosure, because three instruments are already measured.**
+EXP-024 banked ZN at mean 1.006 / p90 1.000, MES at 1.073 / 1.000 and M2K at
+**1.492 / 2.000**. Under the rule above those read FLAT, FLAT and
+SESSION-DEPENDENT. The 1.25 bar is stated rather than the 1.5 one considered
+first precisely because M2K's known mean ratio is 1.492 — a 1.5 bar would have
+been a threshold placed a hundredth of a unit above a value I already knew,
+which is the post-hoc tuning this method exists to prevent. 1.25 is chosen as
+"a quarter wider is material for a cost input", is not adjacent to any measured
+value, and the agreement requirement stops a single noisy tail driving it.
+
+**Config action:** if any instrument reads SESSION-DEPENDENT, `cost_assumptions`
+gains a pre-open spread block and A-008's "liquid RTH" scope becomes explicit
+rather than a comment. This is the item D-025 left open.
+
+### 5. Q3 — the midquote test of criterion (b), and its ceiling
+
+**Why this is the one thing quote data uniquely enables.** Criterion (b) is
+computed on a residual built from TRADE prices. Two of the program's four
+named fake edges are trade-price artifacts: bid-ask bounce (#1, residual VR
+~0.75 returning to ~0.99 at 5-minute sampling) and tick quantisation (#4,
+Treasury VR 0.13–0.32 evaporating at 15-minute bars). **A midquote series has
+no bounce by construction.** So recomputing the variance-ratio battery on
+midquotes discriminates "the (b) signature is microstructure" from "the (b)
+signature is real" — a question no session, signal or entry-bar change could
+touch, and the D-023 open puzzle's sharpest available probe.
+
+**Pairs.** MES–M2K (the only pair that ever cleared cost) and ZF–ZN (the
+strongest criterion (a) in the program) as control. No others: D-016's
+precedent is to register the set in advance to stop per-pair tuning, and §2
+already bars every Treasury pair on cost regardless of outcome.
+
+**Construction, and the constraint that makes it comparable.** The midquote
+series is built by the D-009 own-splice constructor reusing the **TRADE-derived
+splice factors unchanged**, so trade and midquote residuals differ only in
+price basis. Gated on reproducing the banked factor table character-for-
+character (the pattern D-024 used for its S-CASH arm); if it does not
+reproduce, the arm is VOID and unreported.
+
+**Branches.** **MIDQUOTE-CONFIRMS-ARTIFACT** — the VR curve moves to ~1 and/or
+stops declining past q = 30; the microstructure reading of D-011/D-013/D-015
+is corroborated. **MIDQUOTE-PRESERVES-SIGNATURE** — the curve still declines
+past q = 30, sits materially below both legs' own curves, AND survives coarser
+base sampling. **INCONCLUSIVE** otherwise.
+
+**CEILING, fixed now and deliberately harsh.** **MIDQUOTE-PRESERVES-SIGNATURE
+may NOT advance any pair, and may not reopen D-019.** Three independent
+reasons, each sufficient: (i) these are SPENT bars — the window was spent for
+A-006 at D-018, and D-022/D-025's Review clauses bar re-runs on it; (ii) it is
+the fourth re-specification (§1), so a single passing specification is what a
+search is expected to produce; (iii) §2 bars every Treasury pair on cost
+irrespective of (b), and MES–M2K would additionally need its conditional
+surface re-established on unspent data. The branch's ONLY permitted
+consequence is to become a **pre-registered hypothesis for a fresh window**,
+with its own D-number, its own data, and its own verdict rule.
+
+### 6. What no outcome may conclude
+
+- No outcome advances any pair to LEAN. `lean/algorithm/` stays empty; hard
+  gate 1 is untouched and the token has not been written.
+- No outcome reopens D-019 or revises any of the seven verdicts.
+- A cost measurement may not be quoted as improving any pair's economics (§2).
+- Q3 is diagnostic. Neither branch is evidence about A-006 on fresh data.
+- Nothing here may be described as an edge, validated, or profitable.
+
+### 7. Validity gates, applied BEFORE any result is read
+
+1. **Precondition reproduction.** The Nov-2024 and Jun/Aug-2019 windows must
+   reproduce EXP-024 and EXP-025's banked values exactly for ZN, MES and M2K.
+2. **Trade-path reproduction.** The trade-price VR curves must reproduce the
+   banked nb02/nb03 values (48/48 cells) for both Q3 pairs, else the residual
+   path changed and no comparison is interpretable.
+3. **Splice-factor identity** for the midquote construction (§5).
+4. **Timezone witness.** Every leg reports its delivered span, and every window
+   is stated in both clocks. Bar count may never be used as a witness (L-021).
+5. **Measurement sanity.** Sub-tick fraction must be 0 and non-positive spread
+   fraction ~0 in every arm; a violation reads IMPLEMENTATION DEFECT, because
+   top-of-book cannot sit inside the minimum increment.
+6. **Emission integrity.** Retrieved key SET compared against a frozen manifest
+   plus `S_KEYS` (L-019).
+
+Any gate failure: no verdict is read, the defect is fixed, the arm re-runs.
+
+### 8. Priors, stated in advance and falsifiable
+
+- **Q1:** MNQ and MYM uphold A-008 (both are deep books); **ZT, ZF, ZB uphold
+  it**; M2K is already falsified. If a Treasury reads FALSIFIED-WIDER that is
+  the surprise, and it would widen the very cost gaps §2 shows cannot close.
+- **Q2:** ZT, ZF and ZB read SESSION-FLAT, following ZN's banked 1.006/1.000.
+  MNQ and MYM read FLAT or INCONCLUSIVE; M2K is already SESSION-DEPENDENT. The
+  interesting failure is a Treasury reading SESSION-DEPENDENT, which would mean
+  report 15's S-CASH cost ratios were understated after all — and note this is
+  the one Q1/Q2 outcome that could make a §2 gap WIDER rather than leaving it
+  unchanged, which is the only direction §2 permits.
+- **Q3:** **MIDQUOTE-CONFIRMS-ARTIFACT in both pairs.** L-016 and fake edge #1
+  both predict it, and the base-sampling evaporation already banked is the same
+  signature seen a different way. The genuinely interesting outcome is
+  MES–M2K preserving its signature while ZF–ZN does not — which would sharpen
+  the D-023 open puzzle rather than resolve it, and would still advance nothing.
+
+### 9. Runs, parts and the module
+
+Six backtests: Q1/Q2 in two parts by asset class (4 index legs, 4 Treasury
+legs), Q3 in two parts per pair. Every part computes everything and emits a
+filtered subset ≤ 57 keys (L-019); shared diagnostics must be
+character-identical across parts, which is a free determinism gate. The battery
+goes in a NEW module `quote_report.py` — `intraday_reversion.py` (~30,000
+chars) and `pair_minute_report.py` (~29,300) are both within ~2,000–2,700 of
+QC's 32,000-char cap (L-020), so no further battery may be added to either.
+
+### 10. Review clause
+
+Q1 and Q2 settle A-008 for this data source at minute resolution; revisiting
+them requires a different venue or resolution, pre-registered afresh. **Q3 may
+not be re-run on this window under any variation** — that is exactly the
+specification search §1 exists to stop. Second/tick resolution remains open
+(open thread 4b) and is a different experiment.

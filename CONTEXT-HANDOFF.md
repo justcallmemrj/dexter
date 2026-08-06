@@ -367,8 +367,30 @@ window's results as evidence** — the window is spent for this hypothesis.
    front-month figures are within noise of Nov-2024, so M2K's 2-tick book is a
    structural property of the contract, not a window artifact.
 
-   **A pre-registration is still owed** — both runs are preconditions,
-   hypothesis-generating only, and advance nothing.
+   **⚑ D-026 IS NOW DRAFTED (2026-08-05, `logs/research_decisions.md`) and is
+   AWAITING DERRICK'S REVIEW — no notebook-16 code exists and none may be
+   written until he accepts it.** Three questions: **Q1** measures A-008 for
+   all eight instruments (quarterly two-week windows, front month, 2019-06 →
+   2026-04); **Q2** asks whether the spread is session-dependent (mean AND p90
+   ratio must agree, bar 1.25); **Q3** is the one thing quote data uniquely
+   enables — **recomputing criterion (b) on a MIDQUOTE residual**, which has no
+   bid-ask bounce by construction and therefore discriminates fake edges #1 and
+   #4 from a real signature, on MES–M2K plus a ZF–ZN control.
+   **Two ceilings are derived rather than asserted, and both are harsh.**
+   (i) §2 shows that even a physically impossible ZERO spread on both legs
+   leaves every Treasury pair **4.7–6.6x** below its round trip, so no cost
+   outcome can revive any pair, and a result showing costs materially LOWER
+   than assumed reads IMPLEMENTATION DEFECT rather than good news.
+   (ii) §5 bars **MIDQUOTE-PRESERVES-SIGNATURE** from advancing anything,
+   because notebook 16 would be the **FOURTH re-specification of A-006 on the
+   same spent bars** (nb06 signal → nb14 entry → nb15 session → nb16 price
+   basis) and a single passing specification is exactly what a search is
+   expected to produce. Its only permitted consequence is a fresh-window
+   hypothesis with its own D-number.
+   Six backtests, split into parts for L-019, in a NEW module `quote_report.py`
+   for L-020.
+
+   **Both preconditions remain hypothesis-generating only and advance nothing.**
 
    **STILL OPEN, and this is the whole remaining thread: (a) quote data** —
    now the BINDING uncertainty, because the pre-open cost bar is unmeasured and
